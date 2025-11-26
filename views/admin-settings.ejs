@@ -55,7 +55,7 @@
               <!-- Current Logo Display -->
               <div style="margin-bottom: var(--space-4); padding: var(--space-4); background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md);">
                 <p class="label" style="margin-bottom: var(--space-3); font-size: 0.9rem;">Current Logo:</p>
-                <div id="current-logo-display" style="text-align: center; padding: var(--space-4);">
+                <div id="current-logo-display" style="text-align: center; padding: var(--space-4);" data-is-uploaded="<%= settings.login_page_logo && settings.login_page_logo.startsWith('/uploads/') ? 'true' : 'false' %>">
                   <% if (settings.login_page_logo && settings.login_page_logo.startsWith('/uploads/')) { %>
                     <img src="<%= settings.login_page_logo %>" alt="Logo" style="max-width: 150px; max-height: 150px; border-radius: var(--radius-md);">
                   <% } else { %>
@@ -155,6 +155,11 @@
 
         if (result.success) {
           showToast('Logo uploaded successfully!');
+          // Update the data attribute so form knows there's an uploaded logo
+          const currentLogoDisplay = document.getElementById('current-logo-display');
+          if (currentLogoDisplay) {
+            currentLogoDisplay.dataset.isUploaded = 'true';
+          }
           setTimeout(() => location.reload(), 1000);
         } else {
           showToast(result.error || 'Failed to upload logo');
@@ -183,6 +188,11 @@
 
           if (result.success) {
             showToast('Logo deleted successfully!');
+            // Update the data attribute so form knows logo is now emoji
+            const currentLogoDisplay = document.getElementById('current-logo-display');
+            if (currentLogoDisplay) {
+              currentLogoDisplay.dataset.isUploaded = 'false';
+            }
             setTimeout(() => location.reload(), 1000);
           } else {
             showToast('Failed to delete logo');
@@ -211,11 +221,12 @@
         data[key] = value;
       });
 
-      // Don't send login_page_logo if the text input contains an uploaded image path
+      // Don't send login_page_logo if there's currently an uploaded image
       // Logo uploads are handled separately by the "Upload Logo" button
-      const logoInput = document.getElementById('logo-text-input');
-      if (logoInput && logoInput.value.startsWith('/uploads/')) {
+      const currentLogoDisplay = document.getElementById('current-logo-display');
+      if (currentLogoDisplay && currentLogoDisplay.dataset.isUploaded === 'true') {
         delete data.login_page_logo;
+        console.log('Skipping login_page_logo field - uploaded image present');
       }
 
       try {
