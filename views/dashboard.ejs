@@ -56,160 +56,39 @@
 
       <!-- Products Grid -->
       <div class="grid">
-        <!-- Target -->
+        <% servicePanels.forEach(panel => { %>
         <article class="card"
-          data-id="target"
-          data-title="Target"
-          data-description="<%= services.LOGIN_REQUIRED.target?.description || 'Auto-checkout for Target Pokemon drops' %>"
-          data-type="login_required"
-          data-submissions="<%= JSON.stringify(subscribedServices.target || []) %>">
+          data-id="<%= panel.service_id %>"
+          data-title="<%= panel.service_name %>"
+          data-description="<%= panel.description || '' %>"
+          data-type="<%= panel.service_type %>"
+          data-submissions="<%= JSON.stringify(subscribedServices[panel.service_id] || []) %>">
           <div class="card-body">
-            <h3>🎯 Target</h3>
-            <p class="muted">Requires account login + iMap</p>
+            <h3><%= panel.icon ? panel.icon + ' ' : '' %><%= panel.service_name %></h3>
+            <p class="muted"><%= panel.service_type === 'login_required' ? 'Requires account login + iMap' : 'No login required' %></p>
           </div>
           <div class="card-footer">
-            <p class="muted" style="font-size: 0.9rem; margin-bottom: 0.75rem;"><%= services.LOGIN_REQUIRED.target?.description || 'Auto-checkout for Target Pokemon drops' %></p>
+            <% if (panel.description) { %>
+            <p class="muted" style="font-size: 0.9rem; margin-bottom: 0.75rem;"><%= panel.description %></p>
+            <% } %>
             <div class="card-status">
-              <% if (subscribedServices.target && subscribedServices.target.length > 0) { %>
+              <% if (subscribedServices[panel.service_id] && subscribedServices[panel.service_id].length > 0) { %>
                 <div class="badge badge-success">✅ Active</div>
               <% } else { %>
                 <div class="badge badge-info">🔓 Available</div>
               <% } %>
             </div>
             <div class="inline-note">
-              📄 <strong><%= subscribedServices.target ? subscribedServices.target.length : 0 %></strong> submission<%= (subscribedServices.target && subscribedServices.target.length === 1) ? '' : 's' %>
+              📄 <strong><%= subscribedServices[panel.service_id] ? subscribedServices[panel.service_id].length : 0 %></strong> submission<%= (subscribedServices[panel.service_id] && subscribedServices[panel.service_id].length === 1) ? '' : 's' %>
             </div>
             <div class="card-actions">
-              <button class="btn btn-primary" data-action="add-submission" data-service="target">
+              <button class="btn btn-primary" data-action="add-submission" data-service="<%= panel.service_id %>">
                 + Add Submission
               </button>
             </div>
           </div>
         </article>
-
-        <!-- Walmart -->
-        <article class="card"
-          data-id="walmart"
-          data-title="Walmart"
-          data-description="<%= services.LOGIN_REQUIRED.walmart?.description || 'Auto-checkout for Walmart Pokemon drops' %>"
-          data-type="login_required"
-          data-submissions="<%= JSON.stringify(subscribedServices.walmart || []) %>">
-          <div class="card-body">
-            <h3>🛒 Walmart</h3>
-            <p class="muted">Requires account login + iMap</p>
-          </div>
-          <div class="card-footer">
-            <p class="muted" style="font-size: 0.9rem; margin-bottom: 0.75rem;"><%= services.LOGIN_REQUIRED.walmart?.description || 'Auto-checkout for Walmart Pokemon drops' %></p>
-            <div class="card-status">
-              <% if (subscribedServices.walmart && subscribedServices.walmart.length > 0) { %>
-                <div class="badge badge-success">✅ Active</div>
-              <% } else { %>
-                <div class="badge badge-info">🔓 Available</div>
-              <% } %>
-            </div>
-            <div class="inline-note">
-              📄 <strong><%= subscribedServices.walmart ? subscribedServices.walmart.length : 0 %></strong> submission<%= (subscribedServices.walmart && subscribedServices.walmart.length === 1) ? '' : 's' %>
-            </div>
-            <div class="card-actions">
-              <button class="btn btn-primary" data-action="add-submission" data-service="walmart">
-                + Add Submission
-              </button>
-            </div>
-          </div>
-        </article>
-
-        <!-- Best Buy -->
-        <article class="card"
-          data-id="bestbuy"
-          data-title="Best Buy"
-          data-description="<%= services.LOGIN_REQUIRED.bestbuy?.description || 'Auto-checkout for Best Buy Pokemon drops' %>"
-          data-type="login_required"
-          data-submissions="<%= JSON.stringify(subscribedServices.bestbuy || []) %>">
-          <div class="card-body">
-            <h3>🔵 Best Buy</h3>
-            <p class="muted">Requires account login + iMap</p>
-          </div>
-          <div class="card-footer">
-            <p class="muted" style="font-size: 0.9rem; margin-bottom: 0.75rem;"><%= services.LOGIN_REQUIRED.bestbuy?.description || 'Auto-checkout for Best Buy Pokemon drops' %></p>
-            <div class="card-status">
-              <% if (subscribedServices.bestbuy && subscribedServices.bestbuy.length > 0) { %>
-                <div class="badge badge-success">✅ Active</div>
-              <% } else { %>
-                <div class="badge badge-info">🔓 Available</div>
-              <% } %>
-            </div>
-            <div class="inline-note">
-              📄 <strong><%= subscribedServices.bestbuy ? subscribedServices.bestbuy.length : 0 %></strong> submission<%= (subscribedServices.bestbuy && subscribedServices.bestbuy.length === 1) ? '' : 's' %>
-            </div>
-            <div class="card-actions">
-              <button class="btn btn-primary" data-action="add-submission" data-service="bestbuy">
-                + Add Submission
-              </button>
-            </div>
-          </div>
-        </article>
-
-        <!-- Pokemon Center -->
-        <article class="card"
-          data-id="pokemoncenter"
-          data-title="Pokemon Center"
-          data-description="<%= services.NO_LOGIN.pokemoncenter?.description || 'Auto-checkout for Pokemon Center drops' %>"
-          data-type="no_login"
-          data-submissions="<%= JSON.stringify(subscribedServices.pokemoncenter || []) %>">
-          <div class="card-body">
-            <h3>⚡ Pokemon Center</h3>
-            <p class="muted">No login required</p>
-          </div>
-          <div class="card-footer">
-            <p class="muted" style="font-size: 0.9rem; margin-bottom: 0.75rem;"><%= services.NO_LOGIN.pokemoncenter?.description || 'Auto-checkout for Pokemon Center drops' %></p>
-            <div class="card-status">
-              <% if (subscribedServices.pokemoncenter && subscribedServices.pokemoncenter.length > 0) { %>
-                <div class="badge badge-success">✅ Active</div>
-              <% } else { %>
-                <div class="badge badge-info">🔓 Available</div>
-              <% } %>
-            </div>
-            <div class="inline-note">
-              📄 <strong><%= subscribedServices.pokemoncenter ? subscribedServices.pokemoncenter.length : 0 %></strong> submission<%= (subscribedServices.pokemoncenter && subscribedServices.pokemoncenter.length === 1) ? '' : 's' %>
-            </div>
-            <div class="card-actions">
-              <button class="btn btn-primary" data-action="add-submission" data-service="pokemoncenter">
-                + Add Submission
-              </button>
-            </div>
-          </div>
-        </article>
-
-        <!-- Shopify -->
-        <article class="card"
-          data-id="shopify"
-          data-title="Shopify Stores"
-          data-description="<%= services.NO_LOGIN.shopify?.description || 'Auto-checkout for Shopify-based Pokemon stores' %>"
-          data-type="no_login"
-          data-submissions="<%= JSON.stringify(subscribedServices.shopify || []) %>">
-          <div class="card-body">
-            <h3>🛍️ Shopify Stores</h3>
-            <p class="muted">No login required</p>
-          </div>
-          <div class="card-footer">
-            <p class="muted" style="font-size: 0.9rem; margin-bottom: 0.75rem;"><%= services.NO_LOGIN.shopify?.description || 'Auto-checkout for Shopify-based Pokemon stores' %></p>
-            <div class="card-status">
-              <% if (subscribedServices.shopify && subscribedServices.shopify.length > 0) { %>
-                <div class="badge badge-success">✅ Active</div>
-              <% } else { %>
-                <div class="badge badge-info">🔓 Available</div>
-              <% } %>
-            </div>
-            <div class="inline-note">
-              📄 <strong><%= subscribedServices.shopify ? subscribedServices.shopify.length : 0 %></strong> submission<%= (subscribedServices.shopify && subscribedServices.shopify.length === 1) ? '' : 's' %>
-            </div>
-            <div class="card-actions">
-              <button class="btn btn-primary" data-action="add-submission" data-service="shopify">
-                + Add Submission
-              </button>
-            </div>
-          </div>
-        </article>
+        <% }) %>
       </div>
 
       <!-- My Submissions Section -->

@@ -6,7 +6,11 @@ const User = require('../models/User');
 
 // Dashboard home
 router.get('/', ensureAuthenticated, ensureInServer, (req, res) => {
-  const services = Service.getAllServices();
+  const db = require('../config/database');
+
+  // Fetch all active service panels from database (ordered by display_order)
+  const servicePanels = db.prepare('SELECT * FROM service_panels WHERE is_active = 1 ORDER BY display_order ASC').all();
+
   const userSubscriptions = Service.getUserSubscriptions(req.user.id);
 
   // Create a map of subscribed services (supports multiple submissions per service)
@@ -30,13 +34,12 @@ router.get('/', ensureAuthenticated, ensureInServer, (req, res) => {
   }
 
   // Fetch brand name from settings
-  const db = require('../config/database');
   const brandNameSetting = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('brand_name');
   const brandName = brandNameSetting ? brandNameSetting.setting_value : 'Phantom ACO';
 
   res.render('dashboard', {
     user: req.user,
-    services: services,
+    servicePanels: servicePanels,
     subscribedServices: subscribedServices,
     appUrl: process.env.APP_URL,
     isAdmin: isAdmin,
