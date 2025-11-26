@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error - ACO Service</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <main class="error-main">
+      <div class="error-content">
+        <div class="error-icon">⚠️</div>
+        <h1>Oops!</h1>
+        <p class="error-message"><%= message || 'Something went wrong' %></p>
+
+        <div class="error-actions">
+          <a href="<%= user ? '/dashboard' : '/' %>" class="btn btn-primary">
+            <%= user ? 'Back to Dashboard' : 'Go Home' %>
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

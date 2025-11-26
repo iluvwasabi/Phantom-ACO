@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phantom ACO - Admin Dashboard</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
+          <span style="margin-left: 12px; padding: 4px 12px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">ADMIN</span>
+        </div>
+        <div class="header-actions">
+          <a href="/dashboard" class="btn btn-ghost">User Dashboard</a>
+          <div class="chip">
+            <% if (user.discord_avatar) { %>
+              <img src="https://cdn.discordapp.com/avatars/<%= user.discord_id %>/<%= user.discord_avatar %>.png" alt="Avatar" style="width:24px; height:24px; border-radius:50%;">
+            <% } %>
+            <%= user.discord_username %>
+          </div>
+          <a href="/auth/logout" class="btn btn-ghost">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div class="toolbar">
+        <h1 class="title">Admin Dashboard</h1>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid" style="margin-bottom: var(--space-10);">
+        <article class="card">
+          <div class="card-body" style="text-align: center;">
+            <h3 style="font-size: 2.5rem; margin-bottom: var(--space-2); background: linear-gradient(135deg, #a78bfa, #60a5fa); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;"><%= usersCount %></h3>
+            <p class="muted">Total Users</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-body" style="text-align: center;">
+            <h3 style="font-size: 2.5rem; margin-bottom: var(--space-2); background: linear-gradient(135deg, #10b981, #34d399); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;"><%= subscriptionsCount %></h3>
+            <p class="muted">Total Submissions</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-body" style="text-align: center;">
+            <h3 style="font-size: 2.5rem; margin-bottom: var(--space-2); background: linear-gradient(135deg, #f59e0b, #fbbf24); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;"><%= Object.keys(services.LOGIN_REQUIRED).length + Object.keys(services.NO_LOGIN).length %></h3>
+            <p class="muted">Active Services</p>
+          </div>
+        </article>
+      </div>
+
+      <!-- Recent Submissions -->
+      <div class="toolbar">
+        <h2 class="title" style="font-size: clamp(20px, 2vw, 24px);">Recent Submissions</h2>
+      </div>
+
+      <div class="submissions-table">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Service</th>
+              <th>Type</th>
+              <th>User</th>
+              <th>Discord ID</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (recentSubmissions && recentSubmissions.length > 0) { %>
+              <% recentSubmissions.forEach(sub => { %>
+                <tr data-submission-id="<%= sub.id %>">
+                  <td><%= sub.id %></td>
+                  <td><strong><%= sub.service_name %></strong></td>
+                  <td>
+                    <% if (sub.service_type === 'login_required') { %>
+                      <div class="badge badge-info">Login Required</div>
+                    <% } else { %>
+                      <div class="badge badge-success">No Login</div>
+                    <% } %>
+                  </td>
+                  <td><%= sub.discord_username %></td>
+                  <td><%= sub.discord_id %></td>
+                  <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
+                  <td>
+                    <div class="submission-actions">
+                      <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="7" class="empty-state">
+                  <p>No submissions yet</p>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: var(--space-8); text-align: center;">
+        <a href="/admin/submissions" class="btn btn-primary">View Submissions by Service</a>
+        <a href="/admin/users" class="btn btn-primary" style="margin-left: var(--space-3);">View All Users</a>
+        <a href="/admin/panels" class="btn btn-ghost" style="margin-left: var(--space-3);">Manage Panels</a>
+        <a href="/admin/settings" class="btn btn-ghost" style="margin-left: var(--space-3);">Login Page Settings</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script>
+    // Toast notification
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // Delete submission
+    async function deleteSubmission(id) {
+      if (!confirm('Are you sure you want to delete this submission?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/admin/submissions/${id}`, {
+          method: 'DELETE',
+          credentials: 'same-origin'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Submission deleted successfully');
+          // Remove row from table
+          const row = document.querySelector(`tr[data-submission-id="${id}"]`);
+          if (row) {
+            row.remove();
+          }
+        } else {
+          showToast('Failed to delete submission');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        showToast('Error deleting submission');
+      }
+    }
+  </script>
+</body>
+</html>

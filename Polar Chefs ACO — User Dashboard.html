@@ -1,0 +1,2960 @@
+<!DOCTYPE html>
+<!-- saved from url=(0039)https://www.polarchefs-aco.com/products -->
+<html lang="en" data-theme="dark"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polar Chefs ACO — User Dashboard</title>
+  <link rel="icon" href="./Polar Chefs ACO — User Dashboard_files/favicon.ico" type="image/x-icon">
+  <link href="./Polar Chefs ACO — User Dashboard_files/css2" rel="stylesheet">
+
+  <style>
+    /* =============================
+       Design Tokens / Theme
+       ============================= */
+    :root{
+      --brand-50:#eff8fd;
+      --brand-100:#d9f0fb;
+      --brand-200:#bfe6f7;
+      --brand-400:#25aee1;
+      --brand-500:#1a96c4;
+      --brand-600:#117aa1;
+
+      --bg:#f5f7fb;
+      --surface:#ffffff;
+      --text-900:#0f172a;
+      --text-700:#334155;
+      --text-600:#475569;
+      --muted:#94a3b8;
+      --border:#e5e7eb;
+
+      --success:#10b981;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+
+      --radius-xl:16px;
+      --radius-lg:12px;
+      --radius-md:10px;
+      --radius-sm:8px;
+
+      --shadow-sm:0 2px 8px rgba(15,23,42,.06);
+      --shadow-md:0 10px 25px rgba(15,23,42,.08);
+      --shadow-lg:0 20px 45px rgba(15,23,42,.10);
+
+      --space-1:4px;
+      --space-2:8px;
+      --space-3:12px;
+      --space-4:16px;
+      --space-5:20px;
+      --space-6:24px;
+      --space-7:28px;
+      --space-8:32px;
+      --space-10:40px;
+    }
+
+    /* Dark mode */
+    [data-theme="dark"]{
+      --bg:#0b1220;
+      --surface:#0f172a;
+      --text-900:#e5e7eb;
+      --text-700:#cbd5e1;
+      --text-600:#94a3b8;
+      --muted:#64748b;
+      --border:#1f2937;
+
+      --shadow-sm:0 2px 8px rgba(2,6,23,.45);
+      --shadow-md:0 10px 30px rgba(2,6,23,.5);
+      --shadow-lg:0 25px 60px rgba(2,6,23,.55);
+    }
+
+    /* Motion preferences */
+    @media (prefers-reduced-motion: reduce){
+      *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important;}
+    }
+
+    /* =============================
+       Base & Layout
+       ============================= */
+    *, *::before, *::after{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      font-family:'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text-900);
+      line-height:1.5;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .shell{
+      min-height:100dvh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .container{
+      width:100%;
+      max-width:1200px;
+      margin:0 auto;
+      padding: var(--space-8);
+    }
+
+    /* =============================
+       Header
+       ============================= */
+    .header{
+      position:sticky;
+      top:0;
+      z-index:50;
+      backdrop-filter:saturate(180%) blur(8px);
+      background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.65)) ;
+      border-bottom:1px solid var(--border);
+    }
+    [data-theme="dark"] .header{
+      background: linear-gradient(180deg, rgba(15,23,42,.7), rgba(15,23,42,.6));
+    }
+
+    .header-inner{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:var(--space-6);
+      height:72px;
+      max-width:1200px;
+      margin:0 auto;
+      padding:0 var(--space-8);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:var(--space-3);
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+    .brand-mark{
+      width:28px; height:28px; border-radius:10px;
+      background:linear-gradient(135deg, var(--brand-400), var(--brand-500));
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.35), 0 6px 14px rgba(37,174,225,.35);
+    }
+    .brand-name{ color:var(--text-900); }
+    .brand-logo{
+      width:28px; height:28px; border-radius:10px;
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.35), 0 6px 14px rgba(37,174,225,.35);
+      object-fit: cover;
+    }
+
+    .header-actions{
+      display:flex; align-items:center; gap:var(--space-3);
+    }
+
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 12px;
+      font-weight:600; font-size:.9rem;
+      border:1px solid var(--border);
+      border-radius:999px;
+      color:var(--text-700);
+      background:var(--surface);
+    }
+
+    .btn{
+      appearance:none; border:0; cursor:pointer;
+      padding:10px 16px; border-radius:999px; font-weight:600;
+      box-shadow: var(--shadow-sm);
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn-primary{
+      color:#fff;
+      background:linear-gradient(135deg, var(--brand-400), var(--brand-500));
+    }
+    .btn-primary:hover{ box-shadow: var(--shadow-md); }
+    .btn-ghost{
+      background:transparent; color:var(--text-700); border:1px solid var(--border);
+    }
+    .btn-ghost:hover{ background:rgba(148,163,184,.08); }
+
+    /* =============================
+       Page Title / Toolbar
+       ============================= */
+    .toolbar{
+      display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);
+      margin: var(--space-8) 0 var(--space-6);
+    }
+    .title{
+      font-size: clamp(22px, 2.2vw, 28px);
+      font-weight:700;
+      letter-spacing:.2px;
+      background: linear-gradient(135deg, var(--text-900), var(--text-600));
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    }
+
+    /* =============================
+       Products Grid
+       ============================= */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--space-6);
+      align-items: stretch;
+    }
+    .col-4{ grid-column: auto; }
+    @media (max-width: 1024px){ .col-4{ grid-column: auto; } }
+    @media (max-width: 720px){ .col-4{ grid-column: auto; } }
+
+    .card{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius-xl);
+      box-shadow: var(--shadow-sm);
+      overflow:hidden;
+      position:relative;
+      cursor:pointer;
+      transition: box-shadow .2s ease, transform .18s ease, border-color .2s ease;
+      display:flex; flex-direction:column;
+    }
+    .card:hover{ box-shadow: var(--shadow-lg); transform: translateY(-4px) scale(1.01); border-color: rgba(37,174,225,.35); }
+    .card:active{ transform: translateY(-1px) scale(.995); }
+    .card.is-selected{ outline:2px solid var(--brand-400); box-shadow: var(--shadow-md); }
+    .ripple{
+      position:absolute;
+      border-radius:50%;
+      transform: scale(0);
+      opacity:0.45;
+      background: radial-gradient(circle at center, rgba(37,174,225,.45), rgba(37,174,225,.25), rgba(37,174,225,0));
+      animation: ripple 600ms ease-out forwards;
+      pointer-events:none;
+    }
+    @keyframes ripple{
+      to{
+        transform: scale(1);
+        opacity:0;
+      }
+    }
+
+    .card-media{
+      height:96px;
+      background:
+        radial-gradient(120px 60px at 15% 30%, rgba(37,174,225,.15), transparent 60%),
+        radial-gradient(160px 80px at 85% 30%, rgba(26,150,196,.15), transparent 60%),
+        linear-gradient(135deg, var(--brand-50), #fff);
+      border-bottom:1px solid var(--border);
+    }
+    [data-theme="dark"] .card-media{
+      background:
+        radial-gradient(120px 60px at 15% 30%, rgba(37,174,225,.18), transparent 60%),
+        radial-gradient(160px 80px at 85% 30%, rgba(26,150,196,.18), transparent 60%),
+        linear-gradient(135deg, #0b1424, #0e1a2e);
+    }
+
+    .card-body{ padding: var(--space-6); flex:1; display:flex; flex-direction:column; gap: var(--space-4); }
+    .card h3{ margin:0; font-size:1.1rem; letter-spacing:.2px; }
+    .muted{ color:var(--text-600); white-space: pre-line; }
+
+    .inline-note{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:var(--radius-md);
+      background: rgba(37,174,225,.07);
+      border:1px solid rgba(37,174,225,.2);
+      color:var(--text-700);
+      font-weight:500;
+    }
+
+    .badge{
+      width:fit-content;
+      padding:6px 10px; border-radius:999px;
+      font-size:.85rem; font-weight:600;
+      border:1px solid;
+    }
+    .badge-warning{
+      border-color: rgba(245,158,11,.25);
+      background: rgba(245,158,11,.08);
+      color:#b45309;
+    }
+    .badge-success{
+      border-color: rgba(16,185,129,.25);
+      background: rgba(16,185,129,.08);
+      color:#047857;
+    }
+    .badge-danger{
+      border-color: rgba(239,68,68,.25);
+      background: rgba(239,68,68,.08);
+      color:#dc2626;
+    }
+    [data-theme="dark"] .badge-warning{ color:#fbbf24; }
+    [data-theme="dark"] .badge-success{ color:#34d399; }
+    [data-theme="dark"] .badge-danger{ color:#f87171; }
+
+    .card-footer{
+      padding: var(--space-4) var(--space-6) var(--space-6);
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin-top: auto;
+    }
+    
+    .card-status{
+      display: flex;
+      justify-content: center;
+    }
+    
+    .card-actions{
+      display: flex;
+      justify-content: center;
+    }
+
+    /* =============================
+       Submissions Table
+       ============================= */
+    .panel{
+      margin-top: var(--space-10);
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius-xl);
+      box-shadow: var(--shadow-sm);
+      overflow:hidden;
+    }
+
+    .panel-header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: var(--space-6);
+      border-bottom:1px solid var(--border);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
+    thead th{
+      text-align:left; font-size:.85rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+      padding:14px var(--space-6);
+      position:sticky; top:72px; /* sticks under header */
+      background:var(--surface);
+      border-bottom:1px solid var(--border);
+      z-index:5;
+    }
+    tbody td{
+      padding:16px var(--space-6);
+      border-bottom:1px solid var(--border);
+      color:var(--text-700);
+    }
+    tbody tr{ transition: background .18s ease, transform .08s ease; cursor: pointer; }
+    tbody tr:hover{ background: rgba(37,174,225,.12) !important; transform: translateY(-1px); }
+    tbody tr:nth-child(odd){ background: color-mix(in oklab, var(--surface) 92%, var(--brand-50)); }
+    [data-theme="dark"] tbody tr:nth-child(odd){ background: rgba(148,163,184,.03); }
+
+    .row-actions button{
+      background:transparent; border:0; cursor:pointer;
+      padding:8px; border-radius:8px; color:var(--text-600);
+      transition: background .2s ease, transform .1s ease, color .2s ease;
+    }
+    .row-actions button:hover{ background: rgba(37,174,225,.12); color:var(--brand-600); transform: translateY(-1px); }
+
+    .empty{
+      padding:48px; text-align:center; color:var(--text-600); font-style:italic;
+    }
+
+    /* Responsive table -> cards on small screens */
+    @media (max-width: 720px){
+      thead{ display:none; }
+      tbody tr{
+        display:grid; grid-template-columns: 1fr 1fr; gap:8px; padding:12px var(--space-6) 16px;
+      }
+      tbody td{
+        border:none; padding:0;
+      }
+      tbody td::before{
+        content: attr(data-label);
+        display:block; font-size:.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;
+      }
+      .row-actions{ grid-column: span 2; display:flex; gap:8px; margin-top:8px; }
+    }
+
+    /* =============================
+       Modal (Accessible)
+       ============================= */
+    .modal{
+      position:fixed; inset:0; display:none; place-items:center;
+      background: rgba(2,6,23,.55);
+      z-index:1000;
+    }
+    .modal.show{ display:grid; animation: backdropIn .25s ease; }
+    .dialog{
+      width: min(720px, 92vw);
+      background:var(--surface);
+      color:var(--text-900);
+      border:1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      max-height: 88vh; overflow:auto;
+    }
+    .dialog.animate-in{
+      animation: dialogPop .28s cubic-bezier(0.22, 1, 0.36, 1) forwards, dialogGlow .8s ease-out;
+      will-change: transform, opacity, box-shadow;
+      transform-origin: top center;
+    }
+    @keyframes dialogPop{
+      from{ opacity:0; transform: translateY(12px) scale(.98); }
+      to{ opacity:1; transform: translateY(0) scale(1); }
+    }
+    @keyframes dialogGlow{
+      from{ box-shadow: 0 0 0 rgba(37,174,225,0); }
+      to{ box-shadow: 0 12px 50px rgba(37,174,225,.12); }
+    }
+    @keyframes backdropIn{
+      from{ background: rgba(2,6,23,0); }
+      to{ background: rgba(2,6,23,.55); }
+    }
+    .dialog-header{
+      display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);
+      padding: var(--space-6);
+      border-bottom:1px solid var(--border);
+    }
+    .icon-btn{
+      background:transparent; border:1px solid var(--border); color:var(--text-600);
+      width:36px; height:36px; border-radius:10px; cursor:pointer;
+      display:grid; place-items:center;
+      transition: background .2s ease, color .2s ease, transform .1s ease;
+    }
+    .icon-btn:hover{ background: rgba(148,163,184,.12); color:var(--text-900); transform: translateY(-1px); }
+
+    .dialog-body{ padding: var(--space-6); }
+    .form-grid{
+      display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--space-4);
+    }
+    .form-grid .wide{ grid-column: span 2; }
+    @media (max-width:720px){ .form-grid{ grid-template-columns:1fr; } .form-grid .wide{ grid-column: span 1; } }
+
+    .field{ display:block; }
+    .label{
+      display:block; font-weight:600; font-size:.95rem; color:var(--text-700); margin-bottom:8px;
+    }
+    .control{
+      width:100%; padding:12px 14px; border-radius:10px; border:2px solid var(--border);
+      background:var(--surface); color:var(--text-900); font: inherit;
+      transition:border-color .2s ease, box-shadow .2s ease, transform .15s ease;
+    }
+    .control:focus{
+      outline:none; border-color: color-mix(in oklab, var(--brand-500) 80%, var(--brand-400));
+      box-shadow: 0 0 0 4px rgba(37,174,225,.12);
+      transform: translateY(-1px);
+    }
+    select.control{ padding:12px; }
+
+    .dialog-footer{
+      display:flex; gap:var(--space-3); justify-content:flex-end;
+      padding: var(--space-6); border-top:1px solid var(--border);
+    }
+
+    /* =============================
+       Toast
+       ============================= */
+    .toast{
+      position:fixed; top:18px; left:50%; transform:translateX(-50%);
+      background: linear-gradient(135deg, #0ea5e9, var(--brand-500));
+      color:#fff; padding:12px 16px; border-radius:999px; font-weight:700; z-index:1200;
+      box-shadow: var(--shadow-md);
+      animation: toast-in .25s ease;
+    }
+    .toast.success{ background: linear-gradient(135deg, var(--success), #059669); }
+    .toast.error{ background: linear-gradient(135deg, var(--danger), #b91c1c); }
+    @keyframes toast-in{ from{ opacity:0; transform: translate(-50%, -8px);} to{ opacity:1; transform: translate(-50%, 0);} }
+
+    /* =============================
+       Form Validation Styles
+       ============================= */
+    .control.is-invalid{
+      border-color: var(--danger);
+    }
+    .invalid-feedback{
+      color: var(--danger);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      display: none;
+    }
+    .control.is-invalid + .invalid-feedback{
+      display: block;
+    }
+
+    /* =============================
+       IMAP Validation Loading Overlay
+       ============================= */
+    .validation-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      backdrop-filter: blur(4px);
+    }
+
+    .validation-overlay.show {
+      display: flex;
+      animation: overlayFadeIn 0.3s ease;
+    }
+
+    @keyframes overlayFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .validation-content {
+      background: var(--surface);
+      padding: 40px;
+      border-radius: var(--radius-xl);
+      text-align: center;
+      max-width: 500px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+      animation: validationPop 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes validationPop {
+      from { 
+        opacity: 0; 
+        transform: translateY(20px) scale(0.95); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+      }
+    }
+
+    .validation-spinner {
+      width: 60px;
+      height: 60px;
+      border: 6px solid var(--border);
+      border-top: 6px solid var(--brand-400);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .validation-message {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-900);
+      margin-bottom: 10px;
+      letter-spacing: 0.2px;
+    }
+
+    .validation-submessage {
+      font-size: 14px;
+      color: var(--text-600);
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    .validation-progress {
+      font-size: 14px;
+      color: var(--brand-500);
+      margin-top: 15px;
+      font-style: italic;
+      font-weight: 500;
+      min-height: 20px;
+    }
+
+    .validation-timer {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+  </style>
+<link type="text/css" rel="stylesheet" id="dark-mode-custom-link"><link type="text/css" rel="stylesheet" id="dark-mode-general-link"><style lang="en" type="text/css" id="dark-mode-custom-style"></style><style lang="en" type="text/css" id="dark-mode-native-style"></style><style lang="en" type="text/css" id="dark-mode-native-sheet"></style></head>
+<body>
+  <div class="shell">
+
+    <!-- Header -->
+    <header class="header" role="banner">
+      <div class="header-inner">
+        <div class="brand" aria-label="Polar Chefs ACO">
+          <img class="brand-logo" src="./Polar Chefs ACO — User Dashboard_files/favicon.ico" alt="Polar Chefs" width="28" height="28">
+          <div class="brand-name">Polar Chefs ACO — User Dashboard</div>
+        </div>
+
+        <div class="header-actions">
+          <div class="chip" id="userChip" title="Signed in with Discord"><span aria-hidden="true">🟣</span> <span id="userName">dcoconutz</span></div>
+          <button class="btn btn-ghost" id="themeToggle" type="button" aria-pressed="true" title="Toggle theme">🌗 Light Theme</button>
+          <form method="GET" action="https://www.polarchefs-aco.com/logout" style="display: inline;">
+            <button class="btn btn-primary" type="submit">Logout</button>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="container" role="main">
+      <div class="toolbar">
+        <h1 class="title">Available ACO</h1>
+      </div>
+
+      <!-- Products -->
+      <section class="grid" aria-label="Available products">
+        
+        <article class="card col-4" data-id="e3e778b9-489b-4d1f-970a-82fb72c2ca17" data-title="BestBuy Canon PowerShot" data-description="WIll be ran on BestBuy restocks." data-product-type="normal" data-enable-account-email="true" data-enable-account-password="true" data-enable-account-app-password="true" data-enable-entry-limit="false" data-max-entries-per-user="" data-current-entries="0" data-entries-remaining="" data-limit-reached="false" data-subs="[]">
+          <div class="card-media" aria-hidden="true"></div>
+          <div class="card-body">
+            <h3>BestBuy Canon PowerShot</h3>
+            <p class="muted">WIll be ran on BestBuy restocks.</p>
+          </div>
+          
+          <div class="card-footer">
+            <!-- 1. Entries used (If applicable) -->
+            
+              <div class="card-status">
+                <div class="badge badge-warning">♾️ No entry limits</div>
+              </div>
+            
+            
+            <!-- 2. Submissions status -->
+            
+              <div class="card-status">
+                <div class="badge badge-success">✅ Available for submission</div>
+              </div>
+            
+            
+            <!-- 3. Number of submissions -->
+            <div class="inline-note">📄 <strong>0</strong> submissions</div>
+            
+            <!-- 4. + add submissions button -->
+            <div class="card-actions">
+              
+                <button class="btn btn-primary" data-action="add" data-product-id="e3e778b9-489b-4d1f-970a-82fb72c2ca17" data-product="BestBuy Canon PowerShot" type="button">+ Add Submission</button>
+              
+            </div>
+          </div>
+        </article>
+        
+        <article class="card col-4" data-id="36b0e3cf-7dad-407a-9f75-1926a9ec8de8" data-title="Canon PowerShot" data-description="- You will be ran for the resellable Canon camera&#39;s.
+
+- Since these are high ticket items, make sure to have enough funds available to prevent payment declines.
+
+- All profitable models will be ran." data-product-type="aco_submission" data-enable-account-email="false" data-enable-account-password="false" data-enable-account-app-password="false" data-enable-entry-limit="false" data-max-entries-per-user="" data-current-entries="0" data-entries-remaining="" data-limit-reached="false" data-subs="[]">
+          <div class="card-media" aria-hidden="true"></div>
+          <div class="card-body">
+            <h3>Canon PowerShot</h3>
+            <p class="muted">- You will be ran for the resellable Canon camera's.
+
+- Since these are high ticket items, make sure to have enough funds available to prevent payment declines.
+
+- All profitable models will be ran.</p>
+          </div>
+          
+          <div class="card-footer">
+            <!-- 1. Entries used (If applicable) -->
+            
+              <div class="card-status">
+                <div class="badge badge-warning">♾️ No entry limits</div>
+              </div>
+            
+            
+            <!-- 2. Submissions status -->
+            
+              <div class="card-status">
+                <div class="badge badge-success">✅ Available for submission</div>
+              </div>
+            
+            
+            <!-- 3. Number of submissions -->
+            <div class="inline-note">📄 <strong>0</strong> submissions</div>
+            
+            <!-- 4. + add submissions button -->
+            <div class="card-actions">
+              
+                <button class="btn btn-primary" data-action="add" data-product-id="36b0e3cf-7dad-407a-9f75-1926a9ec8de8" data-product="Canon PowerShot" type="button">+ Add Submission</button>
+              
+            </div>
+          </div>
+        </article>
+        
+        <article class="card col-4" data-id="795e64b5-adb8-4ee6-b5e7-e6495635ddce" data-title="AIO Pokemon" data-description="- Pokemon Center
+- Hot Topic/Box Lunch
+- Scheels
+- DSG
+- &amp; any other random site that doesn&#39;t require accounts
+
+- Your ACO entry will be added within 24 hours. You will ONLY hear from us if there is an issue with your submission." data-product-type="normal" data-enable-account-email="false" data-enable-account-password="false" data-enable-account-app-password="false" data-enable-entry-limit="true" data-max-entries-per-user="1" data-current-entries="1" data-entries-remaining="" data-limit-reached="true" data-subs="[{&quot;account_email&quot;: null, &quot;card_number&quot;: &quot;5443179893000972&quot;, &quot;date_submitted&quot;: &quot;Nov 06, 2025&quot;, &quot;email_address&quot;: &quot;dsabares@gmail.com&quot;, &quot;index&quot;: &quot;b8bc4bba-4c5f-4072-aab0-bdc701a82cb8&quot;, &quot;product_id&quot;: &quot;795e64b5-adb8-4ee6-b5e7-e6495635ddce&quot;, &quot;product_title&quot;: &quot;AIO Pokemon&quot;, &quot;status&quot;: &quot;Completed&quot;}]">
+          <div class="card-media" aria-hidden="true"></div>
+          <div class="card-body">
+            <h3>AIO Pokemon</h3>
+            <p class="muted">- Pokemon Center
+- Hot Topic/Box Lunch
+- Scheels
+- DSG
+- &amp; any other random site that doesn't require accounts
+
+- Your ACO entry will be added within 24 hours. You will ONLY hear from us if there is an issue with your submission.</p>
+          </div>
+          
+          <div class="card-footer">
+            <!-- 1. Entries used (If applicable) -->
+            
+              <div class="card-status">
+                <div class="badge badge-warning">📊 1/1 entries used</div>
+              </div>
+            
+            
+            <!-- 2. Submissions status -->
+            
+              <div class="card-status">
+                <div class="badge badge-success">✅ Available for submission</div>
+              </div>
+            
+            
+            <!-- 3. Number of submissions -->
+            <div class="inline-note">📄 <strong>1</strong> submission</div>
+            
+            <!-- 4. + add submissions button -->
+            <div class="card-actions">
+              
+                <button class="btn btn-ghost" disabled="" aria-disabled="true" type="button">+ Add Submission</button>
+              
+            </div>
+          </div>
+        </article>
+        
+        <article class="card col-4" data-id="23923dc2-42e1-40b5-b19b-b7ee78a221c6" data-title="BestBuy Pokemon" data-description="- Do NOT give me an account that you are already using yourself. There will be issues otherwise.
+
+- Login &amp; Password Reset Emails are normal. Just ignore them." data-product-type="normal" data-enable-account-email="true" data-enable-account-password="true" data-enable-account-app-password="true" data-enable-entry-limit="false" data-max-entries-per-user="" data-current-entries="0" data-entries-remaining="" data-limit-reached="false" data-subs="[]">
+          <div class="card-media" aria-hidden="true"></div>
+          <div class="card-body">
+            <h3>BestBuy Pokemon</h3>
+            <p class="muted">- Do NOT give me an account that you are already using yourself. There will be issues otherwise.
+
+- Login &amp; Password Reset Emails are normal. Just ignore them.</p>
+          </div>
+          
+          <div class="card-footer">
+            <!-- 1. Entries used (If applicable) -->
+            
+              <div class="card-status">
+                <div class="badge badge-warning">♾️ No entry limits</div>
+              </div>
+            
+            
+            <!-- 2. Submissions status -->
+            
+              <div class="card-status">
+                <div class="badge badge-success">✅ Available for submission</div>
+              </div>
+            
+            
+            <!-- 3. Number of submissions -->
+            <div class="inline-note">📄 <strong>0</strong> submissions</div>
+            
+            <!-- 4. + add submissions button -->
+            <div class="card-actions">
+              
+                <button class="btn btn-primary" data-action="add" data-product-id="23923dc2-42e1-40b5-b19b-b7ee78a221c6" data-product="BestBuy Pokemon" type="button">+ Add Submission</button>
+              
+            </div>
+          </div>
+        </article>
+        
+        <article class="card col-4 is-selected" data-id="fb73819e-2cfd-419f-9558-4b0f8308feae" data-title="Target Pokemon" data-description="- Do NOT give me an account that you are already using yourself. There will be issues otherwise.
+
+- Login &amp; Password Reset Emails are normal. Just ignore them." data-product-type="normal" data-enable-account-email="true" data-enable-account-password="true" data-enable-account-app-password="true" data-enable-entry-limit="true" data-max-entries-per-user="1" data-current-entries="0" data-entries-remaining="1" data-limit-reached="false" data-subs="[]">
+          <div class="card-media" aria-hidden="true"></div>
+          <div class="card-body">
+            <h3>Target Pokemon</h3>
+            <p class="muted">- Do NOT give me an account that you are already using yourself. There will be issues otherwise.
+
+- Login &amp; Password Reset Emails are normal. Just ignore them.</p>
+          </div>
+          
+          <div class="card-footer">
+            <!-- 1. Entries used (If applicable) -->
+            
+              <div class="card-status">
+                <div class="badge badge-warning">📊 0/1 entries used</div>
+              </div>
+            
+            
+            <!-- 2. Submissions status -->
+            
+              <div class="card-status">
+                <div class="badge badge-success">✅ Available for submission</div>
+              </div>
+            
+            
+            <!-- 3. Number of submissions -->
+            <div class="inline-note">📄 <strong>0</strong> submissions</div>
+            
+            <!-- 4. + add submissions button -->
+            <div class="card-actions">
+              
+                <button class="btn btn-primary" data-action="add" data-product-id="fb73819e-2cfd-419f-9558-4b0f8308feae" data-product="Target Pokemon" type="button">+ Add Submission</button>
+              
+            </div>
+          </div>
+        </article>
+        
+        <article class="card col-4" data-id="57692b0a-83e2-4223-b48a-1ab56a93b73e" data-title="Walmart Pokemon" data-description="- Do NOT give me an account that you are already using yourself. There will be issues otherwise.
+
+- Login &amp; Password Reset Emails are normal. Just ignore them." data-product-type="normal" data-enable-account-email="true" data-enable-account-password="true" data-enable-account-app-password="true" data-enable-entry-limit="false" data-max-entries-per-user="" data-current-entries="0" data-entries-remaining="" data-limit-reached="false" data-subs="[]">
+          <div class="card-media" aria-hidden="true"></div>
+          <div class="card-body">
+            <h3>Walmart Pokemon</h3>
+            <p class="muted">- Do NOT give me an account that you are already using yourself. There will be issues otherwise.
+
+- Login &amp; Password Reset Emails are normal. Just ignore them.</p>
+          </div>
+          
+          <div class="card-footer">
+            <!-- 1. Entries used (If applicable) -->
+            
+              <div class="card-status">
+                <div class="badge badge-warning">♾️ No entry limits</div>
+              </div>
+            
+            
+            <!-- 2. Submissions status -->
+            
+              <div class="card-status">
+                <div class="badge badge-danger">⛔ Submissions Closed</div>
+              </div>
+            
+            
+            <!-- 3. Number of submissions -->
+            <div class="inline-note">📄 <strong>0</strong> submissions</div>
+            
+            <!-- 4. + add submissions button -->
+            <div class="card-actions">
+              
+                <button class="btn btn-ghost" disabled="" aria-disabled="true" type="button">+ Add Submission</button>
+              
+            </div>
+          </div>
+        </article>
+        
+        <article class="card col-4" data-id="5684fe89-b9fc-45b5-bbbe-5bac7be0d4da" data-title="Costco Pokemon" data-description="- Membership is MANDATORY.
+
+- MASTERCARD and VISA ONLY.
+
+- Do NOT give me an account that you are already using yourself. There will be issues otherwise." data-product-type="aco_submission" data-enable-account-email="true" data-enable-account-password="true" data-enable-account-app-password="false" data-enable-entry-limit="false" data-max-entries-per-user="" data-current-entries="0" data-entries-remaining="" data-limit-reached="false" data-subs="[{&quot;account_email&quot;: &quot;dsabares@gmail.com&quot;, &quot;card_number&quot;: &quot;5443176815783669&quot;, &quot;date_submitted&quot;: &quot;Nov 06, 2025&quot;, &quot;email_address&quot;: &quot;dsabares@gmail.com&quot;, &quot;index&quot;: &quot;969b7656-7250-4a2a-a3a5-6cc637da889f&quot;, &quot;product_id&quot;: &quot;5684fe89-b9fc-45b5-bbbe-5bac7be0d4da&quot;, &quot;product_title&quot;: &quot;Costco Pokemon&quot;, &quot;status&quot;: &quot;Completed&quot;}]">
+          <div class="card-media" aria-hidden="true"></div>
+          <div class="card-body">
+            <h3>Costco Pokemon</h3>
+            <p class="muted">- Membership is MANDATORY.
+
+- MASTERCARD and VISA ONLY.
+
+- Do NOT give me an account that you are already using yourself. There will be issues otherwise.</p>
+          </div>
+          
+          <div class="card-footer">
+            <!-- 1. Entries used (If applicable) -->
+            
+              <div class="card-status">
+                <div class="badge badge-warning">♾️ No entry limits</div>
+              </div>
+            
+            
+            <!-- 2. Submissions status -->
+            
+              <div class="card-status">
+                <div class="badge badge-success">✅ Available for submission</div>
+              </div>
+            
+            
+            <!-- 3. Number of submissions -->
+            <div class="inline-note">📄 <strong>1</strong> submission</div>
+            
+            <!-- 4. + add submissions button -->
+            <div class="card-actions">
+              
+                <button class="btn btn-primary" data-action="add" data-product-id="5684fe89-b9fc-45b5-bbbe-5bac7be0d4da" data-product="Costco Pokemon" type="button">+ Add Submission</button>
+              
+            </div>
+          </div>
+        </article>
+        
+        <article class="card col-4" data-id="1574b413-906f-4b8f-aea5-14b29becc5ed" data-title="Sams Club Pokemon" data-description="- Sams Club Membership is Mandatory.
+
+- Do NOT give me an account that you are already using yourself. There will be issues otherwise.
+
+- Only GMAIL accounts. Yahoo &amp; iCloud emails do not work with Hayha.
+
+- Login &amp; Password Reset Emails are normal. Just ignore them." data-product-type="normal" data-enable-account-email="true" data-enable-account-password="true" data-enable-account-app-password="true" data-enable-entry-limit="false" data-max-entries-per-user="" data-current-entries="0" data-entries-remaining="" data-limit-reached="false" data-subs="[]">
+          <div class="card-media" aria-hidden="true"></div>
+          <div class="card-body">
+            <h3>Sams Club Pokemon</h3>
+            <p class="muted">- Sams Club Membership is Mandatory.
+
+- Do NOT give me an account that you are already using yourself. There will be issues otherwise.
+
+- Only GMAIL accounts. Yahoo &amp; iCloud emails do not work with Hayha.
+
+- Login &amp; Password Reset Emails are normal. Just ignore them.</p>
+          </div>
+          
+          <div class="card-footer">
+            <!-- 1. Entries used (If applicable) -->
+            
+              <div class="card-status">
+                <div class="badge badge-warning">♾️ No entry limits</div>
+              </div>
+            
+            
+            <!-- 2. Submissions status -->
+            
+              <div class="card-status">
+                <div class="badge badge-success">✅ Available for submission</div>
+              </div>
+            
+            
+            <!-- 3. Number of submissions -->
+            <div class="inline-note">📄 <strong>0</strong> submissions</div>
+            
+            <!-- 4. + add submissions button -->
+            <div class="card-actions">
+              
+                <button class="btn btn-primary" data-action="add" data-product-id="1574b413-906f-4b8f-aea5-14b29becc5ed" data-product="Sams Club Pokemon" type="button">+ Add Submission</button>
+              
+            </div>
+          </div>
+        </article>
+        
+        <article class="card col-4" data-id="2e24d6f2-86c0-43f9-8856-ada5183dd0f5" data-title="Amazon MTG" data-description="Amazon MTG" data-product-type="amazon" data-enable-account-email="false" data-enable-account-password="false" data-enable-account-app-password="false" data-enable-entry-limit="false" data-max-entries-per-user="" data-current-entries="0" data-entries-remaining="" data-limit-reached="false" data-subs="[]">
+          <div class="card-media" aria-hidden="true"></div>
+          <div class="card-body">
+            <h3>Amazon MTG</h3>
+            <p class="muted">Amazon MTG</p>
+          </div>
+          
+          <div class="card-footer">
+            <!-- 1. Entries used (If applicable) -->
+            
+              <div class="card-status">
+                <div class="badge badge-warning">♾️ No entry limits</div>
+              </div>
+            
+            
+            <!-- 2. Submissions status -->
+            
+              <div class="card-status">
+                <div class="badge badge-success">✅ Available for submission</div>
+              </div>
+            
+            
+            <!-- 3. Number of submissions -->
+            <div class="inline-note">📄 <strong>0</strong> submissions</div>
+            
+            <!-- 4. + add submissions button -->
+            <div class="card-actions">
+              
+                <button class="btn btn-primary" data-action="add" data-product-id="2e24d6f2-86c0-43f9-8856-ada5183dd0f5" data-product="Amazon MTG" type="button">+ Add Submission</button>
+              
+            </div>
+          </div>
+        </article>
+        
+        <article class="card col-4" data-id="9839609d-2754-4277-b904-206bee8d4e10" data-title="Amazon Freebies" data-description="Amazon Freebies" data-product-type="amazon" data-enable-account-email="false" data-enable-account-password="false" data-enable-account-app-password="false" data-enable-entry-limit="true" data-max-entries-per-user="1" data-current-entries="0" data-entries-remaining="1" data-limit-reached="false" data-subs="[]">
+          <div class="card-media" aria-hidden="true"></div>
+          <div class="card-body">
+            <h3>Amazon Freebies</h3>
+            <p class="muted">Amazon Freebies</p>
+          </div>
+          
+          <div class="card-footer">
+            <!-- 1. Entries used (If applicable) -->
+            
+              <div class="card-status">
+                <div class="badge badge-warning">📊 0/1 entries used</div>
+              </div>
+            
+            
+            <!-- 2. Submissions status -->
+            
+              <div class="card-status">
+                <div class="badge badge-success">✅ Available for submission</div>
+              </div>
+            
+            
+            <!-- 3. Number of submissions -->
+            <div class="inline-note">📄 <strong>0</strong> submissions</div>
+            
+            <!-- 4. + add submissions button -->
+            <div class="card-actions">
+              
+                <button class="btn btn-primary" data-action="add" data-product-id="9839609d-2754-4277-b904-206bee8d4e10" data-product="Amazon Freebies" type="button">+ Add Submission</button>
+              
+            </div>
+          </div>
+        </article>
+        
+        <article class="card col-4" data-id="0044718e-20b9-43ae-b53b-7a3c336b65e2" data-title="Amazon Pokemon" data-description="Amazon Pokemon" data-product-type="amazon" data-enable-account-email="false" data-enable-account-password="false" data-enable-account-app-password="false" data-enable-entry-limit="false" data-max-entries-per-user="" data-current-entries="0" data-entries-remaining="" data-limit-reached="false" data-subs="[]">
+          <div class="card-media" aria-hidden="true"></div>
+          <div class="card-body">
+            <h3>Amazon Pokemon</h3>
+            <p class="muted">Amazon Pokemon</p>
+          </div>
+          
+          <div class="card-footer">
+            <!-- 1. Entries used (If applicable) -->
+            
+              <div class="card-status">
+                <div class="badge badge-warning">♾️ No entry limits</div>
+              </div>
+            
+            
+            <!-- 2. Submissions status -->
+            
+              <div class="card-status">
+                <div class="badge badge-success">✅ Available for submission</div>
+              </div>
+            
+            
+            <!-- 3. Number of submissions -->
+            <div class="inline-note">📄 <strong>0</strong> submissions</div>
+            
+            <!-- 4. + add submissions button -->
+            <div class="card-actions">
+              
+                <button class="btn btn-primary" data-action="add" data-product-id="0044718e-20b9-43ae-b53b-7a3c336b65e2" data-product="Amazon Pokemon" type="button">+ Add Submission</button>
+              
+            </div>
+          </div>
+        </article>
+        
+      </section>
+
+      <!-- Submissions -->
+      <section id="subPanel" class="panel" aria-label="Your submissions" style="">
+        <div class="panel-header">
+          <h2 class="title" style="font-size:1.2rem; -webkit-text-fill-color:unset; color:var(--text-900); background:none;">Your Submissions</h2>
+          <div id="filterPill" class="chip" style="display: inline-flex;">
+            <span id="filterLabel">Target Pokemon</span>
+            <button class="btn btn-ghost" data-action="delete-all" type="button" title="Delete all submissions for this product" style="padding:6px 10px;">🗑️ Delete All</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table aria-describedby="subHelp">
+            <caption id="subHelp" class="visually-hidden" style="position:absolute; left:-9999px;">List of your submissions with actions</caption>
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Date</th>
+                <th scope="col">Email</th>
+                <th scope="col">Product</th>
+                <th scope="col">Card</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="subBody"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty">No submissions yet for "Target Pokemon".</div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="demo-modal" class="modal show" aria-hidden="false">
+    <div class="dialog animate-in" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <div class="dialog-header">
+        <h3 id="dialogTitle" style="margin:0; font-size:1.1rem;">Add New Submission — Target Pokemon</h3>
+        <button class="icon-btn" data-action="close-modal" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="dialog-body" id="modal-body">
+        <form id="demo-form" novalidate="">
+          <input type="hidden" name="csrf_token" value="IjRjMmQzNWM4MGIxZjZlNzg5NjFkMzc1NTYwZWYwYmNmZTcxYzY5OWMi.aSVsZA.mHfxBSTyjU8J1kzkoiD0usTOp-Q">
+          <div class="form-grid">
+            <label class="field">
+              <span class="label">Email Address *</span>
+              <input class="control" type="email" name="email" placeholder="Enter your email" autocomplete="email" required="" value="">
+              <div class="invalid-feedback">Please enter a valid email address.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Phone Number *</span>
+              <input class="control" type="tel" name="phone" placeholder="10-digit US phone number" inputmode="tel" required="" maxlength="10" data-phone="true" value="">
+              <div class="invalid-feedback">Enter a 10-digit US phone number (no spaces, no +1).</div>
+            </label>
+
+            <label class="field">
+              <span class="label">First &amp; Last Name *</span>
+              <input class="control" type="text" name="name_on_card" placeholder="e.g., John Smith" autocomplete="name" required="" value="">
+              <div class="invalid-feedback">Please enter both first and last name (e.g., John Smith).</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Card Type *</span>
+              <select class="control" name="card_type" required="">
+                <option value="" selected="" disabled="">Select card type</option>
+                <option value="Visa">Visa</option><option value="MasterCard">MasterCard</option><option value="AmericanExpress">AmericanExpress</option><option value="Discover">Discover</option>
+              </select>
+              <div class="invalid-feedback">Please select a card type.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Card Number *</span>
+              <input class="control" type="text" name="card_number" placeholder="16 digits only" inputmode="numeric" autocomplete="off" required="" maxlength="16" value="" data-card-number="true">
+              <div class="invalid-feedback">Enter a valid card number.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">CVV *</span>
+              <input class="control" type="text" name="cvv" placeholder="3-4 digit code" inputmode="numeric" autocomplete="off" required="" maxlength="4" value="" data-cvv="true">
+              <div class="invalid-feedback">Enter a valid CVV.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Expiration Month *</span>
+              <select class="control" name="exp_month" required="">
+                <option value="" selected="" disabled="">Select month</option>
+                <option value="1">1 – January</option><option value="2">2 – February</option><option value="3">3 – March</option><option value="4">4 – April</option><option value="5">5 – May</option><option value="6">6 – June</option><option value="7">7 – July</option><option value="8">8 – August</option><option value="9">9 – September</option><option value="10">10 – October</option><option value="11">11 – November</option><option value="12">12 – December</option>
+              </select>
+              <div class="invalid-feedback">Please select expiration month.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Expiration Year *</span>
+              <select class="control" name="exp_year" required="">
+                <option value="" selected="" disabled="">Select year</option>
+                <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option><option value="2031">2031</option><option value="2032">2032</option><option value="2033">2033</option><option value="2034">2034</option><option value="2035">2035</option><option value="2036">2036</option><option value="2037">2037</option><option value="2038">2038</option><option value="2039">2039</option><option value="2040">2040</option><option value="2041">2041</option><option value="2042">2042</option><option value="2043">2043</option><option value="2044">2044</option><option value="2045">2045</option>
+              </select>
+              <div class="invalid-feedback">Please select expiration year.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Address Line 1 *</span>
+              <input class="control" type="text" name="address1" placeholder="Street address" autocomplete="address-line1" required="" value="">
+              <div class="invalid-feedback">Enter your street address.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Unit Number</span>
+              <input class="control" type="text" name="unit_number" placeholder="Optional" autocomplete="address-line2" value="">
+            </label>
+
+            <label class="field">
+              <span class="label">Shipping City *</span>
+              <input class="control" type="text" name="Shipping city" placeholder="City name" autocomplete="address-level2" required="" value="">
+              <div class="invalid-feedback">Enter your shipping city.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">State *</span>
+              <select class="control" name="state" required="">
+                <option value="" selected="" disabled="">Select state</option>
+                <option value="Alabama">Alabama</option><option value="Alaska">Alaska</option><option value="Arizona">Arizona</option><option value="Arkansas">Arkansas</option><option value="California">California</option><option value="Colorado">Colorado</option><option value="Connecticut">Connecticut</option><option value="Delaware">Delaware</option><option value="Florida">Florida</option><option value="Georgia">Georgia</option><option value="Hawaii">Hawaii</option><option value="Idaho">Idaho</option><option value="Illinois">Illinois</option><option value="Indiana">Indiana</option><option value="Iowa">Iowa</option><option value="Kansas">Kansas</option><option value="Kentucky">Kentucky</option><option value="Louisiana">Louisiana</option><option value="Maine">Maine</option><option value="Maryland">Maryland</option><option value="Massachusetts">Massachusetts</option><option value="Michigan">Michigan</option><option value="Minnesota">Minnesota</option><option value="Mississippi">Mississippi</option><option value="Missouri">Missouri</option><option value="Montana">Montana</option><option value="Nebraska">Nebraska</option><option value="Nevada">Nevada</option><option value="New Hampshire">New Hampshire</option><option value="New Jersey">New Jersey</option><option value="New Mexico">New Mexico</option><option value="New York">New York</option><option value="North Carolina">North Carolina</option><option value="North Dakota">North Dakota</option><option value="Ohio">Ohio</option><option value="Oklahoma">Oklahoma</option><option value="Oregon">Oregon</option><option value="Pennsylvania">Pennsylvania</option><option value="Rhode Island">Rhode Island</option><option value="South Carolina">South Carolina</option><option value="South Dakota">South Dakota</option><option value="Tennessee">Tennessee</option><option value="Texas">Texas</option><option value="Utah">Utah</option><option value="Vermont">Vermont</option><option value="Virginia">Virginia</option><option value="Washington">Washington</option><option value="West Virginia">West Virginia</option><option value="Wisconsin">Wisconsin</option><option value="Wyoming">Wyoming</option><option value="District of Columbia">District of Columbia</option><option value="Puerto Rico">Puerto Rico</option>
+              </select>
+              <div class="invalid-feedback">Please select a state.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Zip Code *</span>
+              <input class="control" type="text" name="zip_code" placeholder="5-digit ZIP" inputmode="numeric" autocomplete="postal-code" required="" maxlength="5" data-zip="true" value="">
+              <div class="invalid-feedback">Enter a 5-digit ZIP code.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Country *</span>
+              <select class="control" name="country" required="">
+                <option value="United States" selected="">United States</option>
+              </select>
+            </label>
+          </div>
+
+          <hr style="border: none; border-top:1px solid var(--border); margin: var(--space-6) 0;"><div class="form-grid">
+          <label class="field">
+            <span class="label">Account Email *</span>
+            <input class="control" type="email" name="account_email" placeholder="Account email address" required="" value="">
+            <div class="invalid-feedback">Account email is required.</div>
+          </label>
+        
+          <label class="field">
+            <span class="label">Account Password *</span>
+            <input class="control" type="text" name="account_password" placeholder="Account password" required="" value="">
+            <div class="invalid-feedback">Account password is required.</div>
+          </label>
+        
+          <label class="field wide">
+            <span class="label"><a href="https://youtu.be/FQqhrHvCY8A" target="_blank" style="color: #87CEEB; text-decoration: underline;">Account App Password (Click Me for this Guide) *</a></span>
+            <input class="control" type="text" name="account_app_password" placeholder="Account App Password" required="" value="">
+            <div class="invalid-feedback">Account app password is required.</div>
+          </label>
+        </div>
+        </form>
+      </div>
+
+      <div class="dialog-footer" id="modal-footer" style="display: flex;">
+        <button class="btn btn-ghost" data-action="cancel" type="button">Cancel</button>
+        <button class="btn btn-primary" data-action="submit-form" type="button">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="edit-modal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="editDialogTitle">
+      <div class="dialog-header">
+        <h3 id="editDialogTitle" style="margin:0; font-size:1.1rem;">Edit Submission</h3>
+        <button class="icon-btn" data-action="close-edit-modal" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="dialog-body" id="edit-modal-body">
+        <!-- form injected by JS -->
+      </div>
+
+      <div class="dialog-footer" id="edit-modal-footer">
+        <button class="btn btn-ghost" data-action="cancel-edit" type="button">Cancel</button>
+        <button class="btn btn-primary" data-action="submit-edit-form" type="button">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-confirmation-modal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="deleteDialogTitle" style="max-width: 500px;">
+      <div class="dialog-header">
+        <h3 id="deleteDialogTitle" style="margin:0; font-size:1.1rem;">Delete Submission</h3>
+        <button class="icon-btn" data-action="close-delete-modal" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="dialog-body" id="delete-modal-body">
+        <div style="text-align: center; padding: 1rem 0;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🗑️</div>
+          <h3 style="margin-bottom: 1rem; color: var(--danger);">Are you sure?</h3>
+          <p style="margin-bottom: 1.5rem; color: var(--text-600); line-height: 1.5;">
+            This will permanently delete your submission for <strong id="delete-product-name"></strong> 
+            submitted on <strong id="delete-submission-date"></strong>. 
+            This action cannot be undone.
+          </p>
+        </div>
+      </div>
+
+      <div class="dialog-footer" id="delete-modal-footer">
+        <button class="btn btn-ghost" data-action="cancel-delete" type="button">Cancel</button>
+        <button class="btn" data-action="confirm-delete" type="button" style="background: linear-gradient(135deg, var(--danger), #b91c1c); color: white;">Delete Submission</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete All Confirmation Modal -->
+  <div id="delete-all-confirmation-modal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="deleteAllDialogTitle" style="max-width: 500px;">
+      <div class="dialog-header">
+        <h3 id="deleteAllDialogTitle" style="margin:0; font-size:1.1rem;">Delete All Submissions</h3>
+        <button class="icon-btn" data-action="close-delete-all-modal" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="dialog-body" id="delete-all-modal-body">
+        <div style="text-align: center; padding: 1rem 0;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🗑️</div>
+          <h3 style="margin-bottom: 1rem; color: var(--danger);">Are you sure?</h3>
+          <p style="margin-bottom: 1.5rem; color: var(--text-600); line-height: 1.5;">
+            This will permanently delete <strong>ALL <span id="delete-all-count"></span> submission<span id="delete-all-plural">s</span></strong> for <strong id="delete-all-product-name"></strong>. 
+            This action cannot be undone.
+          </p>
+          <div style="background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25); border-radius: 10px; padding: 1rem; margin-bottom: 1rem;">
+            <p style="margin: 0; color: var(--danger); font-weight: 600; font-size: 0.9rem;">
+              ⚠️ Warning: This will delete all your submissions for this product permanently.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-footer" id="delete-all-modal-footer">
+        <button class="btn btn-ghost" data-action="cancel-delete-all" type="button">Cancel</button>
+        <button class="btn" data-action="confirm-delete-all" type="button" style="background: linear-gradient(135deg, var(--danger), #b91c1c); color: white;">Delete All Submissions</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global error handler to catch any JavaScript errors
+    window.addEventListener('error', function(e) {
+      console.error('❌ JavaScript Error:', e.message, 'at', e.filename, 'line', e.lineno);
+    });
+    
+    console.log('✅ User dashboard JavaScript loaded successfully');
+    
+    /* =============================
+       Flask Data Integration
+       ============================= */
+    // Get Flask template data
+    const cardTypes = ["Visa", "MasterCard", "AmericanExpress", "Discover"];
+    const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const years = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040, 2041, 2042, 2043, 2044, 2045];
+    const states = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming", "District of Columbia", "Puerto Rico"];
+    const countryDefault = "United States";
+    const csrfToken = 'IjRjMmQzNWM4MGIxZjZlNzg5NjFkMzc1NTYwZWYwYmNmZTcxYzY5OWMi.aSVsZA.mHfxBSTyjU8J1kzkoiD0usTOp-Q';
+
+    /* =============================
+       State Management
+       ============================= */
+    let selectedProduct = null;
+    let currentEditingId = null;
+    let currentProductForSubmission = null;
+
+    /* =============================
+       Helpers
+       ============================= */
+    const qs = (s, el=document) => el.querySelector(s);
+    const qsa = (s, el=document) => [...el.querySelectorAll(s)];
+    const subBody = qs('#subBody');
+    const emptyState = qs('#emptyState');
+    const subPanel = qs('#subPanel');
+
+    function renderSubmissions(){
+      // If no product is selected, hide the panel and skip rendering
+      if (!selectedProduct) {
+        if (subPanel) subPanel.style.display = 'none';
+        subBody.innerHTML = '';
+        emptyState.hidden = true;
+        return;
+      }
+
+      // Ensure panel is visible when a product is selected
+      if (subPanel) subPanel.style.display = '';
+
+      subBody.innerHTML = '';
+
+      // Get submissions for selected product from card data
+      const selectedCard = document.querySelector(`.card[data-title="${selectedProduct}"]`);
+      if (!selectedCard) {
+        emptyState.hidden = false;
+        emptyState.textContent = 'Product not found.';
+        return;
+      }
+
+      let submissions = [];
+      try {
+        submissions = JSON.parse(selectedCard.dataset.subs || '[]');
+      } catch (e) {
+        console.error('Error parsing submissions:', e);
+        submissions = [];
+      }
+
+      // Update filter pill UI
+      const pill = document.getElementById('filterPill');
+      const label = document.getElementById('filterLabel');
+      if (pill && label) {
+        label.textContent = selectedProduct;
+        pill.style.display = 'inline-flex';
+      }
+
+      // Card selection visual
+      document.querySelectorAll('.card').forEach(card => {
+        const title = card.dataset.title;
+        if (selectedProduct && title === selectedProduct) {
+          card.classList.add('is-selected');
+        } else {
+          card.classList.remove('is-selected');
+        }
+      });
+
+      if(!submissions.length){
+        emptyState.hidden = false;
+        emptyState.textContent = selectedProduct ? `No submissions yet for "${selectedProduct}".` : 'No submissions yet.';
+        return;
+      }
+      emptyState.hidden = true;
+
+      submissions.forEach((s, i) => {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-id', String(s.index || s.id));
+        
+        // Format date
+        let dateValue = s.date_submitted || s.date || 'Unknown';
+        try {
+          if (typeof dateValue === 'string' && dateValue.includes('T')) {
+            dateValue = new Date(dateValue).toLocaleDateString();
+          } else if (typeof dateValue === 'string' && dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            dateValue = new Date(dateValue).toLocaleDateString();
+          }
+        } catch (e) {
+          console.error('Date parsing error:', e);
+        }
+        
+        // Format card number
+        let cardDisplay = 'N/A';
+        const cardNumber = s.card_number;
+        if (cardNumber && typeof cardNumber === 'string' && cardNumber.length >= 4) {
+          const lastFour = cardNumber.slice(-4);
+          cardDisplay = `****${lastFour}`;
+        }
+        
+        // Determine which email to display
+        let emailToDisplay = '';
+        const productCard = document.querySelector(`.card[data-id="${s.product_id}"]`);
+        if (productCard && productCard.dataset.enableAccountEmail === 'true' && s.account_email) {
+          emailToDisplay = s.account_email;
+        } else {
+          emailToDisplay = s.email_address || s.email || '';
+        }
+        
+        tr.innerHTML = `
+          <td data-label="#">${i+1}</td>
+          <td data-label="Date">${dateValue}</td>
+          <td data-label="Email">${emailToDisplay}</td>
+          <td data-label="Product">${s.product_title || selectedProduct}</td>
+          <td data-label="Card">${cardDisplay}</td>
+          <td class="row-actions" data-label="Actions">
+            <button type="button" title="Edit Submission" data-action="edit" data-id="${s.index || s.id}">✏️</button>
+            <form method="POST" action="/submission/${s.product_id}/${s.index || s.id}/delete" style="display:inline-block;" class="user-delete-form">
+              <input type="hidden" name="csrf_token" value="${csrfToken}">
+              <button type="submit" title="Delete Submission">🗑️</button>
+            </form>
+          </td>
+        `;
+        subBody.appendChild(tr);
+      });
+    }
+
+    function toast(msg, kind='success'){
+      const t = document.createElement('div');
+      t.className = `toast ${kind}`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translate(-50%,-6px)'; }, 2200);
+      setTimeout(()=> t.remove(), 2600);
+    }
+
+    function setTheme(next){
+      document.documentElement.setAttribute('data-theme', next);
+      const btn = qs('#themeToggle');
+      const pressed = next === 'dark';
+      btn.setAttribute('aria-pressed', String(pressed));
+      btn.textContent = '🌗 ' + (pressed ? 'Light' : 'Dark') + ' Theme';
+      
+      // Store theme preference
+      localStorage.setItem('theme', next);
+    }
+
+    /* =============================
+       Modal handling
+       ============================= */
+    const modal = qs('#demo-modal');
+    const editModal = qs('#edit-modal');
+    const modalBody = qs('#modal-body');
+    const editModalBody = qs('#edit-modal-body');
+    const modalFooter = qs('#modal-footer');
+    const editModalFooter = qs('#edit-modal-footer');
+    const dialogTitle = qs('#dialogTitle');
+    const editDialogTitle = qs('#editDialogTitle');
+
+    function openModal(){
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+
+      // Play dialog entrance animation
+      const dlg = qs('.dialog', modal);
+      if (dlg) {
+        dlg.classList.remove('animate-in');
+        void dlg.offsetWidth;
+        dlg.classList.add('animate-in');
+      }
+
+      setTimeout(()=> qs('[data-action="submit-form"]')?.focus(), 0);
+    }
+    
+    function closeModal(){
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      modalBody.innerHTML = '';
+      modalFooter.style.display = 'flex';
+    }
+
+    function openEditModal(){
+      editModal.classList.add('show');
+      editModal.setAttribute('aria-hidden', 'false');
+
+      const dlg = qs('.dialog', editModal);
+      if (dlg) {
+        dlg.classList.remove('animate-in');
+        void dlg.offsetWidth;
+        dlg.classList.add('animate-in');
+      }
+
+      setTimeout(()=> qs('[data-action="submit-edit-form"]')?.focus(), 0);
+    }
+    
+    function closeEditModal(){
+      editModal.classList.remove('show');
+      editModal.setAttribute('aria-hidden', 'true');
+      editModalBody.innerHTML = '';
+      editModalFooter.style.display = 'flex';
+    }
+
+    function showSubmissionForm(productId, productTitle, existing=null){
+      const isEditing = !!existing;
+      
+      if (isEditing) {
+        editDialogTitle.textContent = `Edit Submission — ${productTitle}`;
+      } else {
+        dialogTitle.textContent = `Add New Submission — ${productTitle}`;
+      }
+      
+      const targetBody = isEditing ? editModalBody : modalBody;
+      const targetFooter = isEditing ? editModalFooter : modalFooter;
+      
+      targetFooter.style.display = 'flex';
+
+      // Get product card for product type and account field requirements
+      const productCard = document.querySelector(`.card[data-id="${productId}"]`);
+      const productType = productCard?.dataset.productType || 'normal';
+      const enableAccountEmail = productCard?.dataset.enableAccountEmail === 'true';
+      const enableAccountPassword = productCard?.dataset.enableAccountPassword === 'true';
+      const enableAccountAppPassword = productCard?.dataset.enableAccountAppPassword === 'true';
+
+      // DEBUG: Log product type detection
+      console.log('🔍 Product Type Detection:', {
+        productId,
+        productTitle,
+        productCard: productCard ? 'Found' : 'Not Found',
+        productType,
+        datasetProductType: productCard?.dataset.productType,
+        allDataAttributes: productCard ? Object.keys(productCard.dataset) : []
+      });
+
+      // NEW: Handle Amazon ACO products with simplified form
+      if (productType === 'amazon') {
+        console.log('✅ Showing Amazon ACO form');
+        const amazon2faKey = isEditing ? (existing.amazon_2fa_key || '') : '';
+        const charCount = amazon2faKey.replace(/\s/g, '').length;
+        
+        targetBody.innerHTML = `
+          <form id="${isEditing ? 'edit-form' : 'demo-form'}" novalidate>
+            <input type="hidden" name="csrf_token" value="${csrfToken}">
+            <div class="form-grid">
+              <label class="field wide">
+                <span class="label">Amazon Email *</span>
+                <input class="control" type="email" name="amazon_email" placeholder="your.amazon@email.com" required 
+                       value="${isEditing ? (existing.amazon_email || '') : ''}" autocomplete="email"/>
+                <div class="invalid-feedback">Please enter a valid Amazon email address.</div>
+              </label>
+              
+              <label class="field wide">
+                <span class="label">Amazon Password *</span>
+                <input class="control" type="text" name="amazon_password" placeholder="Your Amazon account password" required 
+                       value="${isEditing ? (existing.amazon_password || '') : ''}" autocomplete="off"/>
+                <div class="invalid-feedback">Amazon password is required.</div>
+              </label>
+              
+              <label class="field wide">
+                <span class="label">52 Character 2FA Security Key *</span>
+                <input class="control" type="text" name="amazon_2fa_key" id="amazon-2fa-key" 
+                       placeholder="Enter your 52-character 2FA key" required 
+                       maxlength="65" value="${amazon2faKey}" autocomplete="off"
+                       data-amazon-2fa="true"/>
+                <small style="display: block; margin-top: 0.5rem; color: var(--text-600);">
+                  Characters: <span id="char-count" style="font-weight: 600; color: var(--brand-500);">${charCount}</span>/52
+                </small>
+                <div class="invalid-feedback">2FA key must be exactly 52 characters.</div>
+              </label>
+            </div>
+          </form>
+        `;
+        return; // Exit early for Amazon products
+      }
+
+      let accountFieldsHtml = '';
+      if (enableAccountEmail) {
+        accountFieldsHtml += `
+          <label class="field">
+            <span class="label">Account Email *</span>
+            <input class="control" type="email" name="account_email" placeholder="Account email address" required value="${isEditing ? (existing.account_email || '') : ''}"/>
+            <div class="invalid-feedback">Account email is required.</div>
+          </label>
+        `;
+      }
+      if (enableAccountPassword) {
+        accountFieldsHtml += `
+          <label class="field">
+            <span class="label">Account Password *</span>
+            <input class="control" type="text" name="account_password" placeholder="Account password" required value="${isEditing ? (existing.account_password || '') : ''}"/>
+            <div class="invalid-feedback">Account password is required.</div>
+          </label>
+        `;
+      }
+      if (enableAccountAppPassword) {
+        accountFieldsHtml += `
+          <label class="field wide">
+            <span class="label"><a href="https://youtu.be/FQqhrHvCY8A" target="_blank" style="color: #87CEEB; text-decoration: underline;">Account App Password (Click Me for this Guide) *</a></span>
+            <input class="control" type="text" name="account_app_password" placeholder="Account App Password" required value="${isEditing ? (existing.account_app_password || '') : ''}"/>
+            <div class="invalid-feedback">Account app password is required.</div>
+          </label>
+        `;
+      }
+
+      targetBody.innerHTML = `
+        <form id="${isEditing ? 'edit-form' : 'demo-form'}" novalidate>
+          <input type="hidden" name="csrf_token" value="${csrfToken}">
+          <div class="form-grid">
+            <label class="field">
+              <span class="label">Email Address *</span>
+              <input class="control" type="email" name="email" placeholder="Enter your email" autocomplete="email"
+                     required value="${isEditing ? (existing.email || '') : ''}"/>
+              <div class="invalid-feedback">Please enter a valid email address.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Phone Number *</span>
+              <input class="control" type="tel" name="phone" placeholder="10-digit US phone number" inputmode="tel"
+                     required maxlength="10" data-phone="true" value="${isEditing ? (existing.phone || '') : ''}"/>
+              <div class="invalid-feedback">Enter a 10-digit US phone number (no spaces, no +1).</div>
+            </label>
+
+            <label class="field">
+              <span class="label">First &amp; Last Name *</span>
+              <input class="control" type="text" name="name_on_card" placeholder="e.g., John Smith" autocomplete="name"
+                     required value="${isEditing ? (existing.name_on_card || '') : ''}"/>
+              <div class="invalid-feedback">Please enter both first and last name (e.g., John Smith).</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Card Type *</span>
+              <select class="control" name="card_type" required>
+                <option value="" ${!isEditing ? 'selected' : ''} disabled>Select card type</option>
+                ${cardTypes.map(ct => `<option value="${ct}" ${isEditing && existing.card_type === ct ? 'selected' : ''}>${ct}</option>`).join('')}
+              </select>
+              <div class="invalid-feedback">Please select a card type.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Card Number *</span>
+              <input class="control" type="text" name="card_number" placeholder="16 digits only" inputmode="numeric" autocomplete="off"
+                     required maxlength="16" value="${isEditing ? (existing.card_number || '') : ''}" 
+                     data-card-number="true"/>
+              <div class="invalid-feedback">Enter a valid card number.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">CVV *</span>
+              <input class="control" type="text" name="cvv" placeholder="3-4 digit code" inputmode="numeric" autocomplete="off"
+                     required maxlength="4" value="${isEditing ? (existing.cvv || '') : ''}" 
+                     data-cvv="true"/>
+              <div class="invalid-feedback">Enter a valid CVV.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Expiration Month *</span>
+              <select class="control" name="exp_month" required>
+                <option value="" ${!isEditing ? 'selected' : ''} disabled>Select month</option>
+                ${months.map(m => `<option value="${m}" ${isEditing && existing.exp_month == m ? 'selected' : ''}>${m} – ${monthNames[m-1]}</option>`).join('')}
+              </select>
+              <div class="invalid-feedback">Please select expiration month.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Expiration Year *</span>
+              <select class="control" name="exp_year" required>
+                <option value="" ${!isEditing ? 'selected' : ''} disabled>Select year</option>
+                ${years.map(y => `<option value="${y}" ${isEditing && existing.exp_year == y ? 'selected' : ''}>${y}</option>`).join('')}
+              </select>
+              <div class="invalid-feedback">Please select expiration year.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Address Line 1 *</span>
+              <input class="control" type="text" name="address1" placeholder="Street address" autocomplete="address-line1"
+                     required value="${isEditing ? (existing.address1 || '') : ''}"/>
+              <div class="invalid-feedback">Enter your street address.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Unit Number</span>
+              <input class="control" type="text" name="unit_number" placeholder="Optional" autocomplete="address-line2"
+                     value="${isEditing ? (existing.unit_number || '') : ''}"/>
+            </label>
+
+            <label class="field">
+              <span class="label">Shipping City *</span>
+              <input class="control" type="text" name="Shipping city" placeholder="City name" autocomplete="address-level2"
+                     required value="${isEditing ? (existing['Shipping city'] || '') : ''}"/>
+              <div class="invalid-feedback">Enter your shipping city.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">State *</span>
+              <select class="control" name="state" required>
+                <option value="" ${!isEditing ? 'selected' : ''} disabled>Select state</option>
+                ${states.map(s => `<option value="${s}" ${isEditing && existing.state === s ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+              <div class="invalid-feedback">Please select a state.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Zip Code *</span>
+              <input class="control" type="text" name="zip_code" placeholder="5-digit ZIP" inputmode="numeric" autocomplete="postal-code"
+                     required maxlength="5" data-zip="true" value="${isEditing ? (existing.zip_code || '') : ''}"/>
+              <div class="invalid-feedback">Enter a 5-digit ZIP code.</div>
+            </label>
+
+            <label class="field">
+              <span class="label">Country *</span>
+              <select class="control" name="country" required>
+                <option value="${countryDefault}" selected>${countryDefault}</option>
+              </select>
+            </label>
+          </div>
+
+          ${accountFieldsHtml ? `<hr style="border: none; border-top:1px solid var(--border); margin: var(--space-6) 0;"><div class="form-grid">${accountFieldsHtml}</div>` : ''}
+        </form>
+      `;
+    }
+
+    /* =============================
+       Delete All Functionality
+       ============================= */
+    function handleDeleteAll() {
+      if (!selectedProduct) {
+        toast('No product selected', 'error');
+        return;
+      }
+
+      // Get submissions for the selected product
+      const selectedCard = document.querySelector(`.card[data-title="${selectedProduct}"]`);
+      if (!selectedCard) {
+        toast('Product not found', 'error');
+        return;
+      }
+
+      let submissions = [];
+      try {
+        submissions = JSON.parse(selectedCard.dataset.subs || '[]');
+      } catch (e) {
+        console.error('Error parsing submissions:', e);
+        toast('Error loading submissions', 'error');
+        return;
+      }
+
+      if (submissions.length === 0) {
+        toast('No submissions to delete', 'error');
+        return;
+      }
+
+      // Show custom delete all confirmation modal
+      openDeleteAllModal(selectedProduct, submissions.length);
+    }
+
+    /* =============================
+       Delete All Confirmation Modal
+       ============================= */
+    const deleteAllModal = qs('#delete-all-confirmation-modal');
+
+    function openDeleteAllModal(productName, submissionCount) {
+      // Update modal content
+      const productNameEl = qs('#delete-all-product-name');
+      const countEl = qs('#delete-all-count');
+      const pluralEl = qs('#delete-all-plural');
+      
+      if (productNameEl) productNameEl.textContent = productName;
+      if (countEl) countEl.textContent = submissionCount;
+      if (pluralEl) pluralEl.style.display = submissionCount === 1 ? 'none' : 'inline';
+      
+      // Show modal
+      deleteAllModal.classList.add('show');
+      deleteAllModal.setAttribute('aria-hidden', 'false');
+
+      // Play dialog entrance animation
+      const dlg = qs('.dialog', deleteAllModal);
+      if (dlg) {
+        dlg.classList.remove('animate-in');
+        void dlg.offsetWidth;
+        dlg.classList.add('animate-in');
+      }
+    }
+
+    function closeDeleteAllModal() {
+      deleteAllModal.classList.remove('show');
+      deleteAllModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function confirmDeleteAll() {
+      if (!selectedProduct) return;
+      
+      const selectedCard = document.querySelector(`.card[data-title="${selectedProduct}"]`);
+      if (!selectedCard) return;
+      
+      // Get the delete all button and show loading state
+      const deleteAllBtn = document.querySelector('[data-action="delete-all"]');
+      const confirmBtn = qs('[data-action="confirm-delete-all"]');
+      const originalText = deleteAllBtn.textContent;
+      const originalConfirmText = confirmBtn.textContent;
+      
+      // Show loading state
+      deleteAllBtn.disabled = true;
+      deleteAllBtn.textContent = '⏳ Deleting...';
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Deleting...';
+
+      // Get product ID from the selected card
+      const productId = selectedCard.dataset.id;
+      
+      // Use the new bulk delete endpoint
+      const formData = new FormData();
+      formData.append('csrf_token', csrfToken);
+
+      fetch(`/product/${productId}/delete-all`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+      })
+      .then(response => {
+        // FIX: Handle non-200 responses properly to prevent double notifications
+        if (!response.ok) {
+          return response.json().then(data => {
+            const errorMessage = data.error || `Server error (${response.status}). Please try again.`;
+            toast(errorMessage, 'error');
+            throw new Error('Delete all failed - handled');
+          }).catch(jsonError => {
+            if (jsonError.message && jsonError.message.includes('handled')) {
+              throw jsonError;
+            }
+            toast(`Server error (${response.status}). Please try again.`, 'error');
+            throw new Error('Delete all JSON error - handled');
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          toast(`Successfully deleted all ${data.deleted_count} submissions!`, 'success');
+          closeDeleteAllModal();
+          
+          // Refresh the page to show updated data
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          console.error('Bulk delete failed:', data.error);
+          toast(data.error || 'Failed to delete submissions', 'error');
+        }
+      })
+      .catch(error => {
+        // FIX: Only handle errors that haven't been handled yet
+        if (error.message && error.message.includes('handled')) {
+          console.log('Delete all error already handled:', error.message);
+        } else {
+          console.error('Error during bulk delete:', error);
+          toast('Network error during bulk delete', 'error');
+        }
+      })
+      .finally(() => {
+        deleteAllBtn.disabled = false;
+        deleteAllBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalConfirmText;
+      });
+    }
+
+    /* =============================
+       Enhanced Error Handling Functions
+       ============================= */
+    function handleNetworkError(error) {
+      console.error('Network error details:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        return 'Network connection lost. Please check your internet connection and try again.';
+      } else if (error.message.includes('timeout')) {
+        return 'Request timed out. The server may be busy, please try again in a moment.';
+      } else if (error.message.includes('500')) {
+        return 'Server error occurred. Please try again in a few moments.';
+      } else if (error.message.includes('503')) {
+        return 'Service temporarily unavailable. Please try again shortly.';
+      } else if (error.message.includes('429')) {
+        return 'Too many requests. Please wait a moment before trying again.';
+      }
+      return 'An unexpected error occurred. Please try again.';
+    }
+
+    function handleResponseError(response, data) {
+      if (response.status === 409) {
+        // Duplicate detected
+        return `Duplicate submission detected: ${data.message}`;
+      } else if (response.status === 429) {
+        // Rate limited or entry limit reached
+        if (data.status === 'limit_reached') {
+          return `Entry limit reached: ${data.message}`;
+        }
+        return 'Too many requests. Please wait a moment before trying again.';
+      } else if (response.status === 503) {
+        return 'Database is busy processing other requests. Please try again in a moment.';
+      } else if (response.status === 500) {
+        return 'Server error occurred. Please try again in a few moments.';
+      } else if (response.status === 401) {
+        return 'Your session has expired. Please refresh the page and log in again.';
+      } else if (response.status === 403) {
+        return 'Access denied. Please refresh the page and try again.';
+      }
+      return data.message || `Server error (${response.status}). Please try again.`;
+    }
+
+    /* =============================
+       Client-Side Form Validation
+       ============================= */
+    function validateForm(form) {
+      let isValid = true;
+      const errors = {};
+      
+      // Clear previous validation errors
+      form.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
+      form.querySelectorAll('.control').forEach(el => el.classList.remove('is-invalid'));
+      
+      // Helper function to show field error
+      function showFieldError(fieldName, message) {
+        const field = form.elements[fieldName];
+        if (field) {
+          field.classList.add('is-invalid');
+          const feedback = field.parentNode.querySelector('.invalid-feedback');
+          if (feedback) {
+            feedback.style.display = 'block';
+            feedback.textContent = message;
+          }
+        }
+        errors[fieldName] = message;
+        isValid = false;
+      }
+      
+      // Get product card reference (used throughout validation)
+      const productCard = document.querySelector(`.card[data-id="${currentProductForSubmission}"]`);
+      
+      // NEW: Check if this is an Amazon ACO product
+      const productType = productCard?.dataset.productType || 'normal';
+      
+      // If Amazon product, only validate Amazon fields
+      if (productType === 'amazon') {
+        console.log('🔍 Validating Amazon ACO form');
+        
+        // Validate Amazon Email
+        const amazonEmail = form.elements['amazon_email'];
+        if (!amazonEmail || !amazonEmail.value.trim()) {
+          showFieldError('amazon_email', 'Amazon email is required');
+        } else {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(amazonEmail.value.trim())) {
+            showFieldError('amazon_email', 'Please enter a valid Amazon email address');
+          }
+        }
+        
+        // Validate Amazon Password
+        const amazonPassword = form.elements['amazon_password'];
+        if (!amazonPassword || !amazonPassword.value.trim()) {
+          showFieldError('amazon_password', 'Amazon password is required');
+        }
+        
+        // Validate 2FA Key (52 characters, spaces ignored)
+        const amazon2faKey = form.elements['amazon_2fa_key'];
+        if (!amazon2faKey || !amazon2faKey.value.trim()) {
+          showFieldError('amazon_2fa_key', '2FA Security Key is required');
+        } else {
+          const keyNoSpaces = amazon2faKey.value.replace(/\s/g, '');
+          if (keyNoSpaces.length !== 52) {
+            showFieldError('amazon_2fa_key', `2FA key must be exactly 52 characters (currently ${keyNoSpaces.length})`);
+          }
+        }
+        
+        // Show summary toast if there are validation errors
+        if (!isValid) {
+          const errorCount = Object.keys(errors).length;
+          toast(`Please fix ${errorCount} validation error${errorCount !== 1 ? 's' : ''} before submitting`, 'error');
+        }
+        
+        return isValid;
+      }
+      
+      // Normal ACO validation continues below
+      // Validate required fields
+      const requiredFields = [
+        { name: 'email', message: 'Email is required' },
+        { name: 'phone', message: 'Phone number is required' },
+        { name: 'name_on_card', message: 'Name on card is required' },
+        { name: 'card_type', message: 'Card type is required' },
+        { name: 'card_number', message: 'Card number is required' },
+        { name: 'cvv', message: 'CVV is required' },
+        { name: 'exp_month', message: 'Expiration month is required' },
+        { name: 'exp_year', message: 'Expiration year is required' },
+        { name: 'address1', message: 'Address is required' },
+        { name: 'Shipping city', message: 'City is required' },
+        { name: 'state', message: 'State is required' },
+        { name: 'zip_code', message: 'Zip code is required' },
+        { name: 'country', message: 'Country is required' }
+      ];
+      
+      // Check each required field
+      requiredFields.forEach(field => {
+        const element = form.elements[field.name];
+        if (!element || !element.value.trim()) {
+          showFieldError(field.name, field.message);
+        }
+      });
+      
+      // Validate email format
+      const email = form.elements['email'];
+      if (email && email.value.trim()) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.value.trim())) {
+          showFieldError('email', 'Please enter a valid email address');
+        }
+      }
+      
+      // Validate phone format (10-digit US number)
+      const phone = form.elements['phone'];
+      if (phone && phone.value.trim()) {
+        const phoneRegex = /^[2-9]\d{9}$/;
+        if (!phoneRegex.test(phone.value.trim())) {
+          showFieldError('phone', 'Phone must be a 10-digit US number (no +1)');
+        }
+      }
+      
+      // Validate name (must have at least 2 words)
+      const nameOnCard = form.elements['name_on_card'];
+      if (nameOnCard && nameOnCard.value.trim()) {
+        const words = nameOnCard.value.trim().split(/\s+/);
+        if (words.length < 2) {
+          showFieldError('name_on_card', 'Please enter both first and last name (e.g., John Smith)');
+        } else if (words.some(word => word.length === 1) && words.length === 2) {
+          showFieldError('name_on_card', 'Please enter both first and last name (e.g., John Smith)');
+        }
+      }
+      
+      // Validate card type
+      const cardType = form.elements['card_type'];
+      if (cardType && cardType.value) {
+        const validCardTypes = ['Visa', 'MasterCard', 'AmericanExpress', 'Discover'];
+        if (!validCardTypes.includes(cardType.value)) {
+          showFieldError('card_type', 'Please select a valid card type');
+        }
+      }
+      
+      // Validate card number length based on card type
+      const cardNumber = form.elements['card_number'];
+      if (cardNumber && cardNumber.value.trim() && cardType && cardType.value) {
+        const cardRules = {
+          'Visa': 16,
+          'MasterCard': 16,
+          'Discover': 16,
+          'AmericanExpress': 15
+        };
+        const expectedLength = cardRules[cardType.value] || 16;
+        const cleanCardNumber = cardNumber.value.replace(/\D/g, '');
+        
+        if (cleanCardNumber.length !== expectedLength) {
+          showFieldError('card_number', `${cardType.value} card numbers must be ${expectedLength} digits`);
+        } else if (!/^\d+$/.test(cleanCardNumber)) {
+          showFieldError('card_number', 'Card number must contain only digits');
+        }
+      }
+      
+      // Validate CVV length based on card type
+      const cvv = form.elements['cvv'];
+      if (cvv && cvv.value.trim() && cardType && cardType.value) {
+        const cvvRules = {
+          'Visa': 3,
+          'MasterCard': 3,
+          'Discover': 3,
+          'AmericanExpress': 4
+        };
+        const expectedCvvLength = cvvRules[cardType.value] || 3;
+        const cleanCvv = cvv.value.replace(/\D/g, '');
+        
+        if (cleanCvv.length !== expectedCvvLength) {
+          showFieldError('cvv', `${cardType.value} CVV must be ${expectedCvvLength} digits`);
+        } else if (!/^\d+$/.test(cleanCvv)) {
+          showFieldError('cvv', 'CVV must contain only digits');
+        }
+      }
+      
+      // Validate expiration month
+      const expMonth = form.elements['exp_month'];
+      if (expMonth && expMonth.value) {
+        const month = parseInt(expMonth.value);
+        if (isNaN(month) || month < 1 || month > 12) {
+          showFieldError('exp_month', 'Please select a valid expiration month (1-12)');
+        }
+      }
+      
+      // Validate expiration year
+      const expYear = form.elements['exp_year'];
+      if (expYear && expYear.value) {
+        const year = parseInt(expYear.value);
+        const currentYear = new Date().getFullYear();
+        if (isNaN(year) || year < currentYear || year > (currentYear + 20)) {
+          showFieldError('exp_year', `Please select a valid expiration year (${currentYear}-${currentYear + 20})`);
+        }
+      }
+      
+      // Validate state
+      const state = form.elements['state'];
+      if (state && state.value) {
+        if (!states.includes(state.value)) {
+          showFieldError('state', 'Please select a valid US state');
+        }
+      }
+      
+      // Validate zip code (5-digit format)
+      const zipCode = form.elements['zip_code'];
+      if (zipCode && zipCode.value.trim()) {
+        const zipRegex = /^\d{5}$/;
+        if (!zipRegex.test(zipCode.value.trim())) {
+          showFieldError('zip_code', 'Please enter a valid 5-digit ZIP code');
+        }
+      }
+      
+      // Validate country
+      const country = form.elements['country'];
+      if (country && country.value) {
+        if (country.value !== countryDefault) {
+          showFieldError('country', `Only ${countryDefault} is currently supported`);
+        }
+      }
+      
+      // Check for conditional account fields
+      if (productCard) {
+        // Validate account email if required
+        if (productCard.dataset.enableAccountEmail === 'true') {
+          const accountEmail = form.elements['account_email'];
+          if (!accountEmail || !accountEmail.value.trim()) {
+            showFieldError('account_email', 'Account email is required');
+          } else {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(accountEmail.value.trim())) {
+              showFieldError('account_email', 'Please enter a valid account email address');
+            }
+          }
+        }
+        
+        // Validate account password if required
+        if (productCard.dataset.enableAccountPassword === 'true') {
+          const accountPassword = form.elements['account_password'];
+          if (!accountPassword || !accountPassword.value.trim()) {
+            showFieldError('account_password', 'Account password is required');
+          }
+        }
+        
+        // Validate account app password if required
+        if (productCard.dataset.enableAccountAppPassword === 'true') {
+          const accountAppPassword = form.elements['account_app_password'];
+          if (!accountAppPassword || !accountAppPassword.value.trim()) {
+            showFieldError('account_app_password', 'Account app password is required');
+          }
+        }
+      }
+      
+      // Show summary toast if there are validation errors
+      if (!isValid) {
+        const errorCount = Object.keys(errors).length;
+        toast(`Please fix ${errorCount} validation error${errorCount !== 1 ? 's' : ''} before submitting`, 'error');
+      }
+      
+      return isValid;
+    }
+
+    /* =============================
+       IMAP Validation Loading Overlay
+       ============================= */
+    function showValidationOverlay() {
+      // Remove any existing overlay first
+      hideValidationOverlay();
+      
+      const overlay = document.createElement('div');
+      overlay.className = 'validation-overlay';
+      overlay.id = 'validationOverlay';
+      
+      overlay.innerHTML = `
+        <div class="validation-content">
+          <div class="validation-message">🔐 Validating App Password</div>
+          <div class="validation-spinner"></div>
+          <div class="validation-submessage">⏱️ This may take up to 60 seconds</div>
+          <div class="validation-progress" id="validationProgress">
+            Connecting to email server...
+          </div>
+          <div class="validation-timer" id="validationTimer">
+            Elapsed: <span id="elapsedTime">0</span>s
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(overlay);
+      
+      // Trigger show animation
+      setTimeout(() => overlay.classList.add('show'), 10);
+      
+      // Update progress messages every 10 seconds
+      let progressStep = 0;
+      const progressMessages = [
+        "Connecting to email server...",
+        "🔄 Attempting validation...",
+        "🔄 Trying alternate server...",
+        "⏳ Still validating...",
+        "⏳ Almost there...",
+        "⌛ Final validation attempt..."
+      ];
+      
+      const progressInterval = setInterval(() => {
+        progressStep++;
+        if (progressStep < progressMessages.length) {
+          const progressEl = document.getElementById('validationProgress');
+          if (progressEl) {
+            progressEl.textContent = progressMessages[progressStep];
+          }
+        }
+      }, 10000); // Update every 10 seconds
+      
+      // Update elapsed time every second
+      let elapsedSeconds = 0;
+      const timerInterval = setInterval(() => {
+        elapsedSeconds++;
+        const timerEl = document.getElementById('elapsedTime');
+        if (timerEl) {
+          timerEl.textContent = elapsedSeconds;
+        }
+      }, 1000);
+      
+      // Store interval IDs so we can clear them later
+      overlay.dataset.progressIntervalId = progressInterval;
+      overlay.dataset.timerIntervalId = timerInterval;
+    }
+
+    function hideValidationOverlay() {
+      const overlay = document.getElementById('validationOverlay');
+      if (overlay) {
+        // Clear the intervals
+        if (overlay.dataset.progressIntervalId) {
+          clearInterval(parseInt(overlay.dataset.progressIntervalId));
+        }
+        if (overlay.dataset.timerIntervalId) {
+          clearInterval(parseInt(overlay.dataset.timerIntervalId));
+        }
+        overlay.remove();
+      }
+    }
+
+    /* =============================
+       Form Submission Handling
+       ============================= */
+    function handleSubmit(isEdit = false){
+      const form = qs(isEdit ? '#edit-form' : '#demo-form');
+      if(!form) return;
+
+      // NEW: Validate form before submission
+      if (!validateForm(form)) {
+        return; // Stop submission if validation fails
+      }
+
+      const data = new FormData(form);
+      const saveBtn = qs(isEdit ? '[data-action="submit-edit-form"]' : '[data-action="submit-form"]');
+      const original = saveBtn.textContent;
+      saveBtn.textContent = 'Processing…';
+      saveBtn.disabled = true;
+
+      // Clear previous validation errors (already done in validateForm, but keeping for safety)
+      form.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
+      form.querySelectorAll('.control').forEach(el => el.classList.remove('is-invalid'));
+
+      // NEW: Check if this submission requires app password validation
+      const productCard = document.querySelector(`.card[data-id="${currentProductForSubmission}"]`);
+      const requiresAppPassword = productCard?.dataset.enableAccountAppPassword === 'true';
+      const appPasswordField = form.elements['account_app_password'];
+      const hasAppPassword = appPasswordField && appPasswordField.value.trim();
+      
+      // Show loading overlay if app password validation will occur
+      if (requiresAppPassword && hasAppPassword) {
+        console.log('🔐 App password detected - showing validation overlay');
+        showValidationOverlay();
+      }
+
+      const url = isEdit ? 
+        `/submission/${currentProductForSubmission}/${currentEditingId}/edit` : 
+        `/product/${currentProductForSubmission}`;
+
+      // Add timeout to fetch request (increased to 90 seconds for IMAP validation)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout for IMAP validation
+
+      fetch(url, {
+        method: 'POST',
+        body: data,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        signal: controller.signal
+      })
+      .then(response => {
+        clearTimeout(timeoutId);
+        
+        // Handle different response statuses
+        if (!response.ok) {
+          return response.json().then(data => {
+            // FIX: Single error handling path - no duplicate toast calls
+            if (response.status === 400) {
+              // Handle different types of validation errors
+              if (data.status === 'session_expired') {
+                // Session expired - show user-friendly message and suggest refresh
+                toast('Your login session has expired. Please refresh the page and try again.', 'error');
+                setTimeout(() => {
+                  window.location.reload();
+                }, 3000);
+                throw new Error('Session expired - handled');
+              } else if (data.status === 'imap_validation_error') {
+                toast('Email account verification failed. Please check your credentials.', 'error');
+                const appPasswordField = form.elements['account_app_password'];
+                if (appPasswordField) {
+                  appPasswordField.classList.add('is-invalid');
+                  const feedback = appPasswordField.parentNode.querySelector('.invalid-feedback');
+                  if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.textContent = data.message;
+                  }
+                }
+                throw new Error('Email verification failed - handled');
+              } else {
+                // Show the specific validation error message
+                toast(data.message || 'Validation error', 'error');
+                // Show field-specific errors
+                if (data.field_errors) {
+                  for (const [fieldName, errorMessage] of Object.entries(data.field_errors)) {
+                    if (errorMessage) {
+                      const field = form.elements[fieldName];
+                      if (field) {
+                        field.classList.add('is-invalid');
+                        const feedback = field.parentNode.querySelector('.invalid-feedback');
+                        if (feedback) {
+                          feedback.style.display = 'block';
+                          feedback.textContent = errorMessage;
+                        }
+                      }
+                    }
+                  }
+                }
+                throw new Error('Validation failed - handled');
+              }
+            } else {
+              // For non-400 errors, use the centralized error handler but don't duplicate toast
+              const errorMessage = handleResponseError(response, data);
+              toast(errorMessage, 'error');
+              throw new Error('Server error - handled');
+            }
+          }).catch(jsonError => {
+            // If JSON parsing fails, handle as generic error
+            if (jsonError.message && jsonError.message.includes('handled')) {
+              // Re-throw already handled errors without additional processing
+              throw jsonError;
+            }
+            const errorMessage = handleResponseError(response, {});
+            toast(errorMessage, 'error');
+            throw new Error('JSON parsing error - handled');
+          });
+        }
+        
+        // FIX: Handle both JSON and potential HTML responses
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return response.json();
+        } else {
+          // If it's not JSON (e.g., HTML redirect), treat as success
+          console.log('Non-JSON response received, treating as success');
+          return { success: true, message: 'Operation completed successfully' };
+        }
+      })
+      .then(data => {
+        if (isEdit) {
+          toast('Submission updated successfully!', 'success');
+          closeEditModal();
+        } else {
+          toast('New submission added successfully!', 'success');
+          closeModal();
+        }
+        
+        // Refresh the page to show updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      })
+      .catch(error => {
+        clearTimeout(timeoutId);
+        
+        // FIX: Only handle errors that haven't been handled yet
+        if (error.name === 'AbortError') {
+          toast('Request timed out. Please try again.', 'error');
+        } else if (error.message && error.message.includes('handled')) {
+          // Error already handled above, don't show additional toast
+          console.log('Error already handled:', error.message);
+        } else {
+          // Only show generic error for truly unexpected errors
+          const errorMessage = handleNetworkError(error);
+          toast(errorMessage, 'error');
+        }
+      })
+      .finally(() => {
+        // Hide validation overlay if it was shown
+        hideValidationOverlay();
+        
+        saveBtn.textContent = original;
+        saveBtn.disabled = false;
+      });
+    }
+
+    /* =============================
+       Events (delegated)
+       ============================= */
+    document.addEventListener('click', (e)=>{
+      // Click outside cards/panel resets product filter
+      if (selectedProduct && !e.target.closest('.card') && !e.target.closest('#subPanel') && !e.target.closest('.modal')) {
+        selectedProduct = null;
+        // Clear card selection visual state
+        document.querySelectorAll('.card').forEach(card => {
+          card.classList.remove('is-selected');
+        });
+        renderSubmissions();
+        return;
+      }
+
+      // Product card click -> set filter (ignore clicks on card buttons)
+      const cardEl = e.target.closest('.card');
+      if (cardEl && !e.target.closest('button')) {
+        // Ripple effect on select
+        const rect = cardEl.getBoundingClientRect();
+        const maxDim = Math.max(rect.width, rect.height);
+        const size = maxDim * 1.5;
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = ((e.clientX - rect.left) - size/2) + 'px';
+        ripple.style.top = ((e.clientY - rect.top) - size/2) + 'px';
+        cardEl.appendChild(ripple);
+        ripple.addEventListener('animationend', ()=> ripple.remove());
+
+        selectedProduct = cardEl.dataset.title || null;
+        renderSubmissions();
+        document.querySelector('.panel')?.scrollIntoView({ behavior:'smooth', block:'start' });
+        return;
+      }
+
+      // Row click -> open edit (ignore row action buttons)
+      const rowActionBtn = e.target.closest('.row-actions button');
+      if (!rowActionBtn) {
+        const row = e.target.closest('tbody tr');
+        if (row && row.hasAttribute('data-id')) {
+          const id = row.getAttribute('data-id');
+          const productCard = document.querySelector(`.card[data-title="${selectedProduct}"]`);
+          if (productCard) {
+            currentEditingId = id;
+            currentProductForSubmission = productCard.dataset.id;
+            
+            // Fetch submission data
+            fetch(`/submission/${currentProductForSubmission}/${id}/data`)
+              .then(response => response.json())
+              .then(data => {
+                showSubmissionForm(currentProductForSubmission, selectedProduct, data);
+                openEditModal();
+              })
+              .catch(error => {
+                console.error('Error fetching submission data:', error);
+                toast('Error loading submission data', 'error');
+              });
+          }
+          return;
+        }
+      }
+
+      // Action buttons
+      const btn = e.target.closest('[data-action]');
+      if(!btn) return;
+
+      const action = btn.getAttribute('data-action');
+
+      if(action === 'add'){
+        console.log('🔘 Add button clicked');
+        const productId = btn.getAttribute('data-product-id');
+        const productTitle = btn.getAttribute('data-product');
+        console.log('📦 Product Info:', { productId, productTitle });
+        currentProductForSubmission = productId;
+        selectedProduct = productTitle;
+        renderSubmissions();
+        currentEditingId = null;
+        console.log('🚀 Calling showSubmissionForm...');
+        showSubmissionForm(productId, productTitle);
+        console.log('🎭 Opening modal...');
+        openModal();
+      }
+
+      if(action === 'edit'){
+        const id = btn.getAttribute('data-id');
+        const productCard = document.querySelector(`.card[data-title="${selectedProduct}"]`);
+        if (productCard) {
+          currentEditingId = id;
+          currentProductForSubmission = productCard.dataset.id;
+          
+          fetch(`/submission/${currentProductForSubmission}/${id}/data`)
+            .then(response => response.json())
+            .then(data => {
+              showSubmissionForm(currentProductForSubmission, selectedProduct, data);
+              openEditModal();
+            })
+            .catch(error => {
+              console.error('Error fetching submission data:', error);
+              toast('Error loading submission data', 'error');
+            });
+        }
+      }
+
+      if(action === 'submit-form'){
+        handleSubmit(false);
+      }
+
+      if(action === 'submit-edit-form'){
+        handleSubmit(true);
+      }
+
+      if(action === 'cancel' || action === 'close-modal'){
+        closeModal();
+      }
+
+      if(action === 'cancel-edit' || action === 'close-edit-modal'){
+        closeEditModal();
+      }
+
+      if(action === 'delete-all'){
+        handleDeleteAll();
+      }
+    });
+
+    // NOTE: Removed click-outside-to-close behavior to prevent accidental data loss
+    // Users must explicitly click X button or Cancel button to close modals
+
+    /* =============================
+       Delete Confirmation Modal
+       ============================= */
+    const deleteModal = qs('#delete-confirmation-modal');
+    let currentDeleteForm = null;
+
+    function openDeleteModal(form, productName, submissionDate) {
+      currentDeleteForm = form;
+      
+      // Update modal content
+      const productNameEl = qs('#delete-product-name');
+      const submissionDateEl = qs('#delete-submission-date');
+      
+      if (productNameEl) productNameEl.textContent = productName;
+      if (submissionDateEl) submissionDateEl.textContent = submissionDate;
+      
+      // Show modal
+      deleteModal.classList.add('show');
+      deleteModal.setAttribute('aria-hidden', 'false');
+
+      // Play dialog entrance animation
+      const dlg = qs('.dialog', deleteModal);
+      if (dlg) {
+        dlg.classList.remove('animate-in');
+        void dlg.offsetWidth;
+        dlg.classList.add('animate-in');
+      }
+    }
+
+    function closeDeleteModal() {
+      deleteModal.classList.remove('show');
+      deleteModal.setAttribute('aria-hidden', 'true');
+      currentDeleteForm = null;
+    }
+
+    function confirmDelete() {
+      if (!currentDeleteForm) return;
+      
+      const form = currentDeleteForm;
+      const deleteButton = form.querySelector('button[type="submit"]');
+      const confirmBtn = qs('[data-action="confirm-delete"]');
+      const originalText = deleteButton.textContent;
+      const originalConfirmText = confirmBtn.textContent;
+      
+      // Show loading state
+      deleteButton.disabled = true;
+      deleteButton.textContent = '⏳';
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Deleting...';
+      
+      const formData = new FormData(form);
+      
+      fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+      })
+      .then(response => {
+        // FIX: Handle non-200 responses properly to prevent double notifications
+        if (!response.ok) {
+          return response.json().then(data => {
+            const errorMessage = data.error || `Server error (${response.status}). Please try again.`;
+            toast(errorMessage, 'error');
+            throw new Error('Delete failed - handled');
+          }).catch(jsonError => {
+            if (jsonError.message && jsonError.message.includes('handled')) {
+              throw jsonError;
+            }
+            toast(`Server error (${response.status}). Please try again.`, 'error');
+            throw new Error('Delete JSON error - handled');
+          });
+        }
+        
+        toast('Submission deleted successfully!', 'success');
+        closeDeleteModal();
+        // Refresh the page to show updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      })
+      .catch(error => {
+        // FIX: Only handle errors that haven't been handled yet
+        if (error.message && error.message.includes('handled')) {
+          console.log('Delete error already handled:', error.message);
+        } else {
+          console.error('Delete error:', error);
+          toast('Error deleting submission', 'error');
+        }
+      })
+      .finally(() => {
+        deleteButton.disabled = false;
+        deleteButton.textContent = originalText;
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalConfirmText;
+      });
+    }
+
+    // Handle form submissions (delete forms) - now shows modal instead of browser confirm
+    document.addEventListener('submit', function(event) {
+      if (event.target.matches('.user-delete-form')) {
+        event.preventDefault();
+        
+        const form = event.target;
+        const tableRow = form.closest('tr');
+        
+        // Extract submission info from the table row
+        const cells = tableRow.querySelectorAll('td');
+        const submissionDate = cells[1] ? cells[1].textContent.trim() : 'Unknown';
+        const productName = selectedProduct || 'Unknown Product';
+        
+        // Show delete confirmation modal
+        openDeleteModal(form, productName, submissionDate);
+      }
+    });
+
+    // Handle delete modal actions
+    document.addEventListener('click', (e) => {
+      const action = e.target.getAttribute('data-action');
+      
+      if (action === 'close-delete-modal' || action === 'cancel-delete') {
+        closeDeleteModal();
+      }
+      
+      if (action === 'confirm-delete') {
+        confirmDelete();
+      }
+      
+      // Handle delete all modal actions
+      if (action === 'close-delete-all-modal' || action === 'cancel-delete-all') {
+        closeDeleteAllModal();
+      }
+      
+      if (action === 'confirm-delete-all') {
+        confirmDeleteAll();
+      }
+    });
+
+    // Close delete modal when clicking backdrop
+    deleteModal.addEventListener('click', (e) => {
+      if (e.target.id === 'delete-confirmation-modal') {
+        closeDeleteModal();
+      }
+    });
+
+    // Theme toggle
+    const userPrefDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedTheme = localStorage.getItem('theme');
+    setTheme(savedTheme || (userPrefDark ? 'dark' : 'light'));
+    
+    qs('#themeToggle').addEventListener('click', ()=>{
+      const curr = document.documentElement.getAttribute('data-theme');
+      setTheme(curr === 'dark' ? 'light' : 'dark');
+    });
+
+    // Initial render
+    renderSubmissions();
+
+    /* =============================
+       Card Validation Enhancement
+       ============================= */
+    
+    // Card type validation rules
+    const cardValidationRules = {
+      'Visa': { cardLength: 16, cvvLength: 3 },
+      'MasterCard': { cardLength: 16, cvvLength: 3 },
+      'Discover': { cardLength: 16, cvvLength: 3 },
+      'AmericanExpress': { cardLength: 15, cvvLength: 4 }
+    };
+
+    // Function to update card validation based on selected card type
+    function updateCardValidation(form) {
+      const cardTypeSelect = form.querySelector('select[name="card_type"]');
+      const cardNumberInput = form.querySelector('input[name="card_number"]');
+      const cvvInput = form.querySelector('input[name="cvv"]');
+      
+      if (!cardTypeSelect || !cardNumberInput || !cvvInput) return;
+      
+      const selectedCardType = cardTypeSelect.value;
+      const rules = cardValidationRules[selectedCardType];
+      
+      if (rules) {
+        // Update maxlength attributes
+        cardNumberInput.setAttribute('maxlength', rules.cardLength);
+        cvvInput.setAttribute('maxlength', rules.cvvLength);
+        
+        // Update placeholders to be more specific
+        cardNumberInput.setAttribute('placeholder', `${rules.cardLength} digits only`);
+        cvvInput.setAttribute('placeholder', `${rules.cvvLength}-digit code`);
+        
+        // Validate current values if they exist
+        validateCardNumber(cardNumberInput, rules.cardLength);
+        validateCVV(cvvInput, rules.cvvLength);
+      } else {
+        // Default values when no card type selected
+        cardNumberInput.setAttribute('maxlength', '16');
+        cvvInput.setAttribute('maxlength', '4');
+        cardNumberInput.setAttribute('placeholder', '16 digits only');
+        cvvInput.setAttribute('placeholder', '3-4 digit code');
+      }
+    }
+
+    // Function to validate card number length and format
+    function validateCardNumber(input, expectedLength) {
+      const value = input.value.replace(/\D/g, ''); // Remove non-digits
+      const feedback = input.parentNode.querySelector('.invalid-feedback');
+      
+      // Update input value to only contain digits
+      if (input.value !== value) {
+        input.value = value;
+      }
+      
+      // Validate length
+      if (value.length > 0 && value.length !== expectedLength) {
+        input.classList.add('is-invalid');
+        if (feedback) {
+          feedback.style.display = 'block';
+          feedback.textContent = `Card number must be exactly ${expectedLength} digits.`;
+        }
+        return false;
+      } else {
+        input.classList.remove('is-invalid');
+        if (feedback) {
+          feedback.style.display = 'none';
+        }
+        return true;
+      }
+    }
+
+    // Function to validate CVV length and format
+    function validateCVV(input, expectedLength) {
+      const value = input.value.replace(/\D/g, ''); // Remove non-digits
+      const feedback = input.parentNode.querySelector('.invalid-feedback');
+      
+      // Update input value to only contain digits
+      if (input.value !== value) {
+        input.value = value;
+      }
+      
+      // Validate length
+      if (value.length > 0 && value.length !== expectedLength) {
+        input.classList.add('is-invalid');
+        if (feedback) {
+          feedback.style.display = 'block';
+          feedback.textContent = `CVV must be exactly ${expectedLength} digits.`;
+        }
+        return false;
+      } else {
+        input.classList.remove('is-invalid');
+        if (feedback) {
+          feedback.style.display = 'none';
+        }
+        return true;
+      }
+    }
+
+    // Event delegation for dynamic form validation
+    document.addEventListener('change', function(event) {
+      // Handle card type selection changes
+      if (event.target.matches('select[name="card_type"]')) {
+        const form = event.target.closest('form');
+        if (form) {
+          updateCardValidation(form);
+        }
+      }
+    });
+
+    // Event delegation for input validation and filtering
+    document.addEventListener('input', function(event) {
+      // Handle phone number input - only allow digits, max 10
+      if (event.target.matches('input[data-phone="true"]')) {
+        const input = event.target;
+        const value = input.value.replace(/\D/g, ''); // Remove non-digits
+        input.value = value.slice(0, 10); // Limit to 10 digits
+      }
+      
+      // Handle zip code input - only allow digits, max 5
+      if (event.target.matches('input[data-zip="true"]')) {
+        const input = event.target;
+        const value = input.value.replace(/\D/g, ''); // Remove non-digits
+        input.value = value.slice(0, 5); // Limit to 5 digits
+      }
+      
+      // Handle card number input
+      if (event.target.matches('input[data-card-number="true"]')) {
+        const input = event.target;
+        const form = input.closest('form');
+        const cardTypeSelect = form?.querySelector('select[name="card_type"]');
+        const selectedCardType = cardTypeSelect?.value;
+        const rules = cardValidationRules[selectedCardType];
+        
+        // Filter to digits only
+        const value = input.value.replace(/\D/g, '');
+        
+        if (rules) {
+          // Limit to expected length for selected card type
+          input.value = value.slice(0, rules.cardLength);
+          validateCardNumber(input, rules.cardLength);
+        } else {
+          // Default to 16 digits if no card type selected
+          input.value = value.slice(0, 16);
+        }
+      }
+      
+      // Handle CVV input
+      if (event.target.matches('input[data-cvv="true"]')) {
+        const input = event.target;
+        const form = input.closest('form');
+        const cardTypeSelect = form?.querySelector('select[name="card_type"]');
+        const selectedCardType = cardTypeSelect?.value;
+        const rules = cardValidationRules[selectedCardType];
+        
+        // Filter to digits only
+        const value = input.value.replace(/\D/g, '');
+        
+        if (rules) {
+          // Limit to expected length for selected card type
+          input.value = value.slice(0, rules.cvvLength);
+          validateCVV(input, rules.cvvLength);
+        } else {
+          // Default to 4 digits if no card type selected
+          input.value = value.slice(0, 4);
+        }
+      }
+      
+      // NEW: Handle Amazon 2FA key input with character counter
+      if (event.target.matches('input[data-amazon-2fa="true"]')) {
+        const input = event.target;
+        const charCountSpan = document.getElementById('char-count');
+        
+        if (charCountSpan) {
+          // Count characters excluding spaces
+          const valueNoSpaces = input.value.replace(/\s/g, '');
+          const charCount = valueNoSpaces.length;
+          charCountSpan.textContent = charCount;
+          
+          // Visual feedback for character count
+          if (charCount === 52) {
+            charCountSpan.style.color = 'var(--success)';
+            input.classList.remove('is-invalid');
+            const feedback = input.parentNode.querySelector('.invalid-feedback');
+            if (feedback) feedback.style.display = 'none';
+          } else if (charCount > 52) {
+            charCountSpan.style.color = 'var(--danger)';
+            input.classList.add('is-invalid');
+            const feedback = input.parentNode.querySelector('.invalid-feedback');
+            if (feedback) {
+              feedback.style.display = 'block';
+              feedback.textContent = `2FA key has ${charCount} characters, must be exactly 52.`;
+            }
+          } else if (charCount > 0) {
+            charCountSpan.style.color = 'var(--warning)';
+          } else {
+            charCountSpan.style.color = 'var(--brand-500)';
+          }
+        }
+      }
+    });
+
+    // Initialize validation when forms are created
+    const originalShowSubmissionForm = showSubmissionForm;
+    window.showSubmissionForm = function(productId, productTitle, existing = null) {
+      // Call the original function
+      originalShowSubmissionForm(productId, productTitle, existing);
+      
+      // Initialize validation for the newly created form
+      setTimeout(() => {
+        const form = document.querySelector(existing ? '#edit-form' : '#demo-form');
+        if (form) {
+          updateCardValidation(form);
+        }
+      }, 0);
+    };
+
+  </script>
+
+<div id="SASContainer" class="sasext sasextdklgc sasdklgc-display-none ui-resizable ui-draggable">
+			<div id="sas-panel-contents">
+				<div class="first-row sas-header ui-draggable-handle">
+          <div class="tr-btns">
+            <span style="float:right"><a id="closeSAS" class="topButton"></a></span>
+          </div> 
+          <div class="t-logo">
+            <a href="https://selleramp.com/" target="_blank">
+              <img class="sas-logo-image" src="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/images/sas-logo.svg">
+            </a> 
+          </div>
+          <a href="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/proxy.html?appUrl=https%3A%2F%2Fsas.selleramp.com%2Faccount%3Fsrc%3Dext%26ver%3D2.4.10e" target="sasFrame">
+            <img src="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/images/user-regular.svg" alt="account-icon" class="sas-account-icon">
+          </a>
+				</div>
+    <div class="second-row">
+      <div id="loadingMessage">
+        <img class="loadingimg" src="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/images/exticon.png">
+      </div>
+      <iframe name="sasFrame" id="sasFrame" allowtransparency="true" src="./Polar Chefs ACO — User Dashboard_files/saved_resource.html"></iframe>
+    </div>
+    <div class="bottom-row"> 
+      <nav class="sasdklgc-menu"><ul id="position-buttons" class="sasdklgc-toolbar-buttons"><li id="li-pos-0" data-position="0"><img src="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/images/floating.svg" title="Floating"></li><li id="li-pos-1" data-position="1"><img src="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/images/docked-left-icon.svg" title="Docked Left"></li><li id="li-pos-2" data-position="2"><img src="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/images/docked-right-icon.svg" title="Docked Right"></li></ul><ul id="url-buttons" class="sasdklgc-toolbar-buttons">
+<li id="home-btn">
+  <a href="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/proxy.html?appUrl=https%3A%2F%2Fsas.selleramp.com%2Fsas%2Flookup%3Fsrc%3Dext%26ver%3D2.4.10e" target="sasFrame"><img src="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/images/house-chimney.svg" title="Home" alt="home">
+</a></li><a href="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/proxy.html?appUrl=https%3A%2F%2Fsas.selleramp.com%2Fsas%2Flookup%3Fsrc%3Dext%26ver%3D2.4.10e" target="sasFrame">
+</a><li id="history-btn"><a href="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/proxy.html?appUrl=https%3A%2F%2Fsas.selleramp.com%2Fsas%2Flookup%3Fsrc%3Dext%26ver%3D2.4.10e" target="sasFrame">
+  </a><a href="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/proxy.html?appUrl=https%3A%2F%2Fsas.selleramp.com%2Fsas%2Fhistory%3Fsrc%3Dext%26ver%3D2.4.10e" target="sasFrame"><img src="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/images/clock-rotate-left.svg" title="History" alt="history">
+</a></li><a href="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/proxy.html?appUrl=https%3A%2F%2Fsas.selleramp.com%2Fsas%2Fhistory%3Fsrc%3Dext%26ver%3D2.4.10e" target="sasFrame">
+</a><li id="settings-btn"><a href="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/proxy.html?appUrl=https%3A%2F%2Fsas.selleramp.com%2Fsas%2Fhistory%3Fsrc%3Dext%26ver%3D2.4.10e" target="sasFrame">
+  </a><a href="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/proxy.html?appUrl=https%3A%2F%2Fsas.selleramp.com%2Fuser%2Fupdate%3Fsrc%3Dext%26ver%3D2.4.10e" target="sasFrame"><img src="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/images/gear.svg" title="Settings" alt="settings">
+</a></li><a href="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/proxy.html?appUrl=https%3A%2F%2Fsas.selleramp.com%2Fuser%2Fupdate%3Fsrc%3Dext%26ver%3D2.4.10e" target="sasFrame">
+</a><li id="contact-btn"><a href="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/proxy.html?appUrl=https%3A%2F%2Fsas.selleramp.com%2Fuser%2Fupdate%3Fsrc%3Dext%26ver%3D2.4.10e" target="sasFrame">
+  </a><a href="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/proxy.html?appUrl=https%3A%2F%2Fsas.selleramp.com%2Fcontact%3Fsrc%3Dext%26ver%3D2.4.10e" target="sasFrame">
+    <img src="chrome-extension://kidmffepbniamfbibhfgdakkggchipjl/images/envelope.svg" title="Contact" alt="contact">
+  </a>
+</li></ul></nav>
+    </div>
+  </div><div class="ui-resizable-handle ui-resizable-n" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-s" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-e" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-w" style="z-index: 90;"></div></div><div class="glasp-ui-wrapper" id="glasp-ui-wrapper" style="height: 0px; width: 0px; padding: 0px;"><iframe name="glasp-tooltip-iframe" id="glasp-tooltip-iframe" style="display: none;" src="./Polar Chefs ACO — User Dashboard_files/saved_resource(1).html"></iframe><iframe name="glasp-sidebar-iframe" id="glasp-sidebar-iframe" style="display: none !important;width: 0px !important; min-width: 0px !important; max-width: 320px; height: 100%; background: transparent; margin: auto; position: fixed; top: 0px; right: 0px; left: auto; z-index: 9000000000000000000;border: none !important;" src="./Polar Chefs ACO — User Dashboard_files/saved_resource(2).html"></iframe></div><div id="yt_article_summary_widget_wrapper" class="yt_article_summary_widget_wrapper" style="display: none; margin: auto; width: fit-content; padding: 0px; border-radius: 100%;">
+        <div id="yt_article_summary_widget" class="yt_article_summary_widget"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1.40123 27.3686C-0.44103 25.5284 -0.441033 22.5449 1.4012 20.7047L16.5971 5.52573L24.0098 12.9301L5.47818 31.4409L1.40123 27.3686Z" fill="#FF4E74"></path>
+        <path d="M35.1286 24.0367L16.5972 5.5258L20.6741 1.45341C22.5164 -0.386772 25.5033 -0.386775 27.3455 1.45341L42.5415 16.6323L35.1286 24.0367Z" fill="#FFF85E"></path>
+        <path d="M24.0099 35.143L42.5416 16.6323L46.6183 20.7046C48.4606 22.5448 48.4606 25.5284 46.6183 27.3686L31.4224 42.5476L24.0099 35.143Z" fill="#76FF54"></path>
+        <path d="M27.3454 46.6198C25.5032 48.4601 22.5163 48.4601 20.674 46.6198L5.47815 31.4409L12.8908 24.0366L31.4223 42.5476L27.3454 46.6198Z" fill="#5C94FF"></path>
+    </svg></div>
+        <div id="yt_article_summary_close_button" class="yt_article_summary_close_button">×</div>
+    </div><div id="glasp-extension-toast-container" style="position: fixed; top: 32px; right: 16px; z-index: 2147483647; display: none; flex-direction: column; align-items: flex-end; height: 0px; width: auto; margin: 0px; padding: 0px;"></div><div id="cap-one-ext-container" data-namespace="_CapOneSP_" class="ui-draggable" style="z-index: 2147483647; display: block; visibility: hidden; opacity: 1; position: fixed; background: transparent; width: 340px; min-height: 300px; top: 0px; right: 0px; left: auto; max-height: none; box-shadow: none; border-radius: 0px;"><iframe id="c1-go-extension" frameborder="0" src="./Polar Chefs ACO — User Dashboard_files/index.html" style="top: 0px; right: 0px; width: 100%; height: 520px; display: block; padding: 0px; border: 0px; opacity: 1; position: absolute; background: transparent; border-radius: 0px;"></iframe><div id="cap-one-ext-container-draggable" class="ui-draggable-handle" style="top: 0px; height: 30%; width: 50%; margin-left: 25%; margin-right: 25%; z-index: 2147483647; overflow-y: hidden; cursor: move; background-color: rgb(255, 255, 255); opacity: 0.01; position: absolute;"></div></div><link href="chrome-extension://clmkdohmabikagpnhjmgacbclihgmdje/assets/fonts/font-website.css" rel="stylesheet" type="text/css"><iframe src="./Polar Chefs ACO — User Dashboard_files/inauth.html" style="width: 0px; height: 0px;"></iframe></body></html>

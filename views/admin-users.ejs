@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Users - <%= brandName || 'Phantom ACO' %> Admin</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .copy-btn {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+    .search-box {
+      padding: var(--space-3) var(--space-4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--text-900);
+      font-size: 0.9rem;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: var(--space-6);
+    }
+    .user-count {
+      margin-bottom: var(--space-4);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .copy-cell {
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 8px 12px !important;
+      position: relative;
+      transition: background 0.2s ease;
+    }
+    .copy-cell:hover {
+      background: rgba(96, 165, 250, 0.1);
+    }
+    .copy-cell:active {
+      background: rgba(96, 165, 250, 0.2);
+    }
+    .copy-cell::after {
+      content: '📋';
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0;
+      font-size: 0.7rem;
+      transition: opacity 0.2s ease;
+    }
+    .copy-cell:hover::after {
+      opacity: 0.5;
+    }
+    .copy-indicator {
+      display: inline-block;
+      margin-left: 6px;
+      font-size: 0.7rem;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .copy-indicator.show {
+      opacity: 1;
+    }
+    .container {
+      max-width: 98% !important;
+      padding: var(--space-4) var(--space-3) !important;
+    }
+    .submissions-table {
+      font-size: 0.9rem;
+      margin: 0 !important;
+    }
+    .submissions-table table {
+      width: 100%;
+      table-layout: fixed;
+    }
+    .submissions-table th,
+    .submissions-table td {
+      padding: 12px 8px !important;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.5;
+    }
+    .submissions-table th {
+      font-size: 0.85rem;
+    }
+    .submissions-table th:nth-child(1),
+    .submissions-table td:nth-child(1) { width: 2%; } /* ID */
+    .submissions-table th:nth-child(2),
+    .submissions-table td:nth-child(2) { width: 8%; } /* Username */
+    .submissions-table th:nth-child(3),
+    .submissions-table td:nth-child(3) { width: 9%; } /* Services */
+    .submissions-table th:nth-child(4),
+    .submissions-table td:nth-child(4) { width: 6%; } /* Discord ID */
+    .submissions-table th:nth-child(5),
+    .submissions-table td:nth-child(5) { width: 11%; } /* Email */
+    .submissions-table th:nth-child(6),
+    .submissions-table td:nth-child(6) { width: 8%; } /* Method */
+    .submissions-table th:nth-child(7),
+    .submissions-table td:nth-child(7) { width: 7%; } /* Card # */
+    .submissions-table th:nth-child(8),
+    .submissions-table td:nth-child(8) { width: 5%; } /* Exp */
+    .submissions-table th:nth-child(9),
+    .submissions-table td:nth-child(9) { width: 4%; } /* CVC */
+    .submissions-table th:nth-child(10),
+    .submissions-table td:nth-child(10) { width: 13%; } /* Billing */
+    .submissions-table th:nth-child(11),
+    .submissions-table td:nth-child(11) { width: 13%; } /* Shipping */
+    .submissions-table th:nth-child(12),
+    .submissions-table td:nth-child(12) { width: 8%; } /* Phone */
+    .submissions-table th:nth-child(13),
+    .submissions-table td:nth-child(13) { width: 6%; } /* Actions */
+    .copy-cell {
+      padding: 6px 8px !important;
+    }
+    .badge {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+    }
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      border: 1px solid #dc2626;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
+      border-color: #b91c1c;
+    }
+    .submission-actions {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+    }
+    .submission-actions .btn {
+      padding: 4px 8px;
+      font-size: 1rem;
+      min-width: 32px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
+          <span style="margin-left: 12px; padding: 4px 12px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">ADMIN</span>
+        </div>
+        <div class="header-actions">
+          <a href="/admin" class="btn btn-ghost">Admin Home</a>
+          <a href="/dashboard" class="btn btn-ghost">User Dashboard</a>
+          <a href="/auth/logout" class="btn btn-ghost">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div class="toolbar">
+        <h1 class="title">User Management</h1>
+        <div style="color: var(--muted); font-size: 0.9rem; font-weight: 400;">
+          💡 Click on any field to copy it individually
+        </div>
+      </div>
+
+      <input type="text" id="search-input" class="search-box" placeholder="Search by username, Discord ID, or email...">
+
+      <div class="user-count">
+        Showing <strong id="visible-count"><%= users.length %></strong> of <strong><%= users.length %></strong> users
+      </div>
+
+      <!-- Users Table -->
+      <div class="submissions-table">
+        <table id="users-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Services</th>
+              <th>Discord ID</th>
+              <th>Email</th>
+              <th>Method</th>
+              <th>Card #</th>
+              <th>Exp</th>
+              <th>CVC</th>
+              <th>Billing</th>
+              <th>Shipping</th>
+              <th>Phone</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (users && users.length > 0) { %>
+              <% users.forEach(user => { %>
+                <%
+                // Build billing address string
+                const billingParts = [user.billing_address, user.billing_city, user.billing_state, user.billing_zipcode].filter(v => v);
+                const billingFull = billingParts.length > 0 ? billingParts.join(', ') : '';
+                const billingDisplay = billingFull || 'N/A';
+
+                // Build shipping address string
+                const shippingParts = [user.shipping_address, user.shipping_city, user.shipping_state, user.shipping_zipcode].filter(v => v);
+                const shippingFull = shippingParts.length > 0 ? shippingParts.join(', ') : '';
+                const shippingDisplay = shippingFull || 'N/A';
+
+                // Format services list
+                const servicesDisplay = user.services && user.services.length > 0 ? user.services.join(', ') : 'None';
+
+                // Truncate Discord ID for display (keep full for copy)
+                let discordIdDisplay = 'N/A';
+                if (user.discord_id) {
+                  discordIdDisplay = user.discord_id.substring(0, 12);
+                  if (user.discord_id.length > 12) {
+                    discordIdDisplay += '...';
+                  }
+                }
+
+                // Truncate card number for display (keep full for copy)
+                let cardDisplay = 'N/A';
+                if (user.card_number) {
+                  cardDisplay = '****' + user.card_number.slice(-4);
+                }
+                %>
+                <tr class="user-row" data-user-id="<%= user.id %>">
+                  <td><%= user.id %></td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'discord_username', this)"><strong><%= user.discord_username %></strong></td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'services', this)"><%= servicesDisplay %></td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'discord_id', this)"><%= discordIdDisplay %></td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'email', this)"><%= user.email || 'N/A' %></td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'payment_method', this)"><%= user.payment_method || 'N/A' %></td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'card_number', this)"><%= cardDisplay %></td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'exp_date', this)"><%= user.exp_date || 'N/A' %></td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'cvc', this)"><%= user.cvc || 'N/A' %></td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'billing', this)"><%= billingDisplay %></td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'shipping', this)"><%= shippingDisplay %></td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'phone_number', this)"><%= user.phone_number || 'N/A' %></td>
+                  <td>
+                    <div class="submission-actions">
+                      <button class="btn btn-sm btn-primary" onclick="editUser(<%= user.id %>)" title="Edit Payment Info">✏️</button>
+                      <button class="btn btn-sm btn-danger" onclick="deleteFromUser(<%= user.id %>, this)" title="Delete User">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="13" class="empty-state">
+                  <p>No users found</p>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="edit-modal" class="modal" aria-hidden="true">
+    <div class="dialog animate-in" role="dialog" aria-modal="true">
+      <div class="dialog-header">
+        <h2 id="modal-title">Edit Payment Information</h2>
+        <button class="icon-btn close-edit-modal" aria-label="Close">✕</button>
+      </div>
+      <div class="dialog-body">
+        <form id="edit-user-form" class="form-grid">
+          <input type="hidden" id="edit-user-id">
+
+          <div class="field">
+            <label class="label">Payment Method</label>
+            <select id="edit-payment-method" class="control">
+              <option value="">Select...</option>
+              <option value="Mastercard">Mastercard</option>
+              <option value="Visa">Visa</option>
+              <option value="American Express">American Express</option>
+              <option value="Discover">Discover</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label">Card Number</label>
+            <input type="text" id="edit-card-number" class="control" placeholder="1234 5678 9012 3456">
+          </div>
+
+          <div class="field">
+            <label class="label">Expiration Date</label>
+            <input type="text" id="edit-exp-date" class="control" placeholder="MM/YY">
+          </div>
+
+          <div class="field">
+            <label class="label">CVC</label>
+            <input type="text" id="edit-cvc" class="control" placeholder="123" maxlength="4">
+          </div>
+
+          <div class="field wide">
+            <label class="label">Billing Address (Street)</label>
+            <input type="text" id="edit-billing-address" class="control" placeholder="123 Main St">
+          </div>
+
+          <div class="field">
+            <label class="label">Billing City</label>
+            <input type="text" id="edit-billing-city" class="control" placeholder="New York">
+          </div>
+
+          <div class="field">
+            <label class="label">Billing State</label>
+            <input type="text" id="edit-billing-state" class="control" placeholder="NY" maxlength="2">
+          </div>
+
+          <div class="field">
+            <label class="label">Billing Zipcode</label>
+            <input type="text" id="edit-billing-zipcode" class="control" placeholder="10001" maxlength="10">
+          </div>
+
+          <div class="field wide">
+            <label class="label">Shipping Address (Street)</label>
+            <input type="text" id="edit-shipping-address" class="control" placeholder="123 Main St">
+          </div>
+
+          <div class="field">
+            <label class="label">Shipping City</label>
+            <input type="text" id="edit-shipping-city" class="control" placeholder="New York">
+          </div>
+
+          <div class="field">
+            <label class="label">Shipping State</label>
+            <input type="text" id="edit-shipping-state" class="control" placeholder="NY" maxlength="2">
+          </div>
+
+          <div class="field">
+            <label class="label">Shipping Zipcode</label>
+            <input type="text" id="edit-shipping-zipcode" class="control" placeholder="10001" maxlength="10">
+          </div>
+
+          <div class="field wide">
+            <label class="label">Phone Number</label>
+            <input type="tel" id="edit-phone-number" class="control" placeholder="(555) 123-4567">
+          </div>
+        </form>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-ghost close-edit-modal">Cancel</button>
+        <button class="btn btn-primary" id="save-user-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <!-- Hidden textarea for copying -->
+  <textarea id="copy-buffer" style="position: absolute; left: -9999px;"></textarea>
+
+  <script>
+    const usersData = JSON.parse(decodeURIComponent("<%= encodeURIComponent(JSON.stringify(users)) %>"));
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // Copy from user data
+    function copyFromUser(userId, field, element) {
+      const user = usersData.find(u => u.id === userId);
+      if (!user) return;
+
+      let text = '';
+      if (field === 'services') {
+        text = user.services && user.services.length > 0 ? user.services.join(', ') : '';
+      } else if (field === 'billing') {
+        const parts = [user.billing_address, user.billing_city, user.billing_state, user.billing_zipcode].filter(v => v);
+        text = parts.join(', ');
+      } else if (field === 'shipping') {
+        const parts = [user.shipping_address, user.shipping_city, user.shipping_state, user.shipping_zipcode].filter(v => v);
+        text = parts.join(', ');
+      } else {
+        text = user[field] || '';
+      }
+
+      if (!text || text === 'N/A' || text === '') {
+        showToast('No data to copy');
+        return;
+      }
+
+      const textarea = document.getElementById('copy-buffer');
+      textarea.value = text;
+      textarea.select();
+      document.execCommand('copy');
+
+      element.style.background = 'rgba(16, 185, 129, 0.2)';
+      setTimeout(() => {
+        element.style.background = '';
+      }, 300);
+
+      showToast(`Copied: ${text.length > 30 ? text.substring(0, 30) + '...' : text}`);
+    }
+
+    // Edit user payment info
+    function editUser(userId) {
+      const user = usersData.find(u => u.id === userId);
+      if (!user) return;
+
+      document.getElementById('edit-user-id').value = user.id;
+      document.getElementById('edit-payment-method').value = user.payment_method || '';
+      document.getElementById('edit-card-number').value = user.card_number || '';
+      document.getElementById('edit-exp-date').value = user.exp_date || '';
+      document.getElementById('edit-cvc').value = user.cvc || '';
+      document.getElementById('edit-billing-address').value = user.billing_address || '';
+      document.getElementById('edit-billing-city').value = user.billing_city || '';
+      document.getElementById('edit-billing-state').value = user.billing_state || '';
+      document.getElementById('edit-billing-zipcode').value = user.billing_zipcode || '';
+      document.getElementById('edit-shipping-address').value = user.shipping_address || '';
+      document.getElementById('edit-shipping-city').value = user.shipping_city || '';
+      document.getElementById('edit-shipping-state').value = user.shipping_state || '';
+      document.getElementById('edit-shipping-zipcode').value = user.shipping_zipcode || '';
+      document.getElementById('edit-phone-number').value = user.phone_number || '';
+
+      document.getElementById('edit-modal').classList.add('show');
+    }
+
+    // Close modal
+    document.querySelectorAll('.close-edit-modal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('edit-modal').classList.remove('show');
+      });
+    });
+
+    // Save user changes
+    document.getElementById('save-user-btn').addEventListener('click', async () => {
+      const userId = document.getElementById('edit-user-id').value;
+      const data = {
+        payment_method: document.getElementById('edit-payment-method').value,
+        card_number: document.getElementById('edit-card-number').value,
+        exp_date: document.getElementById('edit-exp-date').value,
+        cvc: document.getElementById('edit-cvc').value,
+        billing_address: document.getElementById('edit-billing-address').value,
+        billing_city: document.getElementById('edit-billing-city').value,
+        billing_state: document.getElementById('edit-billing-state').value,
+        billing_zipcode: document.getElementById('edit-billing-zipcode').value,
+        shipping_address: document.getElementById('edit-shipping-address').value,
+        shipping_city: document.getElementById('edit-shipping-city').value,
+        shipping_state: document.getElementById('edit-shipping-state').value,
+        shipping_zipcode: document.getElementById('edit-shipping-zipcode').value,
+        phone_number: document.getElementById('edit-phone-number').value
+      };
+
+      try {
+        const response = await fetch(`/admin/users/${userId}/payment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showToast('Payment information updated successfully!');
+          document.getElementById('edit-modal').classList.remove('show');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showToast('Failed to update payment information');
+        }
+      } catch (error) {
+        console.error('Save error:', error);
+        showToast('Error updating payment information');
+      }
+    });
+
+    // Delete user
+    async function deleteFromUser(userId, element) {
+      const user = usersData.find(u => u.id === userId);
+      if (!user) return;
+
+      const username = user.discord_username;
+      if (!confirm(`Are you sure you want to delete user "${username}"?\n\nThis will permanently delete:\n- User account\n- All service submissions\n- All payment information\n- All encrypted credentials\n\nThis action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast(`User "${username}" deleted successfully`);
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showToast('Failed to delete user');
+        }
+      } catch (error) {
+        console.error('Delete user error:', error);
+        showToast('Error deleting user');
+      }
+    }
+
+    // Search functionality
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const rows = document.querySelectorAll('.user-row');
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        const userId = parseInt(row.getAttribute('data-user-id'));
+        const user = usersData.find(u => u.id === userId);
+        if (!user) return;
+
+        const username = (user.discord_username || '').toLowerCase();
+        const discordId = (user.discord_id || '').toLowerCase();
+        const email = (user.email || '').toLowerCase();
+
+        if (username.includes(searchTerm) ||
+            discordId.includes(searchTerm) ||
+            email.includes(searchTerm)) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      document.getElementById('visible-count').textContent = visibleCount;
+    });
+  </script>
+</body>
+</html>

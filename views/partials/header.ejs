@@ -1,0 +1,24 @@
+<header class="navbar">
+  <div class="container navbar-container">
+    <a href="<%= user ? '/dashboard' : '/' %>" class="logo">
+      <span class="pokeball">⚫</span>
+      ACO Service
+    </a>
+
+    <nav class="nav-menu">
+      <% if (user) { %>
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/dashboard/profile" class="nav-link">Profile</a>
+        <div class="user-menu">
+          <% if (user.discord_avatar) { %>
+            <img src="https://cdn.discordapp.com/avatars/<%= user.discord_id %>/<%= user.discord_avatar %>.png?size=32" alt="Avatar" class="nav-avatar">
+          <% } %>
+          <span class="nav-username"><%= user.discord_username %></span>
+          <a href="/auth/logout" class="btn btn-sm btn-danger">Logout</a>
+        </div>
+      <% } else { %>
+        <a href="/auth/login" class="btn btn-primary">Login</a>
+      <% } %>
+    </nav>
+  </div>
+</header>

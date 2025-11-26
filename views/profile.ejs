@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - ACO Service</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="/dashboard">Dashboard</a>
+      <span>/</span>
+      <span>My Profile</span>
+    </div>
+
+    <main class="profile-main">
+      <div class="profile-header">
+        <% if (user.discord_avatar) { %>
+          <img src="https://cdn.discordapp.com/avatars/<%= user.discord_id %>/<%= user.discord_avatar %>.png?size=256" alt="Avatar" class="profile-avatar">
+        <% } else { %>
+          <div class="profile-avatar-placeholder">
+            <%= user.discord_username.charAt(0).toUpperCase() %>
+          </div>
+        <% } %>
+        <div class="profile-info">
+          <h1><%= user.discord_username %></h1>
+          <p class="discord-id">Discord ID: <%= user.discord_id %></p>
+          <% if (user.email) { %>
+            <p class="email"><%= user.email %></p>
+          <% } %>
+          <div class="profile-badges">
+            <% if (user.is_verified) { %>
+              <span class="badge badge-success">Verified</span>
+            <% } %>
+            <span class="badge badge-info">Member since <%= new Date(user.created_at).toLocaleDateString() %></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-content">
+        <!-- Active Subscriptions -->
+        <section class="profile-section">
+          <h2>Active Subscriptions</h2>
+          <% if (subscriptions.length > 0) { %>
+            <div class="subscriptions-list">
+              <% subscriptions.forEach(sub => { %>
+                <div class="subscription-item <%= sub.status === 'active' ? 'active' : 'inactive' %>">
+                  <div class="subscription-icon">
+                    <% if (sub.service_name === 'target') { %>🎯
+                    <% } else if (sub.service_name === 'walmart') { %>🛒
+                    <% } else if (sub.service_name === 'bestbuy') { %>🔵
+                    <% } else if (sub.service_name === 'pokemoncenter') { %>⚡
+                    <% } else if (sub.service_name === 'shopify') { %>🛍️
+                    <% } %>
+                  </div>
+                  <div class="subscription-details">
+                    <h3><%= sub.service_name.charAt(0).toUpperCase() + sub.service_name.slice(1) %></h3>
+                    <p class="subscription-meta">
+                      Type: <%= sub.service_type === 'LOGIN_REQUIRED' ? 'Login Required' : 'No Login' %>
+                      <span class="separator">•</span>
+                      Subscribed: <%= new Date(sub.created_at).toLocaleDateString() %>
+                    </p>
+                  </div>
+                  <div class="subscription-status">
+                    <% if (sub.status === 'active') { %>
+                      <span class="badge badge-success">Active</span>
+                    <% } else { %>
+                      <span class="badge badge-secondary">Inactive</span>
+                    <% } %>
+                  </div>
+                  <div class="subscription-actions">
+                    <a href="/dashboard/service/<%= sub.service_name %>" class="btn btn-sm btn-secondary">Manage</a>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="empty-state">
+              <p>You don't have any active subscriptions yet.</p>
+              <a href="/dashboard" class="btn btn-primary">Browse Services</a>
+            </div>
+          <% } %>
+        </section>
+
+        <!-- Form Submission History -->
+        <section class="profile-section">
+          <h2>Form Submission History</h2>
+          <% if (formSubmissions.length > 0) { %>
+            <div class="submissions-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Service</th>
+                    <th>Type</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% formSubmissions.forEach(submission => { %>
+                    <tr>
+                      <td><%= submission.service_name.charAt(0).toUpperCase() + submission.service_name.slice(1) %></td>
+                      <td>
+                        <span class="type-badge <%= submission.form_type === 'LOGIN_REQUIRED' ? 'login' : 'no-login' %>">
+                          <%= submission.form_type === 'LOGIN_REQUIRED' ? 'Login Required' : 'No Login' %>
+                        </span>
+                      </td>
+                      <td><%= new Date(submission.submission_time).toLocaleString() %></td>
+                      <td><span class="badge badge-success">Completed</span></td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div class="empty-state">
+              <p>No form submissions yet.</p>
+            </div>
+          <% } %>
+        </section>
+
+        <!-- Account Actions -->
+        <section class="profile-section">
+          <h2>Account Actions</h2>
+          <div class="action-buttons">
+            <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
+            <a href="/auth/logout" class="btn btn-danger">Logout</a>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

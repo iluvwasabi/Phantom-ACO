@@ -1,0 +1,39 @@
+{
+  "name": "aco-service",
+  "version": "1.0.0",
+  "description": "Auto Checkout Service with Discord OAuth and Google Forms Integration",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "init-db": "node src/utils/initDatabase.js",
+    "generate-keys": "node src/utils/generateKeys.js"
+  },
+  "keywords": [
+    "pokemon",
+    "auto-checkout",
+    "discord",
+    "oauth"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "bcrypt": "^5.1.1",
+    "better-sqlite3": "^9.2.2",
+    "connect-sqlite3": "^0.9.13",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.3.1",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "express-session": "^1.17.3",
+    "helmet": "^7.1.0",
+    "multer": "^2.0.2",
+    "passport": "^0.6.0",
+    "passport-discord": "^0.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

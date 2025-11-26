@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(move \".claude\\agents\\pokemon-market-automator.md\" \".claude\\agents\\pokedude1.md\")",
+      "Bash(dir:*)",
+      "Bash(chmod +x \"D:\\AI Projects\\Claude Projects\\ACO Service\\setup.sh\")",
+      "WebFetch(domain:www.polarchefs-aco.com)",
+      "Bash(cat:*)",
+      "Bash(npm run generate-keys:*)",
+      "Bash(npm run init-db:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(sqlite3:*)",
+      "Bash(node cleanup-corrupted.js:*)",
+      "Bash(timeout:*)",
+      "Bash(npm install:*)",
+      "Bash(node src/migrations/add-payment-fields.js:*)",
+      "Bash(node src/migrations/update-payment-fields.js:*)",
+      "Bash(node:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Page Settings - Phantom ACO Admin</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
+          <span style="margin-left: 12px; padding: 4px 12px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">ADMIN</span>
+        </div>
+        <div class="header-actions">
+          <a href="/admin" class="btn btn-ghost">Admin Home</a>
+          <a href="/dashboard" class="btn btn-ghost">User Dashboard</a>
+          <a href="/auth/logout" class="btn btn-ghost">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div class="toolbar">
+        <h1 class="title">Login Page Settings</h1>
+      </div>
+
+      <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <div class="card-body" style="padding: var(--space-8);">
+          <form id="settings-form">
+            <div class="field" style="margin-bottom: var(--space-6);">
+              <label class="label">Brand Name (appears in dashboard header)</label>
+              <input type="text" name="brand_name" class="control" value="<%= settings.brand_name || 'Phantom ACO' %>">
+            </div>
+
+            <div class="field" style="margin-bottom: var(--space-6);">
+              <label class="label">Login Page Title</label>
+              <input type="text" name="login_page_title" class="control" value="<%= settings.login_page_title || 'Phantom ACO' %>">
+            </div>
+
+            <div class="field" style="margin-bottom: var(--space-6);">
+              <label class="label">Login Page Tagline</label>
+              <input type="text" name="login_page_tagline" class="control" value="<%= settings.login_page_tagline || 'Time is Money. Save both.' %>">
+            </div>
+
+            <div class="field" style="margin-bottom: var(--space-6);">
+              <label class="label">Logo</label>
+
+              <!-- Current Logo Display -->
+              <div style="margin-bottom: var(--space-4); padding: var(--space-4); background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md);">
+                <p class="label" style="margin-bottom: var(--space-3); font-size: 0.9rem;">Current Logo:</p>
+                <div id="current-logo-display" style="text-align: center; padding: var(--space-4);">
+                  <% if (settings.login_page_logo && settings.login_page_logo.startsWith('/uploads/')) { %>
+                    <img src="<%= settings.login_page_logo %>" alt="Logo" style="max-width: 150px; max-height: 150px; border-radius: var(--radius-md);">
+                  <% } else { %>
+                    <div style="font-size: 4rem;"><%= settings.login_page_logo || '👻' %></div>
+                  <% } %>
+                </div>
+              </div>
+
+              <!-- Upload New Logo -->
+              <div style="margin-bottom: var(--space-4);">
+                <label class="label" style="font-size: 0.9rem; margin-bottom: var(--space-2);">Upload Image Logo:</label>
+                <input type="file" id="logo-upload" accept="image/*" class="control" style="padding: var(--space-3);">
+                <p class="muted" style="font-size: 0.85rem; margin-top: var(--space-2);">Supported formats: JPG, PNG, GIF, SVG, WebP (max 5MB)</p>
+                <button type="button" id="upload-logo-btn" class="btn btn-primary" style="margin-top: var(--space-3);">Upload Logo</button>
+              </div>
+
+              <!-- Or Use Emoji/Text -->
+              <div>
+                <label class="label" style="font-size: 0.9rem; margin-bottom: var(--space-2);">Or use emoji/text:</label>
+                <input type="text" name="login_page_logo" id="logo-text-input" class="control" value="<%= settings.login_page_logo && !settings.login_page_logo.startsWith('/uploads/') ? settings.login_page_logo : '👻' %>">
+              </div>
+
+              <% if (settings.login_page_logo && settings.login_page_logo.startsWith('/uploads/')) { %>
+              <button type="button" id="delete-logo-btn" class="btn btn-danger" style="margin-top: var(--space-3);">Delete Image & Use Emoji</button>
+              <% } %>
+            </div>
+
+            <div style="border-top: 1px solid var(--border); padding-top: var(--space-6); margin-top: var(--space-6);">
+              <h3 style="margin-bottom: var(--space-4);">Preview</h3>
+              <div id="preview" style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-8); text-align: center;">
+                <div id="preview-logo" style="margin-bottom: var(--space-4);">
+                  <% if (settings.login_page_logo && settings.login_page_logo.startsWith('/uploads/')) { %>
+                    <img src="<%= settings.login_page_logo %>" alt="Logo" style="max-width: 100px; max-height: 100px; border-radius: var(--radius-md);">
+                  <% } else { %>
+                    <span style="font-size: 3rem;"><%= settings.login_page_logo || '👻' %></span>
+                  <% } %>
+                </div>
+                <h2 id="preview-title" style="font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #a78bfa, #60a5fa); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: var(--space-3);"><%= settings.login_page_title || 'Phantom ACO' %></h2>
+                <p id="preview-tagline" style="color: var(--text-700); font-size: 1.1rem;"><%= settings.login_page_tagline || 'Time is Money. Save both.' %></p>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin-top: var(--space-8);">
+              <button type="submit" class="btn btn-primary" style="min-width: 200px;">Save Settings</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script>
+    // Live preview update
+    const form = document.getElementById('settings-form');
+    const inputs = form.querySelectorAll('input[type="text"]');
+
+    inputs.forEach(input => {
+      input.addEventListener('input', () => {
+        if (input.name === 'login_page_title') {
+          document.getElementById('preview-title').textContent = input.value;
+        } else if (input.name === 'login_page_tagline') {
+          document.getElementById('preview-tagline').textContent = input.value;
+        } else if (input.name === 'login_page_logo') {
+          // Only update if it's not an image path
+          const previewLogo = document.getElementById('preview-logo');
+          if (!input.value.startsWith('/uploads/')) {
+            previewLogo.innerHTML = `<span style="font-size: 3rem;">${input.value}</span>`;
+          }
+        }
+      });
+    });
+
+    // Logo upload handler
+    document.getElementById('upload-logo-btn').addEventListener('click', async () => {
+      const fileInput = document.getElementById('logo-upload');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        showToast('Please select a file first');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('logo', file);
+
+      try {
+        const response = await fetch('/admin/upload-logo', {
+          method: 'POST',
+          credentials: 'same-origin',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast('Logo uploaded successfully!');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showToast(result.error || 'Failed to upload logo');
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        showToast('Error uploading logo');
+      }
+    });
+
+    // Delete logo handler
+    const deleteBtn = document.getElementById('delete-logo-btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to delete the logo image and revert to emoji?')) {
+          return;
+        }
+
+        try {
+          const response = await fetch('/admin/logo', {
+            method: 'DELETE',
+            credentials: 'same-origin'
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            showToast('Logo deleted successfully!');
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            showToast('Failed to delete logo');
+          }
+        } catch (error) {
+          console.error('Delete error:', error);
+          showToast('Error deleting logo');
+        }
+      });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((value, key) => {
+        data[key] = value;
+      });
+
+      try {
+        const response = await fetch('/admin/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        const toast = document.getElementById('toast');
+        if (result.success) {
+          toast.textContent = 'Settings saved successfully!';
+          toast.classList.add('show');
+          setTimeout(() => toast.classList.remove('show'), 3000);
+        } else {
+          toast.textContent = 'Failed to save settings';
+          toast.classList.add('show');
+          setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+      } catch (error) {
+        console.error('Save error:', error);
+        const toast = document.getElementById('toast');
+        toast.textContent = 'Error saving settings';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+    });
+  </script>
+</body>
+</html>

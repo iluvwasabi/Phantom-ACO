@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phantom ACO - Dashboard</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
+        </div>
+        <div class="header-actions">
+          <div class="chip">
+            <% if (user.discord_avatar) { %>
+              <img src="https://cdn.discordapp.com/avatars/<%= user.discord_id %>/<%= user.discord_avatar %>.png" alt="Avatar" style="width:24px; height:24px; border-radius:50%;">
+            <% } %>
+            <%= user.discord_username %>
+          </div>
+          <a href="/auth/logout" class="btn btn-ghost">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+      <% if (isAdmin) { %>
+      <!-- Admin Panel -->
+      <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-8);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-4);">
+          <div>
+            <h3 style="margin: 0 0 var(--space-2) 0; color: #ef4444; font-size: 1.1rem; font-weight: 700;">⚙️ Administrator Panel</h3>
+            <p style="margin: 0; color: var(--muted); font-size: 0.9rem;">Manage service panels and customize the login page</p>
+          </div>
+          <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+            <a href="/admin" class="btn btn-primary">Admin Dashboard</a>
+            <a href="/admin/panels" class="btn btn-primary">Manage Panels</a>
+            <a href="/admin/settings" class="btn btn-primary">Login Settings</a>
+          </div>
+        </div>
+      </div>
+      <% } %>
+
+      <div class="toolbar">
+        <h1 class="title">Available Services</h1>
+        <div class="chip">
+          📊 <%= Object.keys(subscribedServices).length %> Active
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="grid">
+        <!-- Target -->
+        <article class="card"
+          data-id="target"
+          data-title="Target"
+          data-description="Auto-checkout for Target Pokemon drops"
+          data-type="login_required"
+          data-submissions="<%= JSON.stringify(subscribedServices.target || []) %>">
+          <div class="card-body">
+            <h3>🎯 Target</h3>
+            <p class="muted">Requires account login + iMap</p>
+          </div>
+          <div class="card-footer">
+            <div class="card-status">
+              <% if (subscribedServices.target && subscribedServices.target.length > 0) { %>
+                <div class="badge badge-success">✅ Active</div>
+              <% } else { %>
+                <div class="badge badge-info">🔓 Available</div>
+              <% } %>
+            </div>
+            <div class="inline-note">
+              📄 <strong><%= subscribedServices.target ? subscribedServices.target.length : 0 %></strong> submission<%= (subscribedServices.target && subscribedServices.target.length === 1) ? '' : 's' %>
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-primary" data-action="add-submission" data-service="target">
+                + Add Submission
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Walmart -->
+        <article class="card"
+          data-id="walmart"
+          data-title="Walmart"
+          data-description="Auto-checkout for Walmart Pokemon drops"
+          data-type="login_required"
+          data-submissions="<%= JSON.stringify(subscribedServices.walmart || []) %>">
+          <div class="card-body">
+            <h3>🛒 Walmart</h3>
+            <p class="muted">Requires account login + iMap</p>
+          </div>
+          <div class="card-footer">
+            <div class="card-status">
+              <% if (subscribedServices.walmart && subscribedServices.walmart.length > 0) { %>
+                <div class="badge badge-success">✅ Active</div>
+              <% } else { %>
+                <div class="badge badge-info">🔓 Available</div>
+              <% } %>
+            </div>
+            <div class="inline-note">
+              📄 <strong><%= subscribedServices.walmart ? subscribedServices.walmart.length : 0 %></strong> submission<%= (subscribedServices.walmart && subscribedServices.walmart.length === 1) ? '' : 's' %>
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-primary" data-action="add-submission" data-service="walmart">
+                + Add Submission
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Best Buy -->
+        <article class="card"
+          data-id="bestbuy"
+          data-title="Best Buy"
+          data-description="Auto-checkout for Best Buy Pokemon drops"
+          data-type="login_required"
+          data-submissions="<%= JSON.stringify(subscribedServices.bestbuy || []) %>">
+          <div class="card-body">
+            <h3>🔵 Best Buy</h3>
+            <p class="muted">Requires account login + iMap</p>
+          </div>
+          <div class="card-footer">
+            <div class="card-status">
+              <% if (subscribedServices.bestbuy && subscribedServices.bestbuy.length > 0) { %>
+                <div class="badge badge-success">✅ Active</div>
+              <% } else { %>
+                <div class="badge badge-info">🔓 Available</div>
+              <% } %>
+            </div>
+            <div class="inline-note">
+              📄 <strong><%= subscribedServices.bestbuy ? subscribedServices.bestbuy.length : 0 %></strong> submission<%= (subscribedServices.bestbuy && subscribedServices.bestbuy.length === 1) ? '' : 's' %>
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-primary" data-action="add-submission" data-service="bestbuy">
+                + Add Submission
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Pokemon Center -->
+        <article class="card"
+          data-id="pokemoncenter"
+          data-title="Pokemon Center"
+          data-description="Auto-checkout for Pokemon Center drops"
+          data-type="no_login"
+          data-submissions="<%= JSON.stringify(subscribedServices.pokemoncenter || []) %>">
+          <div class="card-body">
+            <h3>⚡ Pokemon Center</h3>
+            <p class="muted">No login required</p>
+          </div>
+          <div class="card-footer">
+            <div class="card-status">
+              <% if (subscribedServices.pokemoncenter && subscribedServices.pokemoncenter.length > 0) { %>
+                <div class="badge badge-success">✅ Active</div>
+              <% } else { %>
+                <div class="badge badge-info">🔓 Available</div>
+              <% } %>
+            </div>
+            <div class="inline-note">
+              📄 <strong><%= subscribedServices.pokemoncenter ? subscribedServices.pokemoncenter.length : 0 %></strong> submission<%= (subscribedServices.pokemoncenter && subscribedServices.pokemoncenter.length === 1) ? '' : 's' %>
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-primary" data-action="add-submission" data-service="pokemoncenter">
+                + Add Submission
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Shopify -->
+        <article class="card"
+          data-id="shopify"
+          data-title="Shopify Stores"
+          data-description="Auto-checkout for Shopify-based Pokemon stores"
+          data-type="no_login"
+          data-submissions="<%= JSON.stringify(subscribedServices.shopify || []) %>">
+          <div class="card-body">
+            <h3>🛍️ Shopify Stores</h3>
+            <p class="muted">No login required</p>
+          </div>
+          <div class="card-footer">
+            <div class="card-status">
+              <% if (subscribedServices.shopify && subscribedServices.shopify.length > 0) { %>
+                <div class="badge badge-success">✅ Active</div>
+              <% } else { %>
+                <div class="badge badge-info">🔓 Available</div>
+              <% } %>
+            </div>
+            <div class="inline-note">
+              📄 <strong><%= subscribedServices.shopify ? subscribedServices.shopify.length : 0 %></strong> submission<%= (subscribedServices.shopify && subscribedServices.shopify.length === 1) ? '' : 's' %>
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-primary" data-action="add-submission" data-service="shopify">
+                + Add Submission
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- My Submissions Section -->
+      <div class="toolbar" style="margin-top: var(--space-10);">
+        <h2 class="title" style="font-size: clamp(20px, 2vw, 24px);">My Submissions</h2>
+      </div>
+
+      <div id="submissions-list">
+        <!-- Submissions will be loaded here dynamically -->
+        <div style="text-align: center; padding: var(--space-8); color: var(--muted);">
+          Loading submissions...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submission Modal -->
+  <div id="submission-modal" class="modal" aria-hidden="true">
+    <div class="dialog animate-in" role="dialog" aria-modal="true">
+      <div class="dialog-header">
+        <h2 id="modal-title">Add Submission</h2>
+        <button class="icon-btn" data-action="close-modal" aria-label="Close">✕</button>
+      </div>
+      <div class="dialog-body" id="modal-body">
+        <!-- Form will be injected here -->
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-ghost" data-action="cancel">Cancel</button>
+        <button class="btn btn-primary" data-action="submit-form" id="submit-btn">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script src="/js/dashboard-app.js"></script>
+</body>
+</html>

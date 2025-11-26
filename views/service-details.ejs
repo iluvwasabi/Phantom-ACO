@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= service.name %> - ACO Service</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="/dashboard">Dashboard</a>
+      <span>/</span>
+      <span><%= service.name %></span>
+    </div>
+
+    <main class="service-details-main">
+      <div class="service-details-header">
+        <div class="service-icon-large">
+          <% if (serviceName === 'target') { %>🎯
+          <% } else if (serviceName === 'walmart') { %>🛒
+          <% } else if (serviceName === 'bestbuy') { %>🔵
+          <% } else if (serviceName === 'pokemoncenter') { %>⚡
+          <% } else if (serviceName === 'shopify') { %>🛍️
+          <% } %>
+        </div>
+        <div>
+          <h1><%= service.name %> ACO Service</h1>
+          <% if (existingSubscription && existingSubscription.status === 'active') { %>
+            <span class="badge badge-success">Active Subscription</span>
+          <% } else { %>
+            <span class="badge badge-info">Not Subscribed</span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="service-details-content">
+        <div class="info-card">
+          <h2>How It Works</h2>
+          <ol class="steps-list">
+            <li>Click "Fill Out Form" below</li>
+            <li>
+              <% if (serviceType === 'LOGIN_REQUIRED') { %>
+                Complete the form with your account credentials and iMap
+              <% } else { %>
+                Complete the form with your shipping and payment information
+              <% } %>
+            </li>
+            <li>Your Discord information will be automatically linked</li>
+            <li>We'll handle checkout automatically when drops happen</li>
+            <li>Get notified in Discord when orders are placed</li>
+          </ol>
+        </div>
+
+        <div class="info-card">
+          <h2>Required Information</h2>
+          <ul class="requirements-list">
+            <li>Discord ID (automatically filled)</li>
+            <li>Shipping Address</li>
+            <li>Payment Information</li>
+            <% if (serviceType === 'LOGIN_REQUIRED') { %>
+              <li><%= service.name %> Account Username</li>
+              <li><%= service.name %> Account Password</li>
+              <li>iMap (for identity verification)</li>
+            <% } %>
+          </ul>
+        </div>
+
+        <div class="info-card security-card">
+          <h2>Security & Privacy</h2>
+          <ul class="security-list">
+            <li>🔒 All credentials are encrypted with AES-256</li>
+            <li>🛡️ Your data is never shared with third parties</li>
+            <li>🔐 Access restricted to verified Discord server members</li>
+            <li>📱 Two-factor authentication support</li>
+          </ul>
+        </div>
+
+        <div class="action-section">
+          <% if (existingSubscription && existingSubscription.status === 'active') { %>
+            <div class="subscription-info">
+              <p>You subscribed to this service on <%= new Date(existingSubscription.created_at).toLocaleDateString() %></p>
+              <p>Last updated: <%= new Date(existingSubscription.updated_at).toLocaleDateString() %></p>
+            </div>
+            <div class="button-group">
+              <button id="fillFormBtn" class="btn btn-primary btn-large">
+                Update Information
+              </button>
+              <form action="/dashboard/service/<%= serviceName %>/unsubscribe" method="POST" style="display: inline;">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to unsubscribe?')">
+                  Unsubscribe
+                </button>
+              </form>
+            </div>
+          <% } else { %>
+            <button id="fillFormBtn" class="btn btn-primary btn-large">
+              Fill Out Form & Subscribe
+            </button>
+          <% } %>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal for Google Form -->
+  <div id="formModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Complete Your Information</h2>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Your Discord information has been pre-filled. Please complete the rest of the form:</p>
+        <iframe id="googleForm" src="" frameborder="0"></iframe>
+      </div>
+      <div class="modal-footer">
+        <p class="modal-note">After submitting the form, close this window to return to the dashboard.</p>
+        <button class="btn btn-secondary" id="closeModalBtn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/footer') %>
+
+  <script>
+    const serviceName = '<%= serviceName %>';
+    const fillFormBtn = document.getElementById('fillFormBtn');
+    const modal = document.getElementById('formModal');
+    const closeModal = document.getElementById('closeModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const googleForm = document.getElementById('googleForm');
+
+    fillFormBtn.addEventListener('click', async () => {
+      try {
+        const response = await fetch(`/dashboard/service/${serviceName}/form`);
+        const data = await response.json();
+
+        googleForm.src = data.formUrl;
+        modal.style.display = 'flex';
+      } catch (error) {
+        console.error('Error loading form:', error);
+        alert('Error loading form. Please try again.');
+      }
+    });
+
+    closeModal.addEventListener('click', () => {
+      modal.style.display = 'none';
+      window.location.reload();
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+      window.location.reload();
+    });
+
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        window.location.reload();
+      }
+    });
+  </script>
+</body>
+</html>
