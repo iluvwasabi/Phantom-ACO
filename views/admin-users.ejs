@@ -187,16 +187,12 @@
             <tr>
               <th>ID</th>
               <th>Username</th>
-              <th>Services</th>
               <th>Discord ID</th>
               <th>Email</th>
-              <th>Method</th>
-              <th>Card #</th>
-              <th>Exp</th>
-              <th>CVC</th>
-              <th>Billing</th>
-              <th>Shipping</th>
-              <th>Phone</th>
+              <th># Submissions</th>
+              <th>Services</th>
+              <th>Joined</th>
+              <th>Last Login</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -204,18 +200,12 @@
             <% if (users && users.length > 0) { %>
               <% users.forEach(user => { %>
                 <%
-                // Build billing address string
-                const billingParts = [user.billing_address, user.billing_city, user.billing_state, user.billing_zipcode].filter(v => v);
-                const billingFull = billingParts.length > 0 ? billingParts.join(', ') : '';
-                const billingDisplay = billingFull || 'N/A';
-
-                // Build shipping address string
-                const shippingParts = [user.shipping_address, user.shipping_city, user.shipping_state, user.shipping_zipcode].filter(v => v);
-                const shippingFull = shippingParts.length > 0 ? shippingParts.join(', ') : '';
-                const shippingDisplay = shippingFull || 'N/A';
-
                 // Format services list
                 const servicesDisplay = user.services && user.services.length > 0 ? user.services.join(', ') : 'None';
+
+                // Format dates
+                const joinedDate = new Date(user.created_at).toLocaleDateString();
+                const lastLoginDate = user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never';
 
                 // Truncate Discord ID for display (keep full for copy)
                 let discordIdDisplay = 'N/A';
@@ -225,29 +215,24 @@
                     discordIdDisplay += '...';
                   }
                 }
-
-                // Truncate card number for display (keep full for copy)
-                let cardDisplay = 'N/A';
-                if (user.card_number) {
-                  cardDisplay = '****' + user.card_number.slice(-4);
-                }
                 %>
                 <tr class="user-row" data-user-id="<%= user.id %>">
                   <td><%= user.id %></td>
                   <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'discord_username', this)"><strong><%= user.discord_username %></strong></td>
-                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'services', this)"><%= servicesDisplay %></td>
                   <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'discord_id', this)"><%= discordIdDisplay %></td>
                   <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'email', this)"><%= user.email || 'N/A' %></td>
-                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'payment_method', this)"><%= user.payment_method || 'N/A' %></td>
-                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'card_number', this)"><%= cardDisplay %></td>
-                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'exp_date', this)"><%= user.exp_date || 'N/A' %></td>
-                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'cvc', this)"><%= user.cvc || 'N/A' %></td>
-                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'billing', this)"><%= billingDisplay %></td>
-                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'shipping', this)"><%= shippingDisplay %></td>
-                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'phone_number', this)"><%= user.phone_number || 'N/A' %></td>
+                  <td>
+                    <% if (user.submission_count > 0) { %>
+                      <span class="badge badge-success"><%= user.submission_count %></span>
+                    <% } else { %>
+                      <span class="badge" style="background: rgba(148, 163, 184, 0.2); color: var(--muted);">0</span>
+                    <% } %>
+                  </td>
+                  <td class="copy-cell" onclick="copyFromUser(<%= user.id %>, 'services', this)"><%= servicesDisplay %></td>
+                  <td><%= joinedDate %></td>
+                  <td><%= lastLoginDate %></td>
                   <td>
                     <div class="submission-actions">
-                      <button class="btn btn-sm btn-primary" onclick="editUser(<%= user.id %>)" title="Edit Payment Info">✏️ Edit</button>
                       <button class="btn btn-sm btn-danger" onclick="deleteFromUser(<%= user.id %>, this)" title="Delete User">🗑️ Delete</button>
                     </div>
                   </td>
@@ -255,7 +240,7 @@
               <% }); %>
             <% } else { %>
               <tr>
-                <td colspan="13" class="empty-state">
+                <td colspan="9" class="empty-state">
                   <p>No users found</p>
                 </td>
               </tr>
@@ -380,12 +365,6 @@
       let text = '';
       if (field === 'services') {
         text = user.services && user.services.length > 0 ? user.services.join(', ') : '';
-      } else if (field === 'billing') {
-        const parts = [user.billing_address, user.billing_city, user.billing_state, user.billing_zipcode].filter(v => v);
-        text = parts.join(', ');
-      } else if (field === 'shipping') {
-        const parts = [user.shipping_address, user.shipping_city, user.shipping_state, user.shipping_zipcode].filter(v => v);
-        text = parts.join(', ');
       } else {
         text = user[field] || '';
       }

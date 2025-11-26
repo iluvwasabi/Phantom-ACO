@@ -120,29 +120,18 @@ router.get('/settings', ensureAuthenticated, ensureAdmin, (req, res) => {
 router.get('/users', ensureAuthenticated, ensureAdmin, (req, res) => {
   const users = db.prepare(`
     SELECT
-      id,
-      discord_id,
-      discord_username,
-      email,
-      payment_email,
-      payment_method,
-      card_number,
-      exp_date,
-      cvc,
-      billing_address,
-      billing_city,
-      billing_state,
-      billing_zipcode,
-      shipping_address,
-      shipping_city,
-      shipping_state,
-      shipping_zipcode,
-      phone_number,
-      created_at,
-      last_login,
-      is_verified
-    FROM users
-    ORDER BY created_at DESC
+      u.id,
+      u.discord_id,
+      u.discord_username,
+      u.email,
+      u.created_at,
+      u.last_login,
+      u.is_verified,
+      COUNT(DISTINCT ss.id) as submission_count
+    FROM users u
+    LEFT JOIN service_subscriptions ss ON ss.user_id = u.id
+    GROUP BY u.id
+    ORDER BY u.created_at DESC
   `).all();
 
   // Get services for each user
