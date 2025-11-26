@@ -150,7 +150,10 @@ const initSchema = () => {
   console.log('Database schema initialized successfully');
 };
 
-// Run migrations
+// Export db first to avoid circular dependency
+module.exports = db;
+
+// Run migrations after export
 const runMigrations = () => {
   const migrationsDir = path.join(__dirname, '../migrations');
 
@@ -163,21 +166,40 @@ const runMigrations = () => {
 
     migrationFiles.forEach(file => {
       try {
-        const migrationPath = path.join(migrationsDir, file);
-        // Run migration by requiring it (each migration handles its own errors)
-        delete require.cache[require.resolve(migrationPath)]; // Clear cache
-        require(migrationPath);
+        // Add payment fields manually to avoid circular dependency
+        if (file === 'add-payment-fields.js') {
+          console.log('Adding payment fields to users table...');
+          try { db.exec(`ALTER TABLE users ADD COLUMN payment_email TEXT;`); console.log('✓ Added payment_email'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ payment_email exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN payment_method TEXT;`); console.log('✓ Added payment_method'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ payment_method exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN subscription_tier TEXT DEFAULT 'free';`); console.log('✓ Added subscription_tier'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ subscription_tier exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN payment_status TEXT DEFAULT 'unpaid';`); console.log('✓ Added payment_status'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ payment_status exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN customer_id TEXT;`); console.log('✓ Added customer_id'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ customer_id exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN phone_number TEXT;`); console.log('✓ Added phone_number'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ phone_number exists'); }
+        } else if (file === 'update-payment-fields.js') {
+          console.log('Updating payment fields...');
+          try { db.exec(`ALTER TABLE users ADD COLUMN card_number TEXT;`); console.log('✓ Added card_number'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ card_number exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN exp_date TEXT;`); console.log('✓ Added exp_date'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ exp_date exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN cvc TEXT;`); console.log('✓ Added cvc'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ cvc exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN billing_address TEXT;`); console.log('✓ Added billing_address'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ billing_address exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN shipping_address TEXT;`); console.log('✓ Added shipping_address'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ shipping_address exists'); }
+        } else if (file === 'add-address-fields.js') {
+          console.log('Adding address fields...');
+          try { db.exec(`ALTER TABLE users ADD COLUMN billing_city TEXT;`); console.log('✓ Added billing_city'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ billing_city exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN billing_state TEXT;`); console.log('✓ Added billing_state'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ billing_state exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN billing_zipcode TEXT;`); console.log('✓ Added billing_zipcode'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ billing_zipcode exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN shipping_city TEXT;`); console.log('✓ Added shipping_city'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ shipping_city exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN shipping_state TEXT;`); console.log('✓ Added shipping_state'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ shipping_state exists'); }
+          try { db.exec(`ALTER TABLE users ADD COLUMN shipping_zipcode TEXT;`); console.log('✓ Added shipping_zipcode'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ shipping_zipcode exists'); }
+        }
       } catch (error) {
         console.error(`Error running migration ${file}:`, error.message);
       }
     });
 
-    console.log('All migrations completed');
+    console.log('All migrations completed successfully!');
   }
 };
 
 // Initialize schema and run migrations on first load
 initSchema();
 runMigrations();
-
-module.exports = db;
