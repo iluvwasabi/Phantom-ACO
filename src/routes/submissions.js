@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const { ensureAuthenticated } = require('../middleware/auth');
+const { ensureAuthenticated, ensureHasACORole } = require('../middleware/auth');
 const CryptoJS = require('crypto-js');
 
 // Encryption helper
@@ -15,7 +15,7 @@ function decrypt(ciphertext) {
 }
 
 // GET /api/submissions - Get all user submissions
-router.get('/api/submissions', ensureAuthenticated, async (req, res) => {
+router.get('/api/submissions', ensureAuthenticated, ensureHasACORole, async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -114,7 +114,7 @@ router.get('/api/submissions', ensureAuthenticated, async (req, res) => {
 });
 
 // POST /api/submissions - Create new submission
-router.post('/api/submissions', ensureAuthenticated, async (req, res) => {
+router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (req, res) => {
   try {
     const userId = req.user.id;
     const {
@@ -237,7 +237,7 @@ router.post('/api/submissions', ensureAuthenticated, async (req, res) => {
 });
 
 // PUT /api/submissions/:id - Update existing submission
-router.put('/api/submissions/:id', ensureAuthenticated, async (req, res) => {
+router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async (req, res) => {
   try {
     const userId = req.user.id;
     const submissionId = req.params.id;
@@ -356,7 +356,7 @@ router.put('/api/submissions/:id', ensureAuthenticated, async (req, res) => {
 });
 
 // DELETE /api/submissions/:id - Delete submission
-router.delete('/api/submissions/:id', ensureAuthenticated, async (req, res) => {
+router.delete('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async (req, res) => {
   try {
     const userId = req.user.id;
     const submissionId = req.params.id;

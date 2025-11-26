@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { ensureAuthenticated, ensureInServer } = require('../middleware/auth');
+const { ensureAuthenticated, ensureInServer, ensureHasACORole } = require('../middleware/auth');
 const Service = require('../models/Service');
 const User = require('../models/User');
 
 // Dashboard home
-router.get('/', ensureAuthenticated, ensureInServer, (req, res) => {
+router.get('/', ensureAuthenticated, ensureInServer, ensureHasACORole, (req, res) => {
   const db = require('../config/database');
 
   // Fetch all active service panels from database (ordered by display_order)
@@ -48,7 +48,7 @@ router.get('/', ensureAuthenticated, ensureInServer, (req, res) => {
 });
 
 // Service selection page
-router.get('/service/:serviceName', ensureAuthenticated, ensureInServer, (req, res) => {
+router.get('/service/:serviceName', ensureAuthenticated, ensureInServer, ensureHasACORole, (req, res) => {
   const { serviceName } = req.params;
   const services = Service.getAllServices();
 
@@ -84,7 +84,7 @@ router.get('/service/:serviceName', ensureAuthenticated, ensureInServer, (req, r
 });
 
 // Generate form URL with Discord prefill
-router.get('/service/:serviceName/form', ensureAuthenticated, ensureInServer, (req, res) => {
+router.get('/service/:serviceName/form', ensureAuthenticated, ensureInServer, ensureHasACORole, (req, res) => {
   const { serviceName } = req.params;
   const services = Service.getAllServices();
 
@@ -127,7 +127,7 @@ router.get('/service/:serviceName/form', ensureAuthenticated, ensureInServer, (r
 });
 
 // User profile
-router.get('/profile', ensureAuthenticated, ensureInServer, (req, res) => {
+router.get('/profile', ensureAuthenticated, ensureInServer, ensureHasACORole, (req, res) => {
   const subscriptions = User.getSubscriptions(req.user.id);
   const formSubmissions = User.getFormSubmissions(req.user.id);
 
@@ -139,7 +139,7 @@ router.get('/profile', ensureAuthenticated, ensureInServer, (req, res) => {
 });
 
 // Unsubscribe from service
-router.post('/service/:serviceName/unsubscribe', ensureAuthenticated, ensureInServer, (req, res) => {
+router.post('/service/:serviceName/unsubscribe', ensureAuthenticated, ensureInServer, ensureHasACORole, (req, res) => {
   const { serviceName } = req.params;
 
   Service.deleteSubscription(req.user.id, serviceName);

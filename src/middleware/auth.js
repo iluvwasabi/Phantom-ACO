@@ -133,10 +133,83 @@ const ensureAdmin = async (req, res, next) => {
   }
 };
 
+/**
+ * Middleware to ensure user has the ACO role or is an administrator
+ */
+const ensureHasACORole = async (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    return res.redirect('/auth/login');
+  }
+
+  try {
+    const serverId = process.env.DISCORD_SERVER_ID;
+    const botToken = process.env.DISCORD_BOT_TOKEN;
+
+    // First check if user is an admin (admins bypass role check)
+    if (req.user.guilds) {
+      const guild = req.user.guilds.find(g => g.id === serverId);
+      if (guild) {
+        const ADMINISTRATOR_PERMISSION = 0x8;
+        const hasAdminPermission = (parseInt(guild.permissions) & ADMINISTRATOR_PERMISSION) === ADMINISTRATOR_PERMISSION;
+
+        if (hasAdminPermission) {
+          console.log(`Admin ${req.user.discord_username} bypassing ACO role check`);
+          return next();
+        }
+      }
+    }
+
+    // Fetch user's roles from Discord API
+    const response = await axios.get(
+      `https://discord.com/api/v10/guilds/${serverId}/members/${req.user.discord_id}`,
+      {
+        headers: {
+          Authorization: `Bot ${botToken}`
+        }
+      }
+    );
+
+    const userRoles = response.data.roles;
+
+    // Fetch all server roles to find ACO role ID
+    const rolesResponse = await axios.get(
+      `https://discord.com/api/v10/guilds/${serverId}/roles`,
+      {
+        headers: {
+          Authorization: `Bot ${botToken}`
+        }
+      }
+    );
+
+    const acoRole = rolesResponse.data.find(role => role.name === 'ACO');
+
+    console.log('=== ACO Role Check Debug ===');
+    console.log('User:', req.user.discord_username);
+    console.log('User roles:', userRoles);
+    console.log('ACO role ID:', acoRole?.id);
+
+    if (acoRole && userRoles.includes(acoRole.id)) {
+      console.log('User has ACO role');
+      return next();
+    }
+
+    // User doesn't have ACO role
+    return res.status(403).render('error', {
+      message: 'Access Denied: You need the ACO role to access this service. Please contact an administrator.',
+      user: req.user
+    });
+
+  } catch (error) {
+    console.error('Error checking ACO role:', error);
+    return res.status(500).send('Error verifying role permissions');
+  }
+};
+
 module.exports = {
   ensureAuthenticated,
   ensureInServer,
   redirectIfAuthenticated,
   checkServiceAccess,
-  ensureAdmin
+  ensureAdmin,
+  ensureHasACORole
 };
