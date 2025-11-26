@@ -2,8 +2,10 @@ const express = require('express');
 const passport = require('passport');
 const router = express.Router();
 
-// Login route
-router.get('/login', passport.authenticate('discord'));
+// Login route - force browser-only OAuth (prevent Discord app from opening)
+router.get('/login', passport.authenticate('discord', {
+  prompt: 'consent'
+}));
 
 // OAuth callback
 router.get('/discord/callback',
