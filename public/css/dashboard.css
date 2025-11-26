@@ -625,23 +625,174 @@ select.control {
 }
 
 /* =============================
-   Responsive
+   Responsive - Mobile First
    ============================= */
+
+/* Tablet styles */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-6);
+  }
+
+  .header-inner {
+    padding: 0 var(--space-6);
+    height: 64px;
+  }
+
+  .brand-name {
+    font-size: 0.95rem;
+  }
+
+  .chip {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-4);
+  }
+}
+
+/* Mobile styles */
 @media (max-width: 640px) {
   .grid {
     grid-template-columns: 1fr;
+    gap: var(--space-4);
   }
 
   .toolbar {
     flex-direction: column;
     align-items: flex-start;
+    gap: var(--space-3);
   }
 
   .header-inner {
     padding: 0 var(--space-4);
+    height: 60px;
+    gap: var(--space-3);
   }
 
   .container {
+    padding: var(--space-4);
+  }
+
+  .brand {
+    gap: var(--space-2);
+  }
+
+  .brand-mark {
+    width: 24px;
+    height: 24px;
+  }
+
+  .brand-name {
+    font-size: 0.9rem;
+  }
+
+  .header-actions {
+    gap: var(--space-2);
+  }
+
+  .chip {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  /* Make buttons more touch-friendly */
+  .btn {
+    padding: 12px 18px;
+    font-size: 0.95rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-primary {
+    width: 100%;
+  }
+
+  /* Card improvements for mobile */
+  .card {
+    padding: var(--space-5);
+  }
+
+  .card-body h3 {
+    font-size: 1.1rem;
+  }
+
+  .card-footer {
+    gap: var(--space-3);
+  }
+
+  .card-actions {
+    width: 100%;
+  }
+
+  .card-actions .btn {
+    width: 100%;
+  }
+
+  /* Modal improvements for mobile */
+  .dialog {
+    margin: var(--space-4);
+    max-width: calc(100% - 32px);
+    max-height: calc(100dvh - 32px);
+  }
+
+  .dialog-body {
+    max-height: calc(100dvh - 200px);
+  }
+
+  /* Form improvements for mobile */
+  .form-group label {
+    font-size: 0.9rem;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    min-height: 44px;
+  }
+
+  /* Hide avatar images on very small screens to save space */
+  .header-actions .chip img {
+    display: none;
+  }
+
+  /* Adjust admin panel on mobile */
+  .admin-panel-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .admin-panel-buttons .btn {
+    width: 100%;
+  }
+}
+
+/* Extra small mobile */
+@media (max-width: 375px) {
+  .container {
+    padding: var(--space-3);
+  }
+
+  .header-inner {
+    padding: 0 var(--space-3);
+  }
+
+  .brand-name {
+    font-size: 0.85rem;
+  }
+
+  .title {
+    font-size: 1.3rem;
+  }
+
+  .card {
     padding: var(--space-4);
   }
 }
