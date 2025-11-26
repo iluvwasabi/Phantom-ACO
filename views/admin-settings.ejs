@@ -211,6 +211,13 @@
         data[key] = value;
       });
 
+      // Don't send login_page_logo if the text input contains an uploaded image path
+      // Logo uploads are handled separately by the "Upload Logo" button
+      const logoInput = document.getElementById('logo-text-input');
+      if (logoInput && logoInput.value.startsWith('/uploads/')) {
+        delete data.login_page_logo;
+      }
+
       try {
         const response = await fetch('/admin/settings', {
           method: 'POST',
