@@ -60,12 +60,13 @@
         <article class="card"
           data-id="target"
           data-title="Target"
-          data-description="Auto-checkout for Target Pokemon drops"
+          data-description="<%= services.LOGIN_REQUIRED.target?.description || 'Auto-checkout for Target Pokemon drops' %>"
           data-type="login_required"
           data-submissions="<%= JSON.stringify(subscribedServices.target || []) %>">
           <div class="card-body">
             <h3>🎯 Target</h3>
-            <p class="muted">Requires account login + iMap</p>
+            <p class="muted"><%= services.LOGIN_REQUIRED.target?.description || 'Auto-checkout for Target Pokemon drops' %></p>
+            <p class="muted" style="font-size: 0.85rem; margin-top: 0.25rem;">Requires account login + iMap</p>
           </div>
           <div class="card-footer">
             <div class="card-status">
@@ -90,12 +91,13 @@
         <article class="card"
           data-id="walmart"
           data-title="Walmart"
-          data-description="Auto-checkout for Walmart Pokemon drops"
+          data-description="<%= services.LOGIN_REQUIRED.walmart?.description || 'Auto-checkout for Walmart Pokemon drops' %>"
           data-type="login_required"
           data-submissions="<%= JSON.stringify(subscribedServices.walmart || []) %>">
           <div class="card-body">
             <h3>🛒 Walmart</h3>
-            <p class="muted">Requires account login + iMap</p>
+            <p class="muted"><%= services.LOGIN_REQUIRED.walmart?.description || 'Auto-checkout for Walmart Pokemon drops' %></p>
+            <p class="muted" style="font-size: 0.85rem; margin-top: 0.25rem;">Requires account login + iMap</p>
           </div>
           <div class="card-footer">
             <div class="card-status">
@@ -120,12 +122,13 @@
         <article class="card"
           data-id="bestbuy"
           data-title="Best Buy"
-          data-description="Auto-checkout for Best Buy Pokemon drops"
+          data-description="<%= services.LOGIN_REQUIRED.bestbuy?.description || 'Auto-checkout for Best Buy Pokemon drops' %>"
           data-type="login_required"
           data-submissions="<%= JSON.stringify(subscribedServices.bestbuy || []) %>">
           <div class="card-body">
             <h3>🔵 Best Buy</h3>
-            <p class="muted">Requires account login + iMap</p>
+            <p class="muted"><%= services.LOGIN_REQUIRED.bestbuy?.description || 'Auto-checkout for Best Buy Pokemon drops' %></p>
+            <p class="muted" style="font-size: 0.85rem; margin-top: 0.25rem;">Requires account login + iMap</p>
           </div>
           <div class="card-footer">
             <div class="card-status">
@@ -150,12 +153,13 @@
         <article class="card"
           data-id="pokemoncenter"
           data-title="Pokemon Center"
-          data-description="Auto-checkout for Pokemon Center drops"
+          data-description="<%= services.NO_LOGIN.pokemoncenter?.description || 'Auto-checkout for Pokemon Center drops' %>"
           data-type="no_login"
           data-submissions="<%= JSON.stringify(subscribedServices.pokemoncenter || []) %>">
           <div class="card-body">
             <h3>⚡ Pokemon Center</h3>
-            <p class="muted">No login required</p>
+            <p class="muted"><%= services.NO_LOGIN.pokemoncenter?.description || 'Auto-checkout for Pokemon Center drops' %></p>
+            <p class="muted" style="font-size: 0.85rem; margin-top: 0.25rem;">No login required</p>
           </div>
           <div class="card-footer">
             <div class="card-status">
@@ -180,12 +184,13 @@
         <article class="card"
           data-id="shopify"
           data-title="Shopify Stores"
-          data-description="Auto-checkout for Shopify-based Pokemon stores"
+          data-description="<%= services.NO_LOGIN.shopify?.description || 'Auto-checkout for Shopify-based Pokemon stores' %>"
           data-type="no_login"
           data-submissions="<%= JSON.stringify(subscribedServices.shopify || []) %>">
           <div class="card-body">
             <h3>🛍️ Shopify Stores</h3>
-            <p class="muted">No login required</p>
+            <p class="muted"><%= services.NO_LOGIN.shopify?.description || 'Auto-checkout for Shopify-based Pokemon stores' %></p>
+            <p class="muted" style="font-size: 0.85rem; margin-top: 0.25rem;">No login required</p>
           </div>
           <div class="card-footer">
             <div class="card-status">

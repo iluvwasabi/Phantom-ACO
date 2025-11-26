@@ -99,7 +99,38 @@ class Service {
   }
 
   static getAllServices() {
-    return this.SERVICES;
+    // Fetch service panels from database to get descriptions
+    const panels = db.prepare('SELECT * FROM service_panels WHERE is_active = 1 ORDER BY display_order').all();
+
+    // Create a map of panel data by service_id
+    const panelMap = {};
+    panels.forEach(panel => {
+      panelMap[panel.service_id] = panel;
+    });
+
+    // Merge static data with database panel data
+    const services = {
+      LOGIN_REQUIRED: {},
+      NO_LOGIN: {}
+    };
+
+    Object.entries(this.SERVICES.LOGIN_REQUIRED).forEach(([key, value]) => {
+      services.LOGIN_REQUIRED[key] = {
+        ...value,
+        description: panelMap[key]?.description || '',
+        color_gradient: panelMap[key]?.color_gradient || ''
+      };
+    });
+
+    Object.entries(this.SERVICES.NO_LOGIN).forEach(([key, value]) => {
+      services.NO_LOGIN[key] = {
+        ...value,
+        description: panelMap[key]?.description || '',
+        color_gradient: panelMap[key]?.color_gradient || ''
+      };
+    });
+
+    return services;
   }
 
   static getServicesByType(type) {
