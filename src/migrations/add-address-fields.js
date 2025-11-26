@@ -72,4 +72,3 @@ try {
 
 console.log('\nMigration completed successfully!');
 console.log('Note: billing_address and shipping_address fields are kept for backwards compatibility');
-process.exit(0);

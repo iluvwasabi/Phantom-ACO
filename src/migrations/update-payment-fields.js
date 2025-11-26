@@ -60,4 +60,3 @@ try {
 
 console.log('\nMigration completed successfully!');
 console.log('Note: Old fields (payment_status, subscription_tier, customer_id) are kept for backwards compatibility');
-process.exit(0);

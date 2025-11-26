@@ -150,7 +150,34 @@ const initSchema = () => {
   console.log('Database schema initialized successfully');
 };
 
-// Initialize schema on first load
+// Run migrations
+const runMigrations = () => {
+  const migrationsDir = path.join(__dirname, '../migrations');
+
+  if (fs.existsSync(migrationsDir)) {
+    const migrationFiles = fs.readdirSync(migrationsDir)
+      .filter(file => file.endsWith('.js'))
+      .sort();
+
+    console.log(`Running ${migrationFiles.length} migrations...`);
+
+    migrationFiles.forEach(file => {
+      try {
+        const migrationPath = path.join(migrationsDir, file);
+        // Run migration by requiring it (each migration handles its own errors)
+        delete require.cache[require.resolve(migrationPath)]; // Clear cache
+        require(migrationPath);
+      } catch (error) {
+        console.error(`Error running migration ${file}:`, error.message);
+      }
+    });
+
+    console.log('All migrations completed');
+  }
+};
+
+// Initialize schema and run migrations on first load
 initSchema();
+runMigrations();
 
 module.exports = db;

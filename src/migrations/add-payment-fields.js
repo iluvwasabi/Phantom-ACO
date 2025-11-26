@@ -82,4 +82,3 @@ try {
 }
 
 console.log('\nMigration completed successfully!');
-process.exit(0);
