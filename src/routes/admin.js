@@ -428,21 +428,35 @@ router.post('/upload-logo', ensureAuthenticated, ensureAdmin, upload.single('log
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    console.log('Logo file uploaded:', req.file);
     const logoPath = `/uploads/logos/${req.file.filename}`;
 
-    // Update the login_page_logo setting
-    db.prepare(`
-      UPDATE admin_settings
-      SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
-      WHERE setting_key = 'login_page_logo'
+    // Get the old logo before updating
+    const oldLogoRow = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('login_page_logo');
+    const oldLogo = oldLogoRow ? oldLogoRow.setting_value : null;
+
+    // Use INSERT OR REPLACE to ensure the setting is always saved
+    const result = db.prepare(`
+      INSERT OR REPLACE INTO admin_settings (id, setting_key, setting_value, setting_type, updated_at, updated_by)
+      VALUES (
+        (SELECT id FROM admin_settings WHERE setting_key = 'login_page_logo'),
+        'login_page_logo',
+        ?,
+        'text',
+        CURRENT_TIMESTAMP,
+        ?
+      )
     `).run(logoPath, req.user.id);
 
-    // Delete old logo if it exists and is not an emoji
-    const oldLogo = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('login_page_logo_old');
-    if (oldLogo && oldLogo.setting_value && oldLogo.setting_value.startsWith('/uploads/')) {
-      const oldPath = path.join(__dirname, '../../public', oldLogo.setting_value);
+    console.log('Database update result:', result);
+    console.log('New logo path saved:', logoPath);
+
+    // Delete old logo file if it exists and is not an emoji
+    if (oldLogo && oldLogo.startsWith('/uploads/')) {
+      const oldPath = path.join(__dirname, '../../public', oldLogo);
       if (fs.existsSync(oldPath)) {
         fs.unlinkSync(oldPath);
+        console.log('Deleted old logo:', oldPath);
       }
     }
 
@@ -453,7 +467,7 @@ router.post('/upload-logo', ensureAuthenticated, ensureAdmin, upload.single('log
     });
   } catch (error) {
     console.error('Upload logo error:', error);
-    res.status(500).json({ error: 'Failed to upload logo' });
+    res.status(500).json({ error: 'Failed to upload logo: ' + error.message });
   }
 });
 
@@ -495,16 +509,24 @@ router.delete('/logo', ensureAuthenticated, ensureAdmin, (req, res) => {
       const filePath = path.join(__dirname, '../../public', currentLogo.setting_value);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
+        console.log('Deleted logo file:', filePath);
       }
     }
 
-    // Reset to default emoji
+    // Reset to default emoji using INSERT OR REPLACE
     db.prepare(`
-      UPDATE admin_settings
-      SET setting_value = '👻', updated_at = CURRENT_TIMESTAMP, updated_by = ?
-      WHERE setting_key = 'login_page_logo'
+      INSERT OR REPLACE INTO admin_settings (id, setting_key, setting_value, setting_type, updated_at, updated_by)
+      VALUES (
+        (SELECT id FROM admin_settings WHERE setting_key = 'login_page_logo'),
+        'login_page_logo',
+        '👻',
+        'text',
+        CURRENT_TIMESTAMP,
+        ?
+      )
     `).run(req.user.id);
 
+    console.log('Logo reset to emoji');
     res.json({ success: true, message: 'Logo deleted, reverted to emoji' });
   } catch (error) {
     console.error('Delete logo error:', error);
