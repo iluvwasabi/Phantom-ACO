@@ -14,10 +14,21 @@ const storage = multer.diskStorage({
     // Use UPLOADS_DIR from environment, fallback to public/uploads
     const uploadsBase = process.env.UPLOADS_DIR || path.join(__dirname, '../../public/uploads');
     const uploadDir = path.join(uploadsBase, 'logos');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+
+    try {
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    } catch (error) {
+      // If we can't create in UPLOADS_DIR, fall back to public/uploads
+      console.error('Failed to create upload directory:', error.message);
+      const fallbackDir = path.join(__dirname, '../../public/uploads/logos');
+      if (!fs.existsSync(fallbackDir)) {
+        fs.mkdirSync(fallbackDir, { recursive: true });
+      }
+      cb(null, fallbackDir);
     }
-    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueName = 'logo-' + Date.now() + path.extname(file.originalname);
