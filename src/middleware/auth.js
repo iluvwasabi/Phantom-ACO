@@ -202,20 +202,6 @@ const ensureHasACORole = async (req, res, next) => {
       });
     }
 
-    // First check if user is an admin in this server (admins bypass role check)
-    if (req.user.guilds) {
-      const guild = req.user.guilds.find(g => g.id === selectedServerId);
-      if (guild) {
-        const ADMINISTRATOR_PERMISSION = 0x8;
-        const hasAdminPermission = (parseInt(guild.permissions) & ADMINISTRATOR_PERMISSION) === ADMINISTRATOR_PERMISSION;
-
-        if (hasAdminPermission) {
-          console.log(`Admin ${req.user.discord_username} bypassing role check in server ${registeredServer.server_name}`);
-          return next();
-        }
-      }
-    }
-
     // Fetch user's roles from Discord API
     const response = await axios.get(
       `https://discord.com/api/v10/guilds/${selectedServerId}/members/${req.user.discord_id}`,
