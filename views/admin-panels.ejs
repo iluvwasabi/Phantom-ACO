@@ -129,6 +129,18 @@
               <option value="0">Inactive</option>
             </select>
           </div>
+
+          <div class="field">
+            <label class="label">Submission Limit</label>
+            <select id="submission-limit" class="control">
+              <option value="0">Unlimited</option>
+              <option value="1">1 Submission</option>
+              <option value="2">2 Submissions</option>
+              <option value="3">3 Submissions</option>
+              <option value="4">4 Submissions</option>
+              <option value="5">5 Submissions</option>
+            </select>
+          </div>
         </form>
       </div>
       <div class="dialog-footer">
@@ -179,6 +191,18 @@
             <label class="label">Color Gradient (CSS)</label>
             <input type="text" id="add-color-gradient" class="control" placeholder="linear-gradient(135deg, #cc0000, #ff0000)">
           </div>
+
+          <div class="field">
+            <label class="label">Submission Limit</label>
+            <select id="add-submission-limit" class="control">
+              <option value="0">Unlimited</option>
+              <option value="1">1 Submission</option>
+              <option value="2">2 Submissions</option>
+              <option value="3">3 Submissions</option>
+              <option value="4">4 Submissions</option>
+              <option value="5">5 Submissions</option>
+            </select>
+          </div>
         </form>
       </div>
       <div class="dialog-footer">
@@ -218,6 +242,7 @@
       document.getElementById('description').value = panel.description || '';
       document.getElementById('color-gradient').value = panel.color_gradient || '';
       document.getElementById('is-active').value = panel.is_active ? '1' : '0';
+      document.getElementById('submission-limit').value = panel.submission_limit || '0';
 
       document.getElementById('edit-modal').classList.add('show');
     }
@@ -241,7 +266,8 @@
         description: document.getElementById('description').value,
         color_gradient: document.getElementById('color-gradient').value,
         is_active: document.getElementById('is-active').value === '1',
-        display_order: parseInt(document.getElementById('display-order').value)
+        display_order: parseInt(document.getElementById('display-order').value),
+        submission_limit: parseInt(document.getElementById('submission-limit').value)
       };
 
       try {
@@ -273,7 +299,8 @@
         service_type: document.getElementById('add-service-type').value,
         description: document.getElementById('add-description').value,
         color_gradient: document.getElementById('add-color-gradient').value,
-        display_order: parseInt(document.getElementById('add-display-order').value)
+        display_order: parseInt(document.getElementById('add-display-order').value),
+        submission_limit: parseInt(document.getElementById('add-submission-limit').value)
       };
 
       try {

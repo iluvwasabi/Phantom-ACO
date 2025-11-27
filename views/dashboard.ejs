@@ -102,11 +102,22 @@
               <% } %>
             </div>
             <div class="inline-note">
-              📄 <strong><%= subscribedServices[panel.service_id] ? subscribedServices[panel.service_id].length : 0 %></strong> submission<%= (subscribedServices[panel.service_id] && subscribedServices[panel.service_id].length === 1) ? '' : 's' %>
+              <%
+                const currentCount = subscribedServices[panel.service_id] ? subscribedServices[panel.service_id].length : 0;
+                const limit = panel.submission_limit || 0;
+              %>
+              📄 <strong><%= currentCount %><% if (limit > 0) { %>/<%= limit %><% } %></strong> submission<%= currentCount === 1 ? '' : 's' %>
+              <% if (limit > 0 && currentCount >= limit) { %>
+                <span style="color: var(--danger); font-size: 0.85rem; margin-left: 4px;">(Limit reached)</span>
+              <% } %>
             </div>
             <div class="card-actions">
-              <button class="btn btn-primary" data-action="add-submission" data-service="<%= panel.service_id %>">
-                + Add Submission
+              <button class="btn btn-primary" data-action="add-submission" data-service="<%= panel.service_id %>" <%= (limit > 0 && currentCount >= limit) ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '' %>>
+                <% if (limit > 0 && currentCount >= limit) { %>
+                  🚫 Limit Reached
+                <% } else { %>
+                  + Add Submission
+                <% } %>
               </button>
             </div>
           </div>

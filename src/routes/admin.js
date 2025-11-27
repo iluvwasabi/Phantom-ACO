@@ -592,13 +592,13 @@ router.get('/stats', ensureAdminAuth, (req, res) => {
 router.put('/panels/:id', ensureAdminAuth, (req, res) => {
   try {
     const panelId = req.params.id;
-    const { service_name, description, color_gradient, is_active, display_order } = req.body;
+    const { service_name, description, color_gradient, is_active, display_order, submission_limit } = req.body;
 
     db.prepare(`
       UPDATE service_panels
-      SET service_name = ?, description = ?, color_gradient = ?, is_active = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP
+      SET service_name = ?, description = ?, color_gradient = ?, is_active = ?, display_order = ?, submission_limit = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(service_name, description, color_gradient, is_active ? 1 : 0, display_order, panelId);
+    `).run(service_name, description, color_gradient, is_active ? 1 : 0, display_order, submission_limit || 0, panelId);
 
     res.json({ success: true, message: 'Panel updated successfully' });
   } catch (error) {
@@ -610,12 +610,12 @@ router.put('/panels/:id', ensureAdminAuth, (req, res) => {
 // Create a new panel
 router.post('/panels', ensureAdminAuth, (req, res) => {
   try {
-    const { service_id, service_name, service_type, description, color_gradient, display_order } = req.body;
+    const { service_id, service_name, service_type, description, color_gradient, display_order, submission_limit } = req.body;
 
     const result = db.prepare(`
-      INSERT INTO service_panels (service_id, service_name, service_type, description, color_gradient, display_order, is_active)
-      VALUES (?, ?, ?, ?, ?, ?, 1)
-    `).run(service_id, service_name, service_type, description, color_gradient, display_order || 99);
+      INSERT INTO service_panels (service_id, service_name, service_type, description, color_gradient, display_order, submission_limit, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+    `).run(service_id, service_name, service_type, description, color_gradient, display_order || 99, submission_limit || 0);
 
     res.json({ success: true, message: 'Panel created successfully', id: result.lastInsertRowid });
   } catch (error) {

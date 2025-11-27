@@ -173,6 +173,17 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       userId
     );
 
+    // Check submission limit for this service
+    const servicePanel = db.prepare('SELECT submission_limit FROM service_panels WHERE service_id = ?').get(service);
+    if (servicePanel && servicePanel.submission_limit > 0) {
+      const currentCount = db.prepare('SELECT COUNT(*) as count FROM service_subscriptions WHERE user_id = ? AND service_name = ?').get(userId, service);
+      if (currentCount && currentCount.count >= servicePanel.submission_limit) {
+        return res.status(400).json({
+          error: `Submission limit reached. You can only have ${servicePanel.submission_limit} submission${servicePanel.submission_limit > 1 ? 's' : ''} for this service.`
+        });
+      }
+    }
+
     // Create service subscription
     const subscriptionResult = db.prepare(`
       INSERT INTO service_subscriptions (user_id, service_type, service_name, status, notes)
