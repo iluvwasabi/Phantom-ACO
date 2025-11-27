@@ -196,6 +196,9 @@ const runMigrations = () => {
         } else if (file === 'create-tos-table.js') {
           console.log('Creating TOS acceptance table...');
           require(path.join(migrationsDir, file));
+        } else if (file === 'add-notes-field.js') {
+          console.log('Adding notes field...');
+          require(path.join(migrationsDir, file));
         }
       } catch (error) {
         console.error(`Error running migration ${file}:`, error.message);

@@ -100,6 +100,7 @@ router.get('/api/submissions', ensureAuthenticated, ensureHasACORole, async (req
         status: sub.status,
         created_at: sub.created_at,
         updated_at: sub.updated_at,
+        notes: sub.notes,
         ...decryptedData
       };
     });
@@ -139,7 +140,8 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       country,
       account_email,
       account_password,
-      account_imap
+      account_imap,
+      notes
     } = req.body;
 
     // Update user's payment information in users table
@@ -173,9 +175,9 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
 
     // Create service subscription
     const subscriptionResult = db.prepare(`
-      INSERT INTO service_subscriptions (user_id, service_type, service_name, status)
-      VALUES (?, ?, ?, 'active')
-    `).run(userId, account_email ? 'login_required' : 'no_login', service);
+      INSERT INTO service_subscriptions (user_id, service_type, service_name, status, notes)
+      VALUES (?, ?, ?, 'active', ?)
+    `).run(userId, account_email ? 'login_required' : 'no_login', service, notes || null);
 
     const subscriptionId = subscriptionResult.lastInsertRowid;
 
@@ -262,7 +264,8 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       country,
       account_email,
       account_password,
-      account_imap
+      account_imap,
+      notes
     } = req.body;
 
     // Find existing subscription and verify ownership
@@ -341,8 +344,8 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       subscription.id
     );
 
-    // Update subscription timestamp
-    db.prepare('UPDATE service_subscriptions SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(subscription.id);
+    // Update subscription with notes and timestamp
+    db.prepare('UPDATE service_subscriptions SET notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(notes || null, subscription.id);
 
     res.json({
       success: true,

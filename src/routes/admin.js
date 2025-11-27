@@ -176,6 +176,7 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
       ss.service_name,
       ss.service_type,
       ss.created_at,
+      ss.notes,
       u.discord_username,
       u.discord_id,
       ec.encrypted_password
@@ -208,6 +209,7 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
         discord_id: sub.discord_id,
         service_name: sub.service_name,
         created_at: sub.created_at,
+        notes: sub.notes,
         email: parsed.email || null,
         phone: parsed.phone || null,
         name_on_card: parsed.name_on_card || null,
@@ -503,7 +505,7 @@ router.put('/api/submissions/:id', ensureAdminAuth, async (req, res) => {
 });
 
 // Get all submissions (API endpoint)
-router.get('/submissions', ensureAdminAuth, (req, res) => {
+router.get('/api/submissions', ensureAdminAuth, (req, res) => {
   const submissions = db.prepare(`
     SELECT
       ss.id,
@@ -512,6 +514,7 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
       ss.status,
       ss.created_at,
       ss.updated_at,
+      ss.notes,
       u.discord_username,
       u.discord_id,
       u.id as user_id

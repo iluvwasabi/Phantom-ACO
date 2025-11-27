@@ -36,7 +36,9 @@
       { name: 'separator', type: 'separator' },
       { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
       { name: 'account_password', label: 'Account Password *', type: 'text', required: true, wide: false },
-      { name: 'account_imap', label: 'Account iMap *', type: 'textarea', required: true, wide: true }
+      { name: 'account_imap', label: 'Account iMap *', type: 'textarea', required: true, wide: true },
+      { name: 'separator', type: 'separator' },
+      { name: 'notes', label: 'Special Instructions (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
     ],
     no_login: [
       { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
@@ -56,7 +58,9 @@
       { name: 'city', label: 'Shipping City *', type: 'text', required: true, wide: false },
       { name: 'state', label: 'Shipping State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
       { name: 'zip_code', label: 'Shipping Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
-      { name: 'country', label: 'Country *', type: 'select', required: true, wide: false, options: ['United States'], default: 'United States' }
+      { name: 'country', label: 'Country *', type: 'select', required: true, wide: false, options: ['United States'], default: 'United States' },
+      { name: 'separator', type: 'separator' },
+      { name: 'notes', label: 'Special Instructions (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
     ]
   };
 
@@ -92,7 +96,8 @@
         });
         html += '</select>';
       } else if (field.type === 'textarea') {
-        html += `<textarea class="control" name="${field.name}" placeholder="Enter ${field.label.replace(' *', '')}" rows="4" ${field.required ? 'required' : ''}>${existingData[field.name] || ''}</textarea>`;
+        const placeholder = field.placeholder || `Enter ${field.label.replace(' *', '')}`;
+        html += `<textarea class="control" name="${field.name}" placeholder="${placeholder}" rows="4" ${field.required ? 'required' : ''}>${existingData[field.name] || ''}</textarea>`;
       } else {
         const value = existingData[field.name] || '';
         html += `<input class="control" type="${field.type}" name="${field.name}" placeholder="${field.label.replace(' *', '')}" ${field.required ? 'required' : ''} ${field.maxlength ? `maxlength="${field.maxlength}"` : ''} value="${value}">`;
@@ -424,6 +429,7 @@
               <th>Type</th>
               <th>Email</th>
               <th>Last 4 Digits</th>
+              <th>Notes</th>
               <th>Status</th>
               <th>Created</th>
               <th>Actions</th>
@@ -450,6 +456,8 @@
       const serviceType = sub.service_type === 'login_required' ? 'Login Required' : 'No Login';
       const email = sub.email || sub.account_email || '-';
       const last4 = sub.card_number ? sub.card_number.slice(-4) : '-';
+      const notes = sub.notes ? (sub.notes.length > 50 ? sub.notes.substring(0, 50) + '...' : sub.notes) : '-';
+      const notesTitle = sub.notes || '';
       const status = sub.status === 'active' ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">Inactive</span>';
       const created = new Date(sub.created_at).toLocaleDateString();
 
@@ -464,6 +472,7 @@
           <td>${serviceType}</td>
           <td>${hasError ? '<span style="color: #ef4444;">[Decryption Error]</span>' : email}</td>
           <td>****${last4}</td>
+          <td title="${notesTitle}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${notes}</td>
           <td>${status}</td>
           <td>${created}</td>
           <td>

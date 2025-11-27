@@ -150,6 +150,7 @@
                 <th>Exp</th>
                 <th>CVC</th>
                 <th>Phone</th>
+                <th>Notes</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
@@ -168,6 +169,7 @@
                     <td class="copy-cell" onclick="copyText('<%= sub.exp_month %>/<%= sub.exp_year %>', this)"><%= sub.exp_month %>/<%= sub.exp_year %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.cvv || '' %>', this)"><%= sub.cvv || 'N/A' %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.phone || '' %>', this)"><%= sub.phone || 'N/A' %></td>
+                    <td class="copy-cell" onclick="copyText('<%= sub.notes || '' %>', this)" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="<%= sub.notes || '' %>"><%= sub.notes || 'N/A' %></td>
                     <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
                     <td>
                       <div class="submission-actions">
@@ -179,7 +181,7 @@
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="12" style="text-align: center; padding: var(--space-8); color: var(--muted);">
+                  <td colspan="13" style="text-align: center; padding: var(--space-8); color: var(--muted);">
                     No Target submissions yet
                   </td>
                 </tr>
@@ -205,6 +207,7 @@
                 <th>Exp</th>
                 <th>CVC</th>
                 <th>Phone</th>
+                <th>Notes</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
@@ -223,6 +226,7 @@
                     <td class="copy-cell" onclick="copyText('<%= sub.exp_month %>/<%= sub.exp_year %>', this)"><%= sub.exp_month %>/<%= sub.exp_year %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.cvv || '' %>', this)"><%= sub.cvv || 'N/A' %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.phone || '' %>', this)"><%= sub.phone || 'N/A' %></td>
+                    <td class="copy-cell" onclick="copyText('<%= sub.notes || '' %>', this)" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="<%= sub.notes || '' %>"><%= sub.notes || 'N/A' %></td>
                     <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
                     <td>
                       <div class="submission-actions">
@@ -234,7 +238,7 @@
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="12" style="text-align: center; padding: var(--space-8); color: var(--muted);">
+                  <td colspan="13" style="text-align: center; padding: var(--space-8); color: var(--muted);">
                     No Walmart submissions yet
                   </td>
                 </tr>
@@ -260,6 +264,7 @@
                 <th>Exp</th>
                 <th>CVC</th>
                 <th>Phone</th>
+                <th>Notes</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
@@ -289,7 +294,7 @@
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="12" style="text-align: center; padding: var(--space-8); color: var(--muted);">
+                  <td colspan="13" style="text-align: center; padding: var(--space-8); color: var(--muted);">
                     No Best Buy submissions yet
                   </td>
                 </tr>
@@ -315,6 +320,7 @@
                 <th>Billing</th>
                 <th>Shipping</th>
                 <th>Phone</th>
+                <th>Notes</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
@@ -336,6 +342,7 @@
                     <td class="copy-cell" onclick="copyText('<%= billingFull %>', this)"><%= billingFull || 'N/A' %></td>
                     <td class="copy-cell" onclick="copyText('<%= shippingFull %>', this)"><%= shippingFull || 'N/A' %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.phone || '' %>', this)"><%= sub.phone || 'N/A' %></td>
+                    <td class="copy-cell" onclick="copyText('<%= sub.notes || '' %>', this)" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="<%= sub.notes || '' %>"><%= sub.notes || 'N/A' %></td>
                     <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
                     <td>
                       <div class="submission-actions">
@@ -347,7 +354,7 @@
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="12" style="text-align: center; padding: var(--space-8); color: var(--muted);">
+                  <td colspan="13" style="text-align: center; padding: var(--space-8); color: var(--muted);">
                     No Pokemon Center submissions yet
                   </td>
                 </tr>
@@ -373,6 +380,7 @@
                 <th>Billing</th>
                 <th>Shipping</th>
                 <th>Phone</th>
+                <th>Notes</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
@@ -405,7 +413,7 @@
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="12" style="text-align: center; padding: var(--space-8); color: var(--muted);">
+                  <td colspan="13" style="text-align: center; padding: var(--space-8); color: var(--muted);">
                     No Shopify submissions yet
                   </td>
                 </tr>
