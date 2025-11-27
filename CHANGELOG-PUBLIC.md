@@ -22,6 +22,12 @@ All the latest features and improvements for Phantom ACO users.
 - If you're in multiple Discord servers using Phantom ACO, you can now switch between them
 - Use the server dropdown in the dashboard header to select your server
 
+### 🎨 Improvements
+
+**Better Login Experience**
+- Increased logo size on login page for better visibility (now 350px)
+- Custom logos now persist across updates and redeployments
+
 ---
 
 ## [November 26, 2025]

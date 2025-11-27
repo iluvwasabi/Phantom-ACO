@@ -11,9 +11,20 @@ All notable changes to the Phantom ACO service are documented here.
 - **Changelog Links in Dashboard** - Users see "What's New" link, admins see "Full Changelog" link
 - **Notes Field for Submissions** - Users can add special instructions like "Only run ETB" or "Avoid booster boxes" to each panel submission
 - **Multi-Server Switcher** - Users in multiple Discord servers can now select which server to use via dropdown in dashboard header
+- **Persistent Logo Storage** - Configured persistent storage for logo uploads using Render disk mounts via `UPLOADS_DIR` environment variable
+
+### 🎨 UI Improvements
+- **Larger Login Logo** - Increased login page logo size from 250px to 350px for better visibility
 
 ### 🐛 Bug Fixes
 - Fixed multi-server permission checking - users with ACO role in one server no longer denied access when system auto-selected wrong server
+- Fixed logo uploads being wiped on deployment - uploads now persist when `UPLOADS_DIR` points to Render persistent disk
+
+### 🔧 Technical
+- Added `UPLOADS_DIR` environment variable for configurable upload directory (defaults to `./public/uploads`)
+- Updated multer storage configuration to use `UPLOADS_DIR` for flexible deployment
+- Added static file serving for uploads directory when stored outside public folder
+- Created `RENDER_PERSISTENT_STORAGE.md` setup guide for Render disk configuration
 
 ---
 
