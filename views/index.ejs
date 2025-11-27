@@ -127,7 +127,7 @@
       <!-- Logo Placeholder -->
       <div class="logo-placeholder">
         <% if (settings.login_page_logo && settings.login_page_logo.startsWith('/uploads/')) { %>
-          <img src="<%= settings.login_page_logo %>" alt="Logo" style="max-width: 100%; max-height: 100%; border-radius: 24px; object-fit: contain;">
+          <img src="<%= settings.login_page_logo %>" alt="Logo" style="max-width: 100%; max-height: 100%; border-radius: 24px; object-fit: contain; mix-blend-mode: screen; filter: brightness(1.2) contrast(1.1);">
         <% } else { %>
           <%= settings.login_page_logo || '👻' %>
         <% } %>
