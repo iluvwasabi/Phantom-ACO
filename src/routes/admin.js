@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { ensureAuthenticated, ensureAdmin } = require('../middleware/auth');
+const { ensureAuthenticated, ensureAdmin, ensureInServer } = require('../middleware/auth');
 const Service = require('../models/Service');
 const db = require('../config/database');
 const multer = require('multer');
@@ -40,7 +40,7 @@ const upload = multer({
 });
 
 // Admin dashboard
-router.get('/', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.get('/', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   const services = Service.getAllServices();
 
   // Get all users count
@@ -79,7 +79,7 @@ router.get('/', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Panels management page
-router.get('/panels', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.get('/panels', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   const panels = db.prepare(`
     SELECT * FROM service_panels
     ORDER BY display_order ASC
@@ -97,7 +97,7 @@ router.get('/panels', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Settings management page
-router.get('/settings', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.get('/settings', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   const settings = db.prepare(`
     SELECT * FROM admin_settings
     ORDER BY setting_key ASC
@@ -117,7 +117,7 @@ router.get('/settings', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Users management page
-router.get('/users', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.get('/users', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   const users = db.prepare(`
     SELECT
       u.id,
@@ -158,7 +158,7 @@ router.get('/users', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Submissions management page
-router.get('/submissions', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.get('/submissions', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   // Decryption helper
   function decrypt(ciphertext) {
     try {
@@ -251,7 +251,7 @@ router.get('/submissions', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Get all users (API endpoint)
-router.get('/api/users', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.get('/api/users', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   const users = db.prepare(`
     SELECT
       id,
@@ -268,8 +268,242 @@ router.get('/api/users', ensureAuthenticated, ensureAdmin, (req, res) => {
   res.json({ users });
 });
 
+// Get a specific submission by ID (admin only - can fetch any user's submission)
+router.get('/api/submissions/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+  try {
+    const submissionId = req.params.id;
+
+    // Decryption helper
+    function decrypt(ciphertext) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(ciphertext, process.env.ENCRYPTION_KEY);
+        return bytes.toString(CryptoJS.enc.Utf8);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Get submission with encrypted credentials
+    const submission = db.prepare(`
+      SELECT
+        ss.id,
+        ss.service_name,
+        ss.service_type,
+        ss.status,
+        ss.created_at,
+        ss.updated_at,
+        ss.user_id,
+        ec.encrypted_username,
+        ec.encrypted_password,
+        ec.encrypted_imap
+      FROM service_subscriptions ss
+      LEFT JOIN encrypted_credentials ec ON ec.subscription_id = ss.id
+      WHERE ss.id = ?
+    `).get(submissionId);
+
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    // Decrypt the data
+    let decryptedData = {};
+
+    if (submission.encrypted_password) {
+      try {
+        const decryptedPassword = decrypt(submission.encrypted_password);
+
+        if (!decryptedPassword || decryptedPassword.trim() === '') {
+          throw new Error('Decryption returned empty result');
+        }
+
+        // Check if it's a JSON string
+        if (decryptedPassword.startsWith('{')) {
+          const parsed = JSON.parse(decryptedPassword);
+          decryptedData = {
+            email: parsed.email || null,
+            phone: parsed.phone || null,
+            name_on_card: parsed.name_on_card || null,
+            card_type: parsed.card_type || null,
+            card_number: parsed.card_number || null,
+            cvv: parsed.cvv || null,
+            exp_month: parsed.exp_month || null,
+            exp_year: parsed.exp_year || null,
+            billing_address: parsed.billing_address || null,
+            billing_city: parsed.billing_city || null,
+            billing_state: parsed.billing_state || null,
+            billing_zipcode: parsed.billing_zipcode || null,
+            address1: parsed.address1 || null,
+            unit_number: parsed.unit_number || null,
+            city: parsed.city || null,
+            state: parsed.state || null,
+            zip_code: parsed.zip_code || null,
+            country: parsed.country || null,
+            account_email: parsed.account_email || null,
+            account_password: parsed.account_password || null,
+            account_imap: parsed.account_imap || null
+          };
+        } else {
+          // It's just a password string (for login_required services)
+          const username = submission.encrypted_username ? decrypt(submission.encrypted_username) : null;
+          const imap = submission.encrypted_imap ? decrypt(submission.encrypted_imap) : null;
+
+          decryptedData = {
+            account_email: username && username.trim() !== '' ? username : null,
+            account_password: decryptedPassword,
+            account_imap: imap && imap.trim() !== '' ? imap : null
+          };
+        }
+      } catch (e) {
+        console.error('Decryption error for submission:', submission.id, e.message);
+        return res.status(500).json({ error: 'Failed to decrypt submission data' });
+      }
+    }
+
+    res.json({
+      id: submission.id,
+      service_name: submission.service_name,
+      service_type: submission.service_type,
+      status: submission.status,
+      created_at: submission.created_at,
+      updated_at: submission.updated_at,
+      user_id: submission.user_id,
+      ...decryptedData
+    });
+
+  } catch (error) {
+    console.error('Get submission error:', error);
+    res.status(500).json({ error: 'Failed to fetch submission' });
+  }
+});
+
+// Update any user's submission (admin only)
+router.put('/api/submissions/:id', ensureAuthenticated, ensureInServer, ensureAdmin, async (req, res) => {
+  try {
+    const submissionId = req.params.id;
+    const {
+      email,
+      phone,
+      name_on_card,
+      card_type,
+      card_number,
+      cvv,
+      exp_month,
+      exp_year,
+      billing_address,
+      billing_city,
+      billing_state,
+      billing_zipcode,
+      address1,
+      unit_number,
+      city,
+      state,
+      zip_code,
+      country,
+      account_email,
+      account_password,
+      account_imap
+    } = req.body;
+
+    // Encryption helper
+    function encrypt(text) {
+      return CryptoJS.AES.encrypt(text, process.env.ENCRYPTION_KEY).toString();
+    }
+
+    // Find existing subscription (no ownership check for admin)
+    const subscription = db.prepare('SELECT * FROM service_subscriptions WHERE id = ?').get(submissionId);
+
+    if (!subscription) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    // Get the user_id from the subscription to update their payment info
+    const userId = subscription.user_id;
+
+    // Update user's payment information in users table
+    const expDate = exp_month && exp_year ? `${exp_month}/${exp_year}` : null;
+    const shippingFullAddress = address1 ? address1 + (unit_number ? ` ${unit_number}` : '') : null;
+
+    db.prepare(`
+      UPDATE users
+      SET payment_email = ?, payment_method = ?, card_number = ?, exp_date = ?, cvc = ?,
+          billing_address = ?, billing_city = ?, billing_state = ?, billing_zipcode = ?,
+          shipping_address = ?, shipping_city = ?, shipping_state = ?, shipping_zipcode = ?,
+          phone_number = ?
+      WHERE id = ?
+    `).run(
+      email || account_email,
+      card_type,
+      card_number,
+      expDate,
+      cvv,
+      billing_address,
+      billing_city,
+      billing_state,
+      billing_zipcode,
+      shippingFullAddress,
+      city,
+      state,
+      zip_code,
+      phone,
+      userId
+    );
+
+    // Prepare data object (NOT encrypted yet)
+    const dataToEncrypt = {
+      email,
+      phone,
+      name_on_card,
+      card_type,
+      card_number,
+      cvv,
+      exp_month,
+      exp_year,
+      billing_address,
+      billing_city,
+      billing_state,
+      billing_zipcode,
+      address1,
+      unit_number,
+      city,
+      state,
+      zip_code,
+      country,
+      account_email,
+      account_password,
+      account_imap
+    };
+
+    // Encrypt the entire JSON object as a single string
+    const encryptedDataString = encrypt(JSON.stringify(dataToEncrypt));
+
+    // Update credentials
+    db.prepare(`
+      UPDATE encrypted_credentials
+      SET encrypted_username = ?, encrypted_password = ?, encrypted_imap = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE subscription_id = ?
+    `).run(
+      account_email ? encrypt(account_email) : encrypt(email),
+      encryptedDataString,
+      account_imap ? encrypt(account_imap) : null,
+      subscription.id
+    );
+
+    // Update subscription timestamp
+    db.prepare('UPDATE service_subscriptions SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(subscription.id);
+
+    res.json({
+      success: true,
+      message: 'Submission updated successfully!'
+    });
+
+  } catch (error) {
+    console.error('Admin update error:', error);
+    res.status(500).json({ error: 'Failed to update submission' });
+  }
+});
+
 // Get all submissions (API endpoint)
-router.get('/submissions', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.get('/submissions', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   const submissions = db.prepare(`
     SELECT
       ss.id,
@@ -290,7 +524,7 @@ router.get('/submissions', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Delete a submission (admin only)
-router.delete('/submissions/:id', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.delete('/submissions/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   try {
     const submissionId = req.params.id;
 
@@ -304,7 +538,7 @@ router.delete('/submissions/:id', ensureAuthenticated, ensureAdmin, (req, res) =
 });
 
 // Get service statistics
-router.get('/stats', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.get('/stats', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   try {
     // Count submissions by service
     const serviceStats = db.prepare(`
@@ -339,7 +573,7 @@ router.get('/stats', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Update a panel
-router.put('/panels/:id', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.put('/panels/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   try {
     const panelId = req.params.id;
     const { service_name, description, color_gradient, is_active, display_order } = req.body;
@@ -358,7 +592,7 @@ router.put('/panels/:id', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Create a new panel
-router.post('/panels', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.post('/panels', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   try {
     const { service_id, service_name, service_type, description, color_gradient, display_order } = req.body;
 
@@ -375,7 +609,7 @@ router.post('/panels', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Delete a panel
-router.delete('/panels/:id', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.delete('/panels/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   try {
     const panelId = req.params.id;
 
@@ -389,7 +623,7 @@ router.delete('/panels/:id', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Update settings
-router.post('/settings', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.post('/settings', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   try {
     const updates = req.body;
 
@@ -411,7 +645,7 @@ router.post('/settings', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Upload logo
-router.post('/upload-logo', ensureAuthenticated, ensureAdmin, upload.single('logo'), (req, res) => {
+router.post('/upload-logo', ensureAuthenticated, ensureInServer, ensureAdmin, upload.single('logo'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -461,7 +695,7 @@ router.post('/upload-logo', ensureAuthenticated, ensureAdmin, upload.single('log
 });
 
 // Update user payment information
-router.post('/users/:id/payment', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.post('/users/:id/payment', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   try {
     const userId = req.params.id;
     const { payment_email, payment_method, card_number, exp_date, cvc,
@@ -489,7 +723,7 @@ router.post('/users/:id/payment', ensureAuthenticated, ensureAdmin, (req, res) =
 });
 
 // Delete logo (revert to emoji)
-router.delete('/logo', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.delete('/logo', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   try {
     const currentLogo = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('login_page_logo');
 
@@ -524,7 +758,7 @@ router.delete('/logo', ensureAuthenticated, ensureAdmin, (req, res) => {
 });
 
 // Delete user
-router.delete('/users/:id', ensureAuthenticated, ensureAdmin, (req, res) => {
+router.delete('/users/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
   try {
     const userId = req.params.id;
 

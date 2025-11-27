@@ -568,18 +568,17 @@
     // Edit submission
     async function editSubmission(id) {
       try {
-        // Fetch submission data
-        const response = await fetch(`/api/submissions`, {
+        // Fetch submission data using admin API
+        const response = await fetch(`/admin/api/submissions/${id}`, {
           credentials: 'same-origin'
         });
 
-        const data = await response.json();
-        const submission = data.submissions.find(s => s.id === id);
-
-        if (!submission) {
-          showToast('Submission not found');
+        if (!response.ok) {
+          showToast('Failed to load submission data');
           return;
         }
+
+        const submission = await response.json();
 
         // Populate form
         document.getElementById('edit-submission-id').value = submission.id;
@@ -642,7 +641,7 @@
       };
 
       try {
-        const response = await fetch(`/api/submissions/${submissionId}`, {
+        const response = await fetch(`/admin/api/submissions/${submissionId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
