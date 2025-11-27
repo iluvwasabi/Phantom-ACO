@@ -33,9 +33,12 @@ router.get('/', ensureAuthenticated, ensureInServer, ensureHasACORole, (req, res
     }
   }
 
-  // Fetch brand name from settings
+  // Fetch brand name and logo from settings
   const brandNameSetting = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('brand_name');
   const brandName = brandNameSetting ? brandNameSetting.setting_value : 'Phantom ACO';
+
+  const logoSetting = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('login_page_logo');
+  const logo = logoSetting ? logoSetting.setting_value : '👻';
 
   // Get user's available servers
   const userGuildIds = req.user.guilds ? req.user.guilds.map(g => g.id) : [];
@@ -54,6 +57,7 @@ router.get('/', ensureAuthenticated, ensureInServer, ensureHasACORole, (req, res
     appUrl: process.env.APP_URL,
     isAdmin: isAdmin,
     brandName: brandName,
+    logo: logo,
     userServers: userServers,
     selectedServer: selectedServer
   });
