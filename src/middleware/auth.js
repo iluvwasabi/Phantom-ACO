@@ -238,10 +238,19 @@ const ensureHasACORole = async (req, res, next) => {
       return next();
     }
 
+    // Get user's other available servers
+    const userGuildIds = req.user.guilds ? req.user.guilds.map(g => g.id) : [];
+    const placeholders = userGuildIds.map(() => '?').join(',');
+    const availableServers = userGuildIds.length > 0
+      ? db.prepare(`SELECT * FROM registered_servers WHERE server_id IN (${placeholders}) AND is_active = 1`).all(...userGuildIds)
+      : [];
+
     // User doesn't have required role
     return res.status(403).render('error', {
       message: `Access Denied: You need the "${registeredServer.required_role_name}" role in ${registeredServer.server_name} to access this service. Please contact an administrator.`,
-      user: req.user
+      user: req.user,
+      availableServers: availableServers,
+      currentServer: registeredServer
     });
 
   } catch (error) {

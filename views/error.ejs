@@ -1,26 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Error - ACO Service</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body>
-  <div class="container">
-    <main class="error-main">
-      <div class="error-content">
-        <div class="error-icon">⚠️</div>
-        <h1>Oops!</h1>
-        <p class="error-message"><%= message || 'Something went wrong' %></p>
+  <div class="container" style="padding-top: 100px;">
+    <main class="error-main" style="max-width: 600px; margin: 0 auto;">
+      <div class="card">
+        <div class="card-body" style="text-align: center; padding: var(--space-8);">
+          <div style="font-size: 4rem; margin-bottom: var(--space-4);">⚠️</div>
+          <h1 style="margin-bottom: var(--space-4);">Oops!</h1>
+          <p style="color: var(--muted); margin-bottom: var(--space-6);"><%= message || 'Something went wrong' %></p>
 
-        <div class="error-actions">
-          <a href="<%= user ? '/dashboard' : '/' %>" class="btn btn-primary">
-            <%= user ? 'Back to Dashboard' : 'Go Home' %>
-          </a>
+          <% if (availableServers && availableServers.length > 1) { %>
+            <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-6);">
+              <h3 style="margin: 0 0 var(--space-3) 0; color: #60a5fa;">🔄 Try a Different Server</h3>
+              <p style="margin: 0 0 var(--space-4) 0; font-size: 0.9rem; color: var(--muted);">You're currently trying to access via <strong><%= currentServer.server_name %></strong>. Switch to another server:</p>
+
+              <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <% availableServers.forEach(server => { %>
+                  <% if (server.server_id !== currentServer.server_id) { %>
+                    <button onclick="switchServer('<%= server.server_id %>')" class="btn btn-primary" style="width: 100%;">
+                      🖥️ Switch to <%= server.server_name %>
+                    </button>
+                  <% } %>
+                <% }); %>
+              </div>
+            </div>
+          <% } %>
+
+          <div style="display: flex; gap: var(--space-3); justify-content: center;">
+            <a href="<%= user ? '/dashboard' : '/' %>" class="btn btn-ghost">
+              <%= user ? 'Back to Dashboard' : 'Go Home' %>
+            </a>
+            <% if (user) { %>
+              <a href="/auth/logout" class="btn btn-ghost">Logout</a>
+            <% } %>
+          </div>
         </div>
       </div>
     </main>
   </div>
+
+  <script>
+    async function switchServer(serverId) {
+      try {
+        const response = await fetch('/dashboard/switch-server', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({ serverId })
+        });
+
+        if (response.ok) {
+          // Redirect to dashboard
+          window.location.href = '/dashboard';
+        } else {
+          alert('Failed to switch server. Please try logging out and back in.');
+        }
+      } catch (error) {
+        console.error('Error switching server:', error);
+        alert('Error switching server. Please try again.');
+      }
+    }
+  </script>
 </body>
 </html>
