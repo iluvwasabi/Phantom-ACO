@@ -193,6 +193,9 @@ const runMigrations = () => {
         } else if (file === 'add-multitenant-tables.js') {
           console.log('Creating multi-tenant tables...');
           require(path.join(migrationsDir, file));
+        } else if (file === 'create-tos-table.js') {
+          console.log('Creating TOS acceptance table...');
+          require(path.join(migrationsDir, file));
         }
       } catch (error) {
         console.error(`Error running migration ${file}:`, error.message);

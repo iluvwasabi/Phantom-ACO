@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOS Acceptances - Phantom ACO Admin</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
+          <span style="margin-left: 12px; padding: 4px 12px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">ADMIN</span>
+        </div>
+        <div class="header-actions">
+          <a href="/admin" class="btn btn-ghost">Admin Home</a>
+          <a href="/dashboard" class="btn btn-ghost">User Dashboard</a>
+          <a href="/admin/logout" class="btn btn-ghost">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div class="toolbar">
+        <h1 class="title">TOS Acceptances</h1>
+      </div>
+
+      <div class="info-card" style="margin-bottom: 24px; padding: 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px;">
+        <h3 style="margin: 0 0 8px 0; color: #10b981;">📋 Legal Audit Trail</h3>
+        <p style="margin: 0; color: var(--muted); font-size: 0.875rem;">This page shows all users who have accepted the Terms of Service. Each acceptance includes timestamp, IP address, and user agent for legal protection.</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid" style="margin-bottom: var(--space-6); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <article class="card">
+          <div class="card-body" style="text-align: center;">
+            <h3 style="font-size: 2rem; margin-bottom: var(--space-2); color: #10b981;"><%= acceptances.length %></h3>
+            <p class="muted">Total Acceptances</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-body" style="text-align: center;">
+            <h3 style="font-size: 2rem; margin-bottom: var(--space-2); color: #60a5fa;"><%= acceptances.filter(a => a.tos_version === 'v1.0').length %></h3>
+            <p class="muted">Current Version (v1.0)</p>
+          </div>
+        </article>
+      </div>
+
+      <!-- Acceptances Table -->
+      <div class="submissions-table">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Discord User</th>
+              <th>Discord ID</th>
+              <th>TOS Version</th>
+              <th>Accepted Date</th>
+              <th>IP Address</th>
+              <th>User Agent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (acceptances.length === 0) { %>
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">
+                  No TOS acceptances yet.
+                </td>
+              </tr>
+            <% } else { %>
+              <% acceptances.forEach(acceptance => { %>
+                <tr>
+                  <td><%= acceptance.id %></td>
+                  <td><strong><%= acceptance.discord_username %></strong></td>
+                  <td><code style="font-size: 0.75rem;"><%= acceptance.discord_id %></code></td>
+                  <td>
+                    <div class="badge badge-success"><%= acceptance.tos_version %></div>
+                  </td>
+                  <td><%= new Date(acceptance.accepted_at).toLocaleString() %></td>
+                  <td><code style="font-size: 0.75rem;"><%= acceptance.ip_address || 'N/A' %></code></td>
+                  <td style="font-size: 0.75rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= acceptance.user_agent %>">
+                    <%= acceptance.user_agent ? acceptance.user_agent.substring(0, 50) + '...' : 'N/A' %>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: var(--space-6); padding: 16px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px;">
+        <h4 style="margin: 0 0 8px 0; color: #60a5fa;">💡 About This Data</h4>
+        <ul style="margin: 0; padding-left: 20px; color: var(--muted); font-size: 0.875rem;">
+          <li>IP addresses and user agents are logged for legal verification</li>
+          <li>This data can be used to prove user consent in case of disputes</li>
+          <li>Users must re-accept if TOS version changes</li>
+          <li>Export this data regularly for backup purposes</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

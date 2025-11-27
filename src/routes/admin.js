@@ -867,4 +867,28 @@ router.delete('/api/servers/:id', ensureAdminAuth, (req, res) => {
   }
 });
 
+// TOS Acceptances page
+router.get('/tos-acceptances', ensureAdminAuth, (req, res) => {
+  const acceptances = db.prepare(`
+    SELECT
+      ta.*,
+      u.discord_username,
+      u.discord_id,
+      u.email
+    FROM tos_acceptances ta
+    JOIN users u ON ta.user_id = u.id
+    ORDER BY ta.accepted_at DESC
+  `).all();
+
+  // Fetch brand name from settings
+  const brandNameSetting = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('brand_name');
+  const brandName = brandNameSetting ? brandNameSetting.setting_value : 'Phantom ACO';
+
+  res.render('admin-tos-acceptances', {
+    user: req.user,
+    acceptances: acceptances,
+    brandName: brandName
+  });
+});
+
 module.exports = router;

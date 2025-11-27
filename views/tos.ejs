@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service - Phantom ACO</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .tos-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .tos-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .tos-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tos-header p {
+      color: var(--muted);
+      font-size: 1.125rem;
+    }
+
+    .tos-content {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .tos-content h2 {
+      font-size: 1.5rem;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: var(--foreground);
+    }
+
+    .tos-content h2:first-child {
+      margin-top: 0;
+    }
+
+    .tos-content h3 {
+      font-size: 1.125rem;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+
+    .tos-content p, .tos-content li {
+      line-height: 1.8;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .tos-content ul {
+      margin-left: 24px;
+      margin-bottom: 16px;
+    }
+
+    .tos-content strong {
+      color: var(--foreground);
+    }
+
+    .acceptance-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 2px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .acceptance-box h3 {
+      color: #ef4444;
+      margin-bottom: 16px;
+      font-size: 1.25rem;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+
+    .checkbox-container label {
+      flex: 1;
+      cursor: pointer;
+      line-height: 1.6;
+      user-select: none;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn-accept {
+      padding: 14px 32px;
+      font-size: 1.125rem;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-accept:disabled {
+      background: rgba(148, 163, 184, 0.2);
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .btn-accept:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-decline {
+      padding: 14px 32px;
+      font-size: 1.125rem;
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-decline:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="tos-container">
+    <div class="tos-header">
+      <h1>📜 Service Agreement</h1>
+      <p>Please read carefully before continuing</p>
+    </div>
+
+    <div class="tos-content">
+      <p><strong>Date:</strong> <%= new Date().toLocaleDateString() %></p>
+      <p><strong>Provider:</strong> Phantom ACO</p>
+      <p><strong>Client Discord ID:</strong> <%= user.discord_id %></p>
+
+      <p>By submitting a request or filling out the intake form for Phantom ACO services, you (the "Buyer") agree to the following terms and conditions.</p>
+
+      <h2>1. SERVICE OVERVIEW</h2>
+      <p>Phantom ACO provides a specialized retail botting service to assist the Buyer in securing limited inventory, with a primary focus on Pokemon TCG products and collectibles. This is strictly a Pay After Success (PAS) service.</p>
+
+      <h2>2. LIABILITY AND RISKS</h2>
+
+      <h3>2.1 Wrong Purchases & Pending Charges</h3>
+      <p>Phantom ACO is under no circumstance to be held liable for any wrong purchases, unintended orders, or pending charges on your payment method.</p>
+
+      <h3>2.2 Operational Risks (SKUs, Keywords & Links)</h3>
+      <p>You, as the Buyer, understand that there are inherent risks with retail botting and ACO services. There is a possibility of picking up the wrong items due to retailer changes in SKUs, variants, keywords, or early links (e.g., purchasing a blister pack instead of a Booster Box if the retailer changes the page). You accept full responsibility for these risks when submitting your information.</p>
+
+      <h3>2.3 Resell Market Risk</h3>
+      <p>By filling out the form, you agree that you are taking the risk of the resell market "crashing" (value dropping) on the item purchased. You are still willing to and required to pay the announced PAS fee regardless of the item's current market value or "brick" status.</p>
+
+      <h2>3. CHARGES AND FEES</h2>
+
+      <h3>3.1 Multiple Successes</h3>
+      <p>Your card may be charged multiple times, and you may hit (successfully purchase) more than one item or cart. If this is the case, you must pay the PAS fee per successful checkout and order confirmation.</p>
+
+      <h3>3.2 Payment Deadline</h3>
+      <p>PAS fees must be paid if the checkout is successful within 1 day (24 hours) of the success notification.</p>
+
+      <h3>3.3 Failure to Pay</h3>
+      <p>Failure to pay the PAS fee within the 24-hour window will result in:</p>
+      <ul>
+        <li>An attempt by Phantom ACO to cancel your order with the retailer.</li>
+        <li>An immediate and permanent ban from the server.</li>
+      </ul>
+
+      <h2>4. REFUNDS AND CANCELLATIONS</h2>
+
+      <h3>4.1 Retailer Cancellations</h3>
+      <p>Refunds for the PAS fee may be granted for orders that end up being cancelled by the retailer (e.g., Pokemon Center or Target cancellations). You must provide valid proof of the cancellation to process this refund.</p>
+
+      <h2>5. ACKNOWLEDGMENT</h2>
+      <p>By accepting below, you confirm that you have read and agree to these terms.</p>
+    </div>
+
+    <div class="acceptance-box">
+      <h3>⚠️ Important Notice</h3>
+      <p>You must accept these terms to continue using Phantom ACO services. Your acceptance will be recorded with your Discord ID, timestamp, and IP address for legal purposes.</p>
+    </div>
+
+    <form action="/tos/accept" method="POST" id="tos-form">
+      <div class="checkbox-container">
+        <input type="checkbox" id="agree-checkbox" name="agree" required>
+        <label for="agree-checkbox">
+          <strong>I have read and agree to the Service Agreement.</strong> I understand the risks, fees, and liability terms outlined above. I acknowledge that my payment information may be charged multiple times and I am responsible for all PAS fees within 24 hours of successful checkout.
+        </label>
+      </div>
+
+      <div class="button-group">
+        <button type="submit" class="btn-accept" id="accept-btn" disabled>
+          ✓ Accept & Continue
+        </button>
+        <a href="/auth/logout" class="btn-decline">
+          ✕ Decline & Logout
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const checkbox = document.getElementById('agree-checkbox');
+    const acceptBtn = document.getElementById('accept-btn');
+
+    checkbox.addEventListener('change', () => {
+      acceptBtn.disabled = !checkbox.checked;
+    });
+  </script>
+</body>
+</html>
