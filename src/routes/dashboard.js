@@ -37,13 +37,25 @@ router.get('/', ensureAuthenticated, ensureInServer, ensureHasACORole, (req, res
   const brandNameSetting = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('brand_name');
   const brandName = brandNameSetting ? brandNameSetting.setting_value : 'Phantom ACO';
 
+  // Get user's available servers
+  const userGuildIds = req.user.guilds ? req.user.guilds.map(g => g.id) : [];
+  const placeholders = userGuildIds.map(() => '?').join(',');
+  const userServers = userGuildIds.length > 0
+    ? db.prepare(`SELECT * FROM registered_servers WHERE server_id IN (${placeholders}) AND is_active = 1`).all(...userGuildIds)
+    : [];
+
+  // Get selected server info
+  const selectedServer = db.prepare('SELECT * FROM registered_servers WHERE server_id = ?').get(req.session.selectedServerId);
+
   res.render('dashboard', {
     user: req.user,
     servicePanels: servicePanels,
     subscribedServices: subscribedServices,
     appUrl: process.env.APP_URL,
     isAdmin: isAdmin,
-    brandName: brandName
+    brandName: brandName,
+    userServers: userServers,
+    selectedServer: selectedServer
   });
 });
 
@@ -145,6 +157,20 @@ router.post('/service/:serviceName/unsubscribe', ensureAuthenticated, ensureInSe
   Service.deleteSubscription(req.user.id, serviceName);
 
   res.redirect('/dashboard');
+});
+
+// Switch server
+router.post('/switch-server', ensureAuthenticated, (req, res) => {
+  const { serverId } = req.body;
+
+  if (!serverId) {
+    return res.status(400).json({ error: 'Server ID is required' });
+  }
+
+  // Update session
+  req.session.selectedServerId = serverId;
+
+  res.json({ success: true, message: 'Server switched successfully' });
 });
 
 module.exports = router;

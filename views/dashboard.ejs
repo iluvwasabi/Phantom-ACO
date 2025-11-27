@@ -17,6 +17,17 @@
           <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
         </div>
         <div class="header-actions">
+          <% if (userServers && userServers.length > 1) { %>
+          <div style="position: relative;">
+            <select id="server-selector" style="padding: 8px 12px; background: var(--surface-100); border: 1px solid var(--border); border-radius: 8px; color: var(--text-900); font-size: 0.9rem; cursor: pointer;">
+              <% userServers.forEach(server => { %>
+                <option value="<%= server.server_id %>" <%= selectedServer && selectedServer.server_id === server.server_id ? 'selected' : '' %>>
+                  🖥️ <%= server.server_name %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+          <% } %>
           <div class="chip">
             <% if (user.discord_avatar) { %>
               <img src="https://cdn.discordapp.com/avatars/<%= user.discord_id %>/<%= user.discord_avatar %>.png" alt="Avatar" style="width:24px; height:24px; border-radius:50%;">
@@ -126,5 +137,35 @@
   <div id="toast" class="toast" aria-live="polite"></div>
 
   <script src="/js/dashboard-app.js"></script>
+  <script>
+    // Server switcher
+    const serverSelector = document.getElementById('server-selector');
+    if (serverSelector) {
+      serverSelector.addEventListener('change', async (e) => {
+        const serverId = e.target.value;
+
+        try {
+          const response = await fetch('/dashboard/switch-server', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ serverId })
+          });
+
+          if (response.ok) {
+            // Reload the page to refresh with new server context
+            window.location.reload();
+          } else {
+            alert('Failed to switch server. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error switching server:', error);
+          alert('Error switching server. Please try again.');
+        }
+      });
+    }
+  </script>
 </body>
 </html>
