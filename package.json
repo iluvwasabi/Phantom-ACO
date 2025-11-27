@@ -4,10 +4,11 @@
   "description": "Auto Checkout Service with Discord OAuth and Google Forms Integration",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "node clear-sessions.js && node src/server.js",
     "dev": "nodemon src/server.js",
     "init-db": "node src/utils/initDatabase.js",
-    "generate-keys": "node src/utils/generateKeys.js"
+    "generate-keys": "node src/utils/generateKeys.js",
+    "clear-sessions": "node clear-sessions.js"
   },
   "keywords": [
     "pokemon",
