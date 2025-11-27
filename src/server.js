@@ -57,18 +57,21 @@ if (fs.existsSync(sessionsDbPath)) {
   }
 })();
 
-// Ensure uploads directory exists
+// Configure uploads directory path
 const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, '../public/uploads');
-const logosDir = path.join(uploadsDir, 'logos');
-if (!fs.existsSync(logosDir)) {
-  try {
+
+// Ensure uploads directory exists
+try {
+  const logosDir = path.join(uploadsDir, 'logos');
+  if (!fs.existsSync(logosDir)) {
     fs.mkdirSync(logosDir, { recursive: true });
     console.log(`✅ Created uploads directory: ${logosDir}`);
-  } catch (error) {
-    console.error('❌ Error creating uploads directory:', error.message);
+  } else {
+    console.log(`✅ Uploads directory exists: ${logosDir}`);
   }
-} else {
-  console.log(`✅ Uploads directory exists: ${logosDir}`);
+} catch (error) {
+  console.warn('⚠️  Warning: Could not create uploads directory:', error.message);
+  console.warn('   Uploads will be created on-demand by multer');
 }
 
 // Trust proxy - required for Render/Railway deployment
@@ -111,7 +114,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve uploads from persistent disk if UPLOADS_DIR is set to a different location
-const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, '../public/uploads');
 if (!uploadsDir.includes('public/uploads') && !uploadsDir.includes('public\\uploads')) {
   // Only add this route if uploads are stored outside of public folder
   app.use('/uploads', express.static(uploadsDir));
