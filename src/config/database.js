@@ -199,6 +199,18 @@ const runMigrations = () => {
         } else if (file === 'add-notes-field.js') {
           console.log('Adding notes field...');
           require(path.join(migrationsDir, file));
+        } else if (file === 'add-submission-limit.js') {
+          console.log('Adding submission limit to service_panels...');
+          try {
+            db.exec(`ALTER TABLE service_panels ADD COLUMN submission_limit INTEGER DEFAULT 0;`);
+            console.log('✓ Added submission_limit column');
+          } catch (e) {
+            if (e.message.includes('duplicate')) {
+              console.log('✓ submission_limit column already exists');
+            } else {
+              throw e;
+            }
+          }
         }
       } catch (error) {
         console.error(`Error running migration ${file}:`, error.message);
