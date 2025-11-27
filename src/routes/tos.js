@@ -12,7 +12,21 @@ router.get('/tos', (req, res) => {
 
   res.render('tos', {
     user: req.user,
-    tosVersion: CURRENT_TOS_VERSION
+    tosVersion: CURRENT_TOS_VERSION,
+    viewOnly: false
+  });
+});
+
+// TOS view-only page (for users who have already accepted)
+router.get('/tos/view', (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.redirect('/');
+  }
+
+  res.render('tos', {
+    user: req.user,
+    tosVersion: CURRENT_TOS_VERSION,
+    viewOnly: true
   });
 });
 

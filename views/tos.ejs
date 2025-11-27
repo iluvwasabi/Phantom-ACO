@@ -160,7 +160,11 @@
   <div class="tos-container">
     <div class="tos-header">
       <h1>📜 Service Agreement</h1>
-      <p>Please read carefully before continuing</p>
+      <% if (typeof viewOnly !== 'undefined' && viewOnly) { %>
+        <p>Terms of Service - Version <%= tosVersion %></p>
+      <% } else { %>
+        <p>Please read carefully before continuing</p>
+      <% } %>
     </div>
 
     <div class="tos-content">
@@ -208,37 +212,45 @@
       <p>By accepting below, you confirm that you have read and agree to these terms.</p>
     </div>
 
-    <div class="acceptance-box">
-      <h3>⚠️ Important Notice</h3>
-      <p>You must accept these terms to continue using Phantom ACO services. Your acceptance will be recorded with your Discord ID, timestamp, and IP address for legal purposes.</p>
-    </div>
-
-    <form action="/tos/accept" method="POST" id="tos-form">
-      <div class="checkbox-container">
-        <input type="checkbox" id="agree-checkbox" name="agree" required>
-        <label for="agree-checkbox">
-          <strong>I have read and agree to the Service Agreement.</strong> I understand the risks, fees, and liability terms outlined above. I acknowledge that my payment information may be charged multiple times and I am responsible for all PAS fees within 24 hours of successful checkout.
-        </label>
+    <% if (typeof viewOnly === 'undefined' || !viewOnly) { %>
+      <div class="acceptance-box">
+        <h3>⚠️ Important Notice</h3>
+        <p>You must accept these terms to continue using Phantom ACO services. Your acceptance will be recorded with your Discord ID, timestamp, and IP address for legal purposes.</p>
       </div>
 
-      <div class="button-group">
-        <button type="submit" class="btn-accept" id="accept-btn" disabled>
-          ✓ Accept & Continue
-        </button>
-        <a href="/auth/logout" class="btn-decline">
-          ✕ Decline & Logout
+      <form action="/tos/accept" method="POST" id="tos-form">
+        <div class="checkbox-container">
+          <input type="checkbox" id="agree-checkbox" name="agree" required>
+          <label for="agree-checkbox">
+            <strong>I have read and agree to the Service Agreement.</strong> I understand the risks, fees, and liability terms outlined above. I acknowledge that my payment information may be charged multiple times and I am responsible for all PAS fees within 24 hours of successful checkout.
+          </label>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="btn-accept" id="accept-btn" disabled>
+            ✓ Accept & Continue
+          </button>
+          <a href="/auth/logout" class="btn-decline">
+            ✕ Decline & Logout
+          </a>
+        </div>
+      </form>
+
+      <script>
+        const checkbox = document.getElementById('agree-checkbox');
+        const acceptBtn = document.getElementById('accept-btn');
+
+        checkbox.addEventListener('change', () => {
+          acceptBtn.disabled = !checkbox.checked;
+        });
+      </script>
+    <% } else { %>
+      <div class="button-group" style="margin-top: 24px;">
+        <a href="/dashboard" class="btn-accept" style="display: inline-block; text-decoration: none; text-align: center;">
+          ← Back to Dashboard
         </a>
       </div>
-    </form>
+    <% } %>
   </div>
-
-  <script>
-    const checkbox = document.getElementById('agree-checkbox');
-    const acceptBtn = document.getElementById('accept-btn');
-
-    checkbox.addEventListener('change', () => {
-      acceptBtn.disabled = !checkbox.checked;
-    });
-  </script>
 </body>
 </html>
