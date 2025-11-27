@@ -19,7 +19,11 @@
       "Bash(node src/migrations/update-payment-fields.js:*)",
       "Bash(node:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash($null)"
     ],
     "deny": [],
     "ask": []

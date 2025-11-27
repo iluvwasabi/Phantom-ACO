@@ -190,6 +190,9 @@ const runMigrations = () => {
           try { db.exec(`ALTER TABLE users ADD COLUMN shipping_city TEXT;`); console.log('✓ Added shipping_city'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ shipping_city exists'); }
           try { db.exec(`ALTER TABLE users ADD COLUMN shipping_state TEXT;`); console.log('✓ Added shipping_state'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ shipping_state exists'); }
           try { db.exec(`ALTER TABLE users ADD COLUMN shipping_zipcode TEXT;`); console.log('✓ Added shipping_zipcode'); } catch (e) { if (!e.message.includes('duplicate')) console.log('✓ shipping_zipcode exists'); }
+        } else if (file === 'add-multitenant-tables.js') {
+          console.log('Creating multi-tenant tables...');
+          require(path.join(migrationsDir, file));
         }
       } catch (error) {
         console.error(`Error running migration ${file}:`, error.message);

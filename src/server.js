@@ -81,11 +81,13 @@ app.use((req, res, next) => {
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const submissionsRoutes = require('./routes/submissions');
+const adminAuthRoutes = require('./routes/adminAuth');
 const adminRoutes = require('./routes/admin');
 
 app.use('/auth', authRoutes);
 app.use('/dashboard', dashboardRoutes);
-app.use('/admin', adminRoutes);
+app.use('/admin', adminAuthRoutes); // Admin auth routes (login/logout)
+app.use('/admin', adminRoutes); // Admin panel routes (protected)
 app.use('/', submissionsRoutes);
 
 // Home page

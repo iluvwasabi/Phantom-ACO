@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { ensureAuthenticated, ensureAdmin, ensureInServer } = require('../middleware/auth');
+const { ensureAdminAuth } = require('../middleware/adminAuth');
 const Service = require('../models/Service');
 const db = require('../config/database');
 const multer = require('multer');
@@ -40,7 +40,7 @@ const upload = multer({
 });
 
 // Admin dashboard
-router.get('/', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.get('/', ensureAdminAuth, (req, res) => {
   const services = Service.getAllServices();
 
   // Get all users count
@@ -79,7 +79,7 @@ router.get('/', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => 
 });
 
 // Panels management page
-router.get('/panels', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.get('/panels', ensureAdminAuth, (req, res) => {
   const panels = db.prepare(`
     SELECT * FROM service_panels
     ORDER BY display_order ASC
@@ -97,7 +97,7 @@ router.get('/panels', ensureAuthenticated, ensureInServer, ensureAdmin, (req, re
 });
 
 // Settings management page
-router.get('/settings', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.get('/settings', ensureAdminAuth, (req, res) => {
   const settings = db.prepare(`
     SELECT * FROM admin_settings
     ORDER BY setting_key ASC
@@ -117,7 +117,7 @@ router.get('/settings', ensureAuthenticated, ensureInServer, ensureAdmin, (req, 
 });
 
 // Users management page
-router.get('/users', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.get('/users', ensureAdminAuth, (req, res) => {
   const users = db.prepare(`
     SELECT
       u.id,
@@ -158,7 +158,7 @@ router.get('/users', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res
 });
 
 // Submissions management page
-router.get('/submissions', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.get('/submissions', ensureAdminAuth, (req, res) => {
   // Decryption helper
   function decrypt(ciphertext) {
     try {
@@ -251,7 +251,7 @@ router.get('/submissions', ensureAuthenticated, ensureInServer, ensureAdmin, (re
 });
 
 // Get all users (API endpoint)
-router.get('/api/users', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.get('/api/users', ensureAdminAuth, (req, res) => {
   const users = db.prepare(`
     SELECT
       id,
@@ -269,7 +269,7 @@ router.get('/api/users', ensureAuthenticated, ensureInServer, ensureAdmin, (req,
 });
 
 // Get a specific submission by ID (admin only - can fetch any user's submission)
-router.get('/api/submissions/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.get('/api/submissions/:id', ensureAdminAuth, (req, res) => {
   try {
     const submissionId = req.params.id;
 
@@ -377,7 +377,7 @@ router.get('/api/submissions/:id', ensureAuthenticated, ensureInServer, ensureAd
 });
 
 // Update any user's submission (admin only)
-router.put('/api/submissions/:id', ensureAuthenticated, ensureInServer, ensureAdmin, async (req, res) => {
+router.put('/api/submissions/:id', ensureAdminAuth, async (req, res) => {
   try {
     const submissionId = req.params.id;
     const {
@@ -503,7 +503,7 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureInServer, ensureAd
 });
 
 // Get all submissions (API endpoint)
-router.get('/submissions', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.get('/submissions', ensureAdminAuth, (req, res) => {
   const submissions = db.prepare(`
     SELECT
       ss.id,
@@ -524,7 +524,7 @@ router.get('/submissions', ensureAuthenticated, ensureInServer, ensureAdmin, (re
 });
 
 // Delete a submission (admin only)
-router.delete('/submissions/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.delete('/submissions/:id', ensureAdminAuth, (req, res) => {
   try {
     const submissionId = req.params.id;
 
@@ -538,7 +538,7 @@ router.delete('/submissions/:id', ensureAuthenticated, ensureInServer, ensureAdm
 });
 
 // Get service statistics
-router.get('/stats', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.get('/stats', ensureAdminAuth, (req, res) => {
   try {
     // Count submissions by service
     const serviceStats = db.prepare(`
@@ -573,7 +573,7 @@ router.get('/stats', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res
 });
 
 // Update a panel
-router.put('/panels/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.put('/panels/:id', ensureAdminAuth, (req, res) => {
   try {
     const panelId = req.params.id;
     const { service_name, description, color_gradient, is_active, display_order } = req.body;
@@ -592,7 +592,7 @@ router.put('/panels/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (req
 });
 
 // Create a new panel
-router.post('/panels', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.post('/panels', ensureAdminAuth, (req, res) => {
   try {
     const { service_id, service_name, service_type, description, color_gradient, display_order } = req.body;
 
@@ -609,7 +609,7 @@ router.post('/panels', ensureAuthenticated, ensureInServer, ensureAdmin, (req, r
 });
 
 // Delete a panel
-router.delete('/panels/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.delete('/panels/:id', ensureAdminAuth, (req, res) => {
   try {
     const panelId = req.params.id;
 
@@ -623,7 +623,7 @@ router.delete('/panels/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (
 });
 
 // Update settings
-router.post('/settings', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.post('/settings', ensureAdminAuth, (req, res) => {
   try {
     const updates = req.body;
 
@@ -645,7 +645,7 @@ router.post('/settings', ensureAuthenticated, ensureInServer, ensureAdmin, (req,
 });
 
 // Upload logo
-router.post('/upload-logo', ensureAuthenticated, ensureInServer, ensureAdmin, upload.single('logo'), (req, res) => {
+router.post('/upload-logo', ensureAdminAuth, upload.single('logo'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -695,7 +695,7 @@ router.post('/upload-logo', ensureAuthenticated, ensureInServer, ensureAdmin, up
 });
 
 // Update user payment information
-router.post('/users/:id/payment', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.post('/users/:id/payment', ensureAdminAuth, (req, res) => {
   try {
     const userId = req.params.id;
     const { payment_email, payment_method, card_number, exp_date, cvc,
@@ -723,7 +723,7 @@ router.post('/users/:id/payment', ensureAuthenticated, ensureInServer, ensureAdm
 });
 
 // Delete logo (revert to emoji)
-router.delete('/logo', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.delete('/logo', ensureAdminAuth, (req, res) => {
   try {
     const currentLogo = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('login_page_logo');
 
@@ -758,7 +758,7 @@ router.delete('/logo', ensureAuthenticated, ensureInServer, ensureAdmin, (req, r
 });
 
 // Delete user
-router.delete('/users/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (req, res) => {
+router.delete('/users/:id', ensureAdminAuth, (req, res) => {
   try {
     const userId = req.params.id;
 
@@ -780,6 +780,90 @@ router.delete('/users/:id', ensureAuthenticated, ensureInServer, ensureAdmin, (r
   } catch (error) {
     console.error('Delete user error:', error);
     res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// Server management page
+router.get('/servers', ensureAdminAuth, (req, res) => {
+  const servers = db.prepare(`
+    SELECT *,
+      (SELECT COUNT(*) FROM users WHERE server_id = registered_servers.server_id) as user_count
+    FROM registered_servers
+    ORDER BY created_at DESC
+  `).all();
+
+  // Fetch brand name from settings
+  const brandNameSetting = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('brand_name');
+  const brandName = brandNameSetting ? brandNameSetting.setting_value : 'Phantom ACO';
+
+  res.render('admin-servers', {
+    user: req.user,
+    servers: servers,
+    brandName: brandName
+  });
+});
+
+// Add new server (API)
+router.post('/api/servers', ensureAdminAuth, (req, res) => {
+  try {
+    const { server_id, server_name, required_role_name } = req.body;
+
+    if (!server_id || !server_name || !required_role_name) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check if server already exists
+    const existing = db.prepare('SELECT * FROM registered_servers WHERE server_id = ?').get(server_id);
+    if (existing) {
+      return res.status(400).json({ error: 'Server already registered' });
+    }
+
+    const result = db.prepare(`
+      INSERT INTO registered_servers (server_id, server_name, required_role_name)
+      VALUES (?, ?, ?)
+    `).run(server_id, server_name, required_role_name);
+
+    res.json({
+      success: true,
+      message: 'Server registered successfully',
+      id: result.lastInsertRowid
+    });
+  } catch (error) {
+    console.error('Add server error:', error);
+    res.status(500).json({ error: 'Failed to register server' });
+  }
+});
+
+// Update server (API)
+router.put('/api/servers/:id', ensureAdminAuth, (req, res) => {
+  try {
+    const serverId = req.params.id;
+    const { server_name, required_role_name, is_active } = req.body;
+
+    db.prepare(`
+      UPDATE registered_servers
+      SET server_name = ?, required_role_name = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(server_name, required_role_name, is_active ? 1 : 0, serverId);
+
+    res.json({ success: true, message: 'Server updated successfully' });
+  } catch (error) {
+    console.error('Update server error:', error);
+    res.status(500).json({ error: 'Failed to update server' });
+  }
+});
+
+// Delete server (API)
+router.delete('/api/servers/:id', ensureAdminAuth, (req, res) => {
+  try {
+    const serverId = req.params.id;
+
+    db.prepare('DELETE FROM registered_servers WHERE id = ?').run(serverId);
+
+    res.json({ success: true, message: 'Server deleted successfully' });
+  } catch (error) {
+    console.error('Delete server error:', error);
+    res.status(500).json({ error: 'Failed to delete server' });
   }
 });
 

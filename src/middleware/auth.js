@@ -11,7 +11,8 @@ const ensureAuthenticated = (req, res, next) => {
 };
 
 /**
- * Middleware to verify user is in the Discord server
+ * Middleware to verify user is in any registered Discord server
+ * (Multi-tenant support)
  */
 const ensureInServer = async (req, res, next) => {
   if (!req.isAuthenticated()) {
@@ -19,36 +20,71 @@ const ensureInServer = async (req, res, next) => {
   }
 
   try {
-    const serverId = process.env.DISCORD_SERVER_ID;
+    const db = require('../config/database');
 
-    console.log('=== Server Check Debug ===');
-    console.log('Server ID:', serverId);
-    console.log('User guilds:', req.user.guilds);
-    console.log('User object:', req.user);
+    // Get all active registered servers
+    const registeredServers = db.prepare('SELECT * FROM registered_servers WHERE is_active = 1').all();
 
-    // Check if user has the guild in their guilds list
-    if (req.user.guilds) {
-      const inServer = req.user.guilds.some(guild => guild.id === serverId);
-      console.log('In server check result:', inServer);
+    console.log('=== Multi-Tenant Server Check ===');
+    console.log('Registered servers:', registeredServers.length);
+    console.log('User guilds:', req.user.guilds?.length || 0);
 
-      if (inServer) {
-        if (!req.user.is_verified) {
-          // Mark user as verified
-          const User = require('../models/User');
-          User.verifyUser(req.user.id);
-          req.user.is_verified = 1;
-        }
-        return next();
-      }
-    } else {
+    if (!req.user.guilds || req.user.guilds.length === 0) {
       console.log('No guilds found on user object - session may have expired');
+      return res.render('not-in-server', {
+        serverId: null,
+        user: req.user,
+        message: 'No Discord servers found. Your session may have expired.'
+      });
     }
 
-    // User not in server
-    return res.render('not-in-server', {
-      serverId: serverId,
-      user: req.user
-    });
+    // Find which registered servers the user is a member of
+    const userServers = [];
+    for (const guild of req.user.guilds) {
+      const registeredServer = registeredServers.find(s => s.server_id === guild.id);
+      if (registeredServer) {
+        userServers.push({
+          ...registeredServer,
+          permissions: guild.permissions
+        });
+      }
+    }
+
+    console.log('User is in', userServers.length, 'registered server(s)');
+
+    if (userServers.length === 0) {
+      // User not in any registered server
+      return res.render('not-in-server', {
+        serverId: null,
+        user: req.user,
+        message: 'You are not a member of any authorized Discord servers.'
+      });
+    }
+
+    // Store the user's servers in session for later use
+    req.session.userServers = userServers.map(s => ({
+      id: s.server_id,
+      name: s.server_name,
+      required_role: s.required_role_name
+    }));
+
+    // If user has a selected server in session, use it; otherwise use the first one
+    if (!req.session.selectedServerId) {
+      req.session.selectedServerId = userServers[0].server_id;
+    }
+
+    // Mark user as verified
+    if (!req.user.is_verified) {
+      const User = require('../models/User');
+      User.verifyUser(req.user.id);
+      req.user.is_verified = 1;
+    }
+
+    // Update user's server_id in database
+    db.prepare('UPDATE users SET server_id = ? WHERE id = ?').run(req.session.selectedServerId, req.user.id);
+
+    return next();
+
   } catch (error) {
     console.error('Error checking server membership:', error);
     return res.status(500).send('Error verifying server membership');
@@ -134,7 +170,8 @@ const ensureAdmin = async (req, res, next) => {
 };
 
 /**
- * Middleware to ensure user has the ACO role or is an administrator
+ * Middleware to ensure user has the required role in their selected server
+ * (Multi-tenant support - checks role configured for each server)
  */
 const ensureHasACORole = async (req, res, next) => {
   if (!req.isAuthenticated()) {
@@ -142,18 +179,38 @@ const ensureHasACORole = async (req, res, next) => {
   }
 
   try {
-    const serverId = process.env.DISCORD_SERVER_ID;
+    const db = require('../config/database');
     const botToken = process.env.DISCORD_BOT_TOKEN;
 
-    // First check if user is an admin (admins bypass role check)
+    // Get the user's selected server
+    const selectedServerId = req.session.selectedServerId;
+
+    if (!selectedServerId) {
+      return res.status(403).render('error', {
+        message: 'No server selected. Please log in again.',
+        user: req.user
+      });
+    }
+
+    // Get the registered server configuration
+    const registeredServer = db.prepare('SELECT * FROM registered_servers WHERE server_id = ? AND is_active = 1').get(selectedServerId);
+
+    if (!registeredServer) {
+      return res.status(403).render('error', {
+        message: 'Server not found or inactive.',
+        user: req.user
+      });
+    }
+
+    // First check if user is an admin in this server (admins bypass role check)
     if (req.user.guilds) {
-      const guild = req.user.guilds.find(g => g.id === serverId);
+      const guild = req.user.guilds.find(g => g.id === selectedServerId);
       if (guild) {
         const ADMINISTRATOR_PERMISSION = 0x8;
         const hasAdminPermission = (parseInt(guild.permissions) & ADMINISTRATOR_PERMISSION) === ADMINISTRATOR_PERMISSION;
 
         if (hasAdminPermission) {
-          console.log(`Admin ${req.user.discord_username} bypassing ACO role check`);
+          console.log(`Admin ${req.user.discord_username} bypassing role check in server ${registeredServer.server_name}`);
           return next();
         }
       }
@@ -161,7 +218,7 @@ const ensureHasACORole = async (req, res, next) => {
 
     // Fetch user's roles from Discord API
     const response = await axios.get(
-      `https://discord.com/api/v10/guilds/${serverId}/members/${req.user.discord_id}`,
+      `https://discord.com/api/v10/guilds/${selectedServerId}/members/${req.user.discord_id}`,
       {
         headers: {
           Authorization: `Bot ${botToken}`
@@ -171,9 +228,9 @@ const ensureHasACORole = async (req, res, next) => {
 
     const userRoles = response.data.roles;
 
-    // Fetch all server roles to find ACO role ID
+    // Fetch all server roles to find the required role
     const rolesResponse = await axios.get(
-      `https://discord.com/api/v10/guilds/${serverId}/roles`,
+      `https://discord.com/api/v10/guilds/${selectedServerId}/roles`,
       {
         headers: {
           Authorization: `Bot ${botToken}`
@@ -181,26 +238,28 @@ const ensureHasACORole = async (req, res, next) => {
       }
     );
 
-    const acoRole = rolesResponse.data.find(role => role.name === 'ACO');
+    const requiredRole = rolesResponse.data.find(role => role.name === registeredServer.required_role_name);
 
-    console.log('=== ACO Role Check Debug ===');
+    console.log('=== Multi-Tenant Role Check ===');
     console.log('User:', req.user.discord_username);
+    console.log('Server:', registeredServer.server_name);
+    console.log('Required role:', registeredServer.required_role_name);
     console.log('User roles:', userRoles);
-    console.log('ACO role ID:', acoRole?.id);
+    console.log('Required role ID:', requiredRole?.id);
 
-    if (acoRole && userRoles.includes(acoRole.id)) {
-      console.log('User has ACO role');
+    if (requiredRole && userRoles.includes(requiredRole.id)) {
+      console.log('User has required role');
       return next();
     }
 
-    // User doesn't have ACO role
+    // User doesn't have required role
     return res.status(403).render('error', {
-      message: 'Access Denied: You need the ACO role to access this service. Please contact an administrator.',
+      message: `Access Denied: You need the "${registeredServer.required_role_name}" role in ${registeredServer.server_name} to access this service. Please contact an administrator.`,
       user: req.user
     });
 
   } catch (error) {
-    console.error('Error checking ACO role:', error);
+    console.error('Error checking role:', error);
     return res.status(500).send('Error verifying role permissions');
   }
 };
