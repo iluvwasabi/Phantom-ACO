@@ -57,6 +57,20 @@ if (fs.existsSync(sessionsDbPath)) {
   }
 })();
 
+// Ensure uploads directory exists
+const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, '../public/uploads');
+const logosDir = path.join(uploadsDir, 'logos');
+if (!fs.existsSync(logosDir)) {
+  try {
+    fs.mkdirSync(logosDir, { recursive: true });
+    console.log(`✅ Created uploads directory: ${logosDir}`);
+  } catch (error) {
+    console.error('❌ Error creating uploads directory:', error.message);
+  }
+} else {
+  console.log(`✅ Uploads directory exists: ${logosDir}`);
+}
+
 // Trust proxy - required for Render/Railway deployment
 app.set('trust proxy', 1);
 

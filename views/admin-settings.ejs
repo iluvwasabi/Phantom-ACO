@@ -162,11 +162,13 @@
           }
           setTimeout(() => location.reload(), 1000);
         } else {
+          // Show the actual error message from the server
           showToast(result.error || 'Failed to upload logo');
+          console.error('Server error:', result.error);
         }
       } catch (error) {
         console.error('Upload error:', error);
-        showToast('Error uploading logo');
+        showToast('Network error: ' + error.message);
       }
     });
 
