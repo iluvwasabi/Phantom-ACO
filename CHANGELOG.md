@@ -7,6 +7,8 @@ All notable changes to the Phantom ACO service are documented here.
 ## [November 27, 2025]
 
 ### ✨ Features
+- **Public & Private Changelogs** - Public changelog at `/changelog` shows user-facing features, admin changelog at `/admin/changelog` shows full technical details
+- **Changelog Links in Dashboard** - Users see "What's New" link, admins see "Full Changelog" link
 - **Notes Field for Submissions** - Users can add special instructions like "Only run ETB" or "Avoid booster boxes" to each panel submission
 - **Multi-Server Switcher** - Users in multiple Discord servers can now select which server to use via dropdown in dashboard header
 

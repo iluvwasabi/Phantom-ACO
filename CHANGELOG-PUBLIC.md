@@ -8,6 +8,11 @@ All the latest features and improvements for Phantom ACO users.
 
 ### ✨ New Features
 
+**Changelog Page**
+- View all updates and new features at any time
+- Click "📋 What's New" on your dashboard to see the latest changes
+- Stay informed about new features and improvements
+
 **Notes for Your Submissions**
 - Add special instructions to each service submission
 - Examples: "Only run ETB", "Avoid booster boxes", "Focus on premium collections"
