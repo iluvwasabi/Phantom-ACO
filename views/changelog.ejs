@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= isPublic ? "What's New" : "Full Changelog" %> - <%= brandName || 'Phantom ACO' %></title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .changelog-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: var(--space-8);
+    }
+    .changelog-content {
+      background: var(--surface-50);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-8);
+    }
+    .changelog-content h1 {
+      font-size: 2.5rem;
+      margin-bottom: var(--space-6);
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .changelog-content h2 {
+      font-size: 1.75rem;
+      margin-top: var(--space-8);
+      margin-bottom: var(--space-4);
+      color: var(--text-900);
+      border-bottom: 2px solid var(--border);
+      padding-bottom: var(--space-3);
+    }
+    .changelog-content h3 {
+      font-size: 1.25rem;
+      margin-top: var(--space-6);
+      margin-bottom: var(--space-3);
+      color: var(--text-800);
+    }
+    .changelog-content ul {
+      margin-left: var(--space-6);
+      margin-bottom: var(--space-4);
+    }
+    .changelog-content li {
+      margin-bottom: var(--space-2);
+      line-height: 1.6;
+    }
+    .changelog-content strong {
+      color: var(--text-900);
+    }
+    .changelog-content code {
+      background: rgba(96, 165, 250, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+    .changelog-content hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: var(--space-8) 0;
+    }
+    .changelog-header-actions {
+      display: flex;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
+        </div>
+        <div class="header-actions">
+          <% if (user) { %>
+            <a href="/dashboard" class="btn btn-ghost">Dashboard</a>
+            <% if (!isPublic) { %>
+              <a href="/changelog" class="btn btn-ghost">Public Changelog</a>
+            <% } %>
+            <a href="/auth/logout" class="btn btn-ghost">Logout</a>
+          <% } else { %>
+            <a href="/auth/discord" class="btn btn-primary">Login with Discord</a>
+          <% } %>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="changelog-container">
+      <div class="changelog-header-actions">
+        <% if (!isPublic && user) { %>
+          <div class="chip" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">
+            🔒 Admin View - Full Technical Details
+          </div>
+        <% } else { %>
+          <div class="chip" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">
+            📢 Public Changelog - User Features
+          </div>
+        <% } %>
+      </div>
+
+      <div class="changelog-content">
+        <%- changelogHtml %>
+      </div>
+
+      <div style="text-align: center; margin-top: var(--space-6);">
+        <% if (user) { %>
+          <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
+        <% } else { %>
+          <a href="/" class="btn btn-primary">Go to Home</a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

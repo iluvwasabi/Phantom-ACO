@@ -894,4 +894,28 @@ router.get('/tos-acceptances', ensureAdminAuth, (req, res) => {
   });
 });
 
+// Admin changelog (full technical details)
+router.get('/changelog', ensureAdminAuth, (req, res) => {
+  try {
+    const { marked } = require('marked');
+    const changelogPath = path.join(__dirname, '../../CHANGELOG.md');
+    const markdown = fs.readFileSync(changelogPath, 'utf8');
+    const html = marked(markdown);
+
+    // Fetch brand name from settings
+    const brandNameSetting = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('brand_name');
+    const brandName = brandNameSetting ? brandNameSetting.setting_value : 'Phantom ACO';
+
+    res.render('changelog', {
+      user: req.user,
+      changelogHtml: html,
+      brandName: brandName,
+      isPublic: false
+    });
+  } catch (error) {
+    console.error('Error loading admin changelog:', error);
+    res.status(500).send('Error loading changelog');
+  }
+});
+
 module.exports = router;

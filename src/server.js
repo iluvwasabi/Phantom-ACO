@@ -131,6 +131,7 @@ const submissionsRoutes = require('./routes/submissions');
 const adminAuthRoutes = require('./routes/adminAuth');
 const adminRoutes = require('./routes/admin');
 const { router: tosRoutes, ensureTOSAccepted } = require('./routes/tos');
+const changelogRoutes = require('./routes/changelog');
 
 app.use('/auth', authRoutes);
 app.use('/', tosRoutes); // TOS routes
@@ -138,6 +139,7 @@ app.use('/', tosRoutes); // TOS routes
 // TOS acceptance middleware - must come after auth routes but before protected routes
 app.use(ensureTOSAccepted);
 
+app.use('/changelog', changelogRoutes); // Public changelog
 app.use('/dashboard', dashboardRoutes);
 app.use('/admin', adminAuthRoutes); // Admin auth routes (login/logout)
 app.use('/admin', adminRoutes); // Admin panel routes (protected)
