@@ -14,9 +14,9 @@
       <div class="header-inner">
         <div class="brand">
           <% if (logo && logo.startsWith('/uploads/')) { %>
-            <img src="<%= logo %>" alt="Logo" style="width: 40px; height: 40px; border-radius: 8px; object-fit: contain; margin-right: 12px;">
+            <img src="<%= logo %>" alt="Logo" style="width: 80px; height: 80px; border-radius: 8px; object-fit: contain; margin-right: 12px;">
           <% } else { %>
-            <div style="font-size: 1.8rem; margin-right: 8px;"><%= logo || '👻' %></div>
+            <div style="font-size: 3.6rem; margin-right: 8px;"><%= logo || '👻' %></div>
           <% } %>
           <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
         </div>
