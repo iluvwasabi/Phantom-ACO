@@ -11,7 +11,9 @@ const CryptoJS = require('crypto-js');
 // Configure multer for logo uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../public/uploads/logos');
+    // Use UPLOADS_DIR from environment, fallback to public/uploads
+    const uploadsBase = process.env.UPLOADS_DIR || path.join(__dirname, '../../public/uploads');
+    const uploadDir = path.join(uploadsBase, 'logos');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }

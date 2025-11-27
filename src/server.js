@@ -96,6 +96,14 @@ app.use(express.urlencoded({ extended: true }));
 // Static files
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Serve uploads from persistent disk if UPLOADS_DIR is set to a different location
+const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, '../public/uploads');
+if (!uploadsDir.includes('public/uploads') && !uploadsDir.includes('public\\uploads')) {
+  // Only add this route if uploads are stored outside of public folder
+  app.use('/uploads', express.static(uploadsDir));
+  console.log(`📁 Serving uploads from: ${uploadsDir}`);
+}
+
 // Session configuration
 app.use(session({
   store: new SQLiteStore({
