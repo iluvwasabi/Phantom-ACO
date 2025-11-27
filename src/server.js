@@ -6,9 +6,56 @@ const passport = require('./config/passport');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Clear sessions on startup
+const sessionsDbPath = path.join(__dirname, '../data', 'sessions.db');
+if (fs.existsSync(sessionsDbPath)) {
+  try {
+    fs.unlinkSync(sessionsDbPath);
+    console.log('✅ Session cache cleared');
+  } catch (error) {
+    console.log('⚠️  Warning: Could not delete sessions.db:', error.message);
+  }
+}
+
+// Ensure admin user exists on startup
+(async () => {
+  try {
+    const db = require('./config/database');
+    const DEFAULT_USERNAME = 'admin';
+    const DEFAULT_PASSWORD = 'Pokemon123!desi';
+
+    const existingAdmin = db.prepare('SELECT * FROM admin_users WHERE username = ?').get(DEFAULT_USERNAME);
+
+    if (existingAdmin) {
+      console.log('✅ Admin user exists');
+      const password_hash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+      db.prepare(`
+        UPDATE admin_users
+        SET password_hash = ?, is_active = 1
+        WHERE username = ?
+      `).run(password_hash, DEFAULT_USERNAME);
+      console.log('🔄 Admin password reset to default');
+    } else {
+      console.log('➕ Creating admin user...');
+      const password_hash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+      db.prepare(`
+        INSERT INTO admin_users (username, password_hash, is_active)
+        VALUES (?, ?, 1)
+      `).run(DEFAULT_USERNAME, password_hash);
+      console.log('✅ Admin user created');
+    }
+
+    console.log(`📋 Admin login: ${DEFAULT_USERNAME} / ${DEFAULT_PASSWORD}`);
+  } catch (error) {
+    console.error('❌ Error setting up admin user:', error.message);
+  }
+})();
 
 // Trust proxy - required for Render/Railway deployment
 app.set('trust proxy', 1);
@@ -149,7 +196,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`ACO Service running on http://localhost:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Discord Server ID: ${process.env.DISCORD_SERVER_ID}`);
