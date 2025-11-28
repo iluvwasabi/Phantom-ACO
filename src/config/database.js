@@ -234,6 +234,18 @@ const runMigrations = () => {
               throw e;
             }
           }
+        } else if (file === 'add-order-email.js') {
+          console.log('Adding email column to orders table...');
+          try {
+            db.exec(`ALTER TABLE orders ADD COLUMN email TEXT;`);
+            console.log('✓ Added email column to orders table');
+          } catch (e) {
+            if (e.message.includes('duplicate')) {
+              console.log('✓ email column already exists in orders table');
+            } else {
+              throw e;
+            }
+          }
         }
       } catch (error) {
         console.error(`Error running migration ${file}:`, error.message);
