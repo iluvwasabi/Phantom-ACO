@@ -37,62 +37,8 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
       email
     });
 
-    // Find user by email from their submissions
-    let user = null;
-    let submissionId = null;
-
-    if (email) {
-      // Try to find user by the email in their encrypted credentials
-      const submissions = db.prepare(`
-        SELECT ss.id, ss.user_id, u.email, u.discord_username, u.customer_id
-        FROM service_subscriptions ss
-        JOIN users u ON u.id = ss.user_id
-        LEFT JOIN encrypted_credentials ec ON ec.subscription_id = ss.id
-        WHERE ss.service_name = ?
-      `).all(retailer.toLowerCase());
-
-      // We need to decrypt and check each submission's email
-      const CryptoJS = require('crypto-js');
-      function decrypt(ciphertext) {
-        try {
-          const bytes = CryptoJS.AES.decrypt(ciphertext, process.env.ENCRYPTION_KEY);
-          return bytes.toString(CryptoJS.enc.Utf8);
-        } catch (e) {
-          return null;
-        }
-      }
-
-      for (const sub of submissions) {
-        const credentials = db.prepare('SELECT encrypted_password FROM encrypted_credentials WHERE subscription_id = ?').get(sub.id);
-
-        if (credentials && credentials.encrypted_password) {
-          try {
-            const decryptedPassword = decrypt(credentials.encrypted_password);
-            if (decryptedPassword && decryptedPassword.startsWith('{')) {
-              const parsed = JSON.parse(decryptedPassword);
-              const subEmail = parsed.email || parsed.account_email;
-
-              if (subEmail && subEmail.toLowerCase() === email.toLowerCase()) {
-                user = sub;
-                submissionId = sub.id;
-                console.log(`✅ Matched email ${email} to submission ${submissionId}`);
-                break;
-              }
-            }
-          } catch (e) {
-            // Skip this submission
-            continue;
-          }
-        }
-      }
-    }
-
-    // If no user found by email, try to match by profile name or create generic order
-    if (!user) {
-      console.log(`⚠️  Could not match email ${email} to any submission`);
-      // We'll create the order without linking to a specific user submission
-      // Admin can manually link it later
-    }
+    // Don't try to match to submissions - just use the checkout email directly
+    console.log(`📧 Using checkout email: ${email}`);
 
     // Calculate 7% fee
     const orderTotal = price * (quantity || 1);
@@ -100,7 +46,7 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
 
     console.log(`💰 Order total: $${orderTotal} → Fee: $${feeAmount} (7%)`);
 
-    // Create order record in "pending_review" status
+    // Create order record in "pending_review" status with checkout email
     const orderResult = db.prepare(`
       INSERT INTO orders (
         submission_id,
@@ -111,24 +57,26 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
         order_total,
         fee_amount,
         fee_percentage,
+        email,
         status,
         order_date
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending_review', ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_review', ?)
     `).run(
-      submissionId,
-      user ? user.user_id : null,
+      null,  // No submission link
+      null,  // No user link
       retailer,
       product,
       orderNumber,
       orderTotal,
       feeAmount,
       7,
+      email,  // Store checkout email
       timestamp || new Date().toISOString()
     );
 
     const orderId = orderResult.lastInsertRowid;
 
-    console.log(`✅ Created order ${orderId} - awaiting admin approval`);
+    console.log(`✅ Created order ${orderId} with email ${email} - awaiting admin approval`);
 
     // Send Discord notification to admin (if webhook configured)
     const discordWebhook = process.env.ADMIN_DISCORD_WEBHOOK;
@@ -144,13 +92,12 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
               fields: [
                 { name: 'Order ID', value: `#${orderId}`, inline: true },
                 { name: 'Bot', value: bot, inline: true },
-                { name: 'Customer', value: user ? user.discord_username : 'Unknown', inline: true },
+                { name: 'Email', value: email || 'N/A', inline: true },
                 { name: 'Retailer', value: retailer, inline: true },
                 { name: 'Product', value: product, inline: false },
                 { name: 'Order Total', value: `$${orderTotal}`, inline: true },
                 { name: 'Fee (7%)', value: `$${feeAmount}`, inline: true },
-                { name: 'Order #', value: orderNumber || 'N/A', inline: true },
-                { name: 'Email', value: email || 'N/A', inline: false }
+                { name: 'Order #', value: orderNumber || 'N/A', inline: true }
               ],
               footer: { text: `Review at: ${process.env.APP_URL}/admin/orders` },
               timestamp: new Date().toISOString()
@@ -166,10 +113,7 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
       success: true,
       order_id: orderId,
       status: 'pending_review',
-      matched_user: !!user,
-      submission_id: submissionId,
-      discord_id: user ? user.discord_id : null,
-      discord_username: user ? user.discord_username : null
+      email: email
     });
 
   } catch (error) {

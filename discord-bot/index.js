@@ -254,40 +254,6 @@ async function processCheckoutMessage(message) {
 
     // Optional: React to the message to show it was processed
     await message.react('✅');
-
-    // If we got a discord_id and invoice_url, DM the user
-    if (result.discord_id && result.invoice_url) {
-      try {
-        const user = await client.users.fetch(result.discord_id);
-        await user.send({
-          embeds: [{
-            title: '💳 Payment Required for Your Checkout',
-            description: `Hi ${result.discord_username || 'there'}! Your checkout for **${checkoutData.product}** from **${checkoutData.retailer}** was successful!`,
-            color: 0x3b82f6, // Blue
-            fields: [
-              { name: 'Order Total', value: `$${checkoutData.price * checkoutData.quantity}`, inline: true },
-              { name: 'Service Fee (7%)', value: `$${(checkoutData.price * checkoutData.quantity * 0.07).toFixed(2)}`, inline: true },
-              { name: 'Order Number', value: checkoutData.orderNumber || 'N/A', inline: false }
-            ],
-            footer: { text: 'Please pay within 7 days' },
-            timestamp: new Date().toISOString()
-          }],
-          components: [{
-            type: 1, // Action row
-            components: [{
-              type: 2, // Button
-              style: 5, // Link button
-              label: 'Pay Invoice',
-              url: result.invoice_url
-            }]
-          }]
-        });
-        console.log(`✅ DM sent to ${result.discord_username} with invoice link`);
-      } catch (dmError) {
-        console.error('Failed to DM user:', dmError.message);
-        console.log('(User may have DMs disabled)');
-      }
-    }
   } catch (error) {
     console.error('❌ Failed to send checkout to website');
     // Optional: React with error emoji

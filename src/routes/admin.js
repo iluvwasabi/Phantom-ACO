@@ -943,7 +943,9 @@ router.get('/changelog', ensureAdminAuth, (req, res) => {
 router.get('/orders', ensureAdminAuth, (req, res) => {
   // Get pending orders
   const pendingOrders = db.prepare(`
-    SELECT o.*, u.discord_username, u.email, u.customer_id
+    SELECT o.*, u.discord_username, u.discord_id,
+           COALESCE(o.email, u.email) as email,
+           u.customer_id
     FROM orders o
     LEFT JOIN users u ON u.id = o.user_id
     WHERE o.status = 'pending_review'
@@ -952,7 +954,8 @@ router.get('/orders', ensureAdminAuth, (req, res) => {
 
   // Get recently approved/processed orders
   const approvedOrders = db.prepare(`
-    SELECT o.*, u.discord_username, u.email
+    SELECT o.*, u.discord_username, u.discord_id,
+           COALESCE(o.email, u.email) as email
     FROM orders o
     LEFT JOIN users u ON u.id = o.user_id
     WHERE o.status IN ('pending_payment', 'paid', 'payment_failed')
