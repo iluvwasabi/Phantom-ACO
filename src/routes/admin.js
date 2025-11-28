@@ -1011,7 +1011,22 @@ router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
     // Create or get Stripe customer
     let customerId = order.customer_id;
 
+    // Verify customer exists in Stripe, or create new one
+    if (customerId) {
+      try {
+        await stripe.customers.retrieve(customerId);
+      } catch (error) {
+        // Customer doesn't exist in Stripe anymore, create new one
+        console.log(`⚠️  Customer ${customerId} not found in Stripe, creating new one`);
+        customerId = null;
+      }
+    }
+
     if (!customerId) {
+      if (!order.email) {
+        return res.status(400).json({ error: 'Cannot create invoice: customer has no email address' });
+      }
+
       const customer = await stripe.customers.create({
         email: order.email,
         name: order.discord_username,
@@ -1024,8 +1039,10 @@ router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
       customerId = customer.id;
 
       // Save customer ID
-      db.prepare('UPDATE users SET customer_id = ? WHERE id = ?')
-        .run(customerId, order.user_id);
+      if (order.user_id) {
+        db.prepare('UPDATE users SET customer_id = ? WHERE id = ?')
+          .run(customerId, order.user_id);
+      }
     }
 
     // Create Stripe invoice
