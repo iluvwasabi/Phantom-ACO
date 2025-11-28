@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // POST /webhooks/bot - Receive checkout success notifications from bot
 router.post('/webhooks/bot', express.json(), async (req, res) => {
