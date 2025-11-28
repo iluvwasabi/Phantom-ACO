@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 
 // Discord bot client
@@ -13,6 +13,7 @@ const client = new Client({
 
 // Configuration
 const CHECKOUT_CHANNEL_ID = process.env.DISCORD_CHECKOUT_CHANNEL_ID;
+const PUBLIC_CHECKOUT_CHANNEL_ID = process.env.PUBLIC_CHECKOUT_CHANNEL_ID;
 const WEBSITE_API_URL = process.env.WEBSITE_API_URL || 'http://localhost:3000';
 const API_SECRET = process.env.DISCORD_BOT_API_SECRET;
 
@@ -173,10 +174,60 @@ async function sendToWebsite(checkoutData) {
   }
 }
 
+// Create a public-safe embed by filtering out sensitive information
+function createPublicCheckoutEmbed(checkoutData) {
+  // Determine embed color based on bot
+  const color = checkoutData.bot === 'Refract' ? 0x5865F2 : 0x57F287; // Blue for Refract, Green for Stellar
+
+  // Create embed with only public information
+  const embed = new EmbedBuilder()
+    .setTitle('Successful Checkout')
+    .setColor(color)
+    .addFields(
+      { name: 'Retailer', value: checkoutData.retailer || 'N/A', inline: true },
+      { name: 'Product', value: checkoutData.product || 'N/A', inline: false },
+      { name: 'Price', value: `$${checkoutData.price.toFixed(2)}`, inline: true },
+      { name: 'Quantity', value: checkoutData.quantity.toString(), inline: true },
+      { name: 'Bot', value: checkoutData.bot, inline: true }
+    )
+    .setTimestamp()
+    .setFooter({ text: 'ACO Service' });
+
+  return embed;
+}
+
+// Send sanitized checkout to public channel
+async function sendToPublicChannel(checkoutData) {
+  if (!PUBLIC_CHECKOUT_CHANNEL_ID) {
+    console.log('⚠️  No public checkout channel configured, skipping public announcement');
+    return;
+  }
+
+  try {
+    // Get the public channel
+    const publicChannel = await client.channels.fetch(PUBLIC_CHECKOUT_CHANNEL_ID);
+
+    if (!publicChannel) {
+      console.error('❌ Could not find public checkout channel');
+      return;
+    }
+
+    // Create sanitized embed (filters out email, order number, profile, proxy)
+    const publicEmbed = createPublicCheckoutEmbed(checkoutData);
+
+    // Send to public channel
+    await publicChannel.send({ embeds: [publicEmbed] });
+    console.log('✅ Sent sanitized checkout to public channel');
+  } catch (error) {
+    console.error('❌ Error sending to public channel:', error.message);
+  }
+}
+
 // Bot ready event
 client.on('ready', () => {
   console.log(`✅ Discord bot logged in as ${client.user.tag}`);
   console.log(`📡 Monitoring channel: ${CHECKOUT_CHANNEL_ID}`);
+  console.log(`📢 Public announcements channel: ${PUBLIC_CHECKOUT_CHANNEL_ID || 'Not configured'}`);
   console.log(`🌐 Website API: ${WEBSITE_API_URL}`);
 });
 
@@ -251,6 +302,9 @@ async function processCheckoutMessage(message) {
     const result = await sendToWebsite(checkoutData);
     console.log('🎉 Checkout successfully sent to website!');
     console.log('Result:', result);
+
+    // Send sanitized version to public channel
+    await sendToPublicChannel(checkoutData);
 
     // Optional: React to the message to show it was processed
     await message.react('✅');
