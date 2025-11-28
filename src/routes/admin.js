@@ -195,6 +195,7 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
       ss.service_type,
       ss.created_at,
       ss.notes,
+      ss.added_to_bot,
       u.discord_username,
       u.discord_id,
       ec.encrypted_password
@@ -228,6 +229,7 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
         service_name: sub.service_name,
         created_at: sub.created_at,
         notes: sub.notes,
+        added_to_bot: sub.added_to_bot,
         email: parsed.email || null,
         phone: parsed.phone || null,
         name_on_card: parsed.name_on_card || null,
@@ -1093,6 +1095,37 @@ router.delete('/orders/:id/reject', ensureAdminAuth, (req, res) => {
   } catch (error) {
     console.error('Reject order error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /admin/api/submissions/:id/toggle-bot - Toggle added_to_bot flag (admin version)
+router.put('/api/submissions/:id/toggle-bot', ensureAdminAuth, async (req, res) => {
+  try {
+    const submissionId = req.params.id;
+    const { added_to_bot } = req.body;
+
+    // Find subscription
+    const subscription = db.prepare('SELECT * FROM service_subscriptions WHERE id = ?').get(submissionId);
+
+    if (!subscription) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    // Update added_to_bot flag
+    db.prepare(`
+      UPDATE service_subscriptions
+      SET added_to_bot = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(added_to_bot, submissionId);
+
+    res.json({
+      success: true,
+      message: added_to_bot ? 'Marked as added to bot' : 'Unmarked from bot'
+    });
+
+  } catch (error) {
+    console.error('Toggle bot error:', error);
+    res.status(500).json({ error: 'Failed to update added_to_bot flag' });
   }
 });
 

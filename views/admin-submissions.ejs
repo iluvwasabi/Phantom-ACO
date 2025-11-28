@@ -82,9 +82,15 @@
       justify-content: center;
     }
     .submission-actions .btn {
-      padding: 6px 10px;
+      padding: 4px 8px;
       font-size: 0.85rem;
       min-width: auto;
+    }
+    .bot-checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      margin: 0;
     }
     .btn-danger {
       background: #ef4444;
@@ -140,6 +146,7 @@
           <table>
             <thead>
               <tr>
+                <th>Bot</th>
                 <th>ID</th>
                 <th>Username</th>
                 <th>Account Email</th>
@@ -159,6 +166,9 @@
               <% if (submissions.target.length > 0) { %>
                 <% submissions.target.forEach(sub => { %>
                   <tr data-submission-id="<%= sub.id %>">
+                    <td style="text-align: center;">
+                      <input type="checkbox" class="bot-checkbox" data-submission-id="<%= sub.id %>" <%= sub.added_to_bot ? 'checked' : '' %>>
+                    </td>
                     <td><%= sub.id %></td>
                     <td><strong><%= sub.discord_username %></strong></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.account_email || '' %>', this)"><%= sub.account_email || 'N/A' %></td>
@@ -173,15 +183,15 @@
                     <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
                     <td>
                       <div class="submission-actions">
-                        <button class="btn btn-sm btn-primary" onclick="editSubmission(<%= sub.id %>)" title="Edit Submission">✏️ Edit</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)" title="Delete Submission">🗑️ Delete</button>
+                        <button class="btn btn-sm btn-primary" onclick="editSubmission(<%= sub.id %>)" title="Edit Submission">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)" title="Delete Submission">🗑️</button>
                       </div>
                     </td>
                   </tr>
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="13" style="text-align: center; padding: var(--space-8); color: var(--muted);">
+                  <td colspan="14" style="text-align: center; padding: var(--space-8); color: var(--muted);">
                     No Target submissions yet
                   </td>
                 </tr>
@@ -197,6 +207,7 @@
           <table>
             <thead>
               <tr>
+                <th>Bot</th>
                 <th>ID</th>
                 <th>Username</th>
                 <th>Account Email</th>
@@ -216,6 +227,9 @@
               <% if (submissions.walmart.length > 0) { %>
                 <% submissions.walmart.forEach(sub => { %>
                   <tr data-submission-id="<%= sub.id %>">
+                    <td style="text-align: center;">
+                      <input type="checkbox" class="bot-checkbox" data-submission-id="<%= sub.id %>" <%= sub.added_to_bot ? 'checked' : '' %>>
+                    </td>
                     <td><%= sub.id %></td>
                     <td><strong><%= sub.discord_username %></strong></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.account_email || '' %>', this)"><%= sub.account_email || 'N/A' %></td>
@@ -230,15 +244,15 @@
                     <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
                     <td>
                       <div class="submission-actions">
-                        <button class="btn btn-sm btn-primary" onclick="editSubmission(<%= sub.id %>)" title="Edit Submission">✏️ Edit</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)" title="Delete Submission">🗑️ Delete</button>
+                        <button class="btn btn-sm btn-primary" onclick="editSubmission(<%= sub.id %>)" title="Edit Submission">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)" title="Delete Submission">🗑️</button>
                       </div>
                     </td>
                   </tr>
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="13" style="text-align: center; padding: var(--space-8); color: var(--muted);">
+                  <td colspan="14" style="text-align: center; padding: var(--space-8); color: var(--muted);">
                     No Walmart submissions yet
                   </td>
                 </tr>
@@ -254,6 +268,7 @@
           <table>
             <thead>
               <tr>
+                <th>Bot</th>
                 <th>ID</th>
                 <th>Username</th>
                 <th>Account Email</th>
@@ -273,6 +288,9 @@
               <% if (submissions.bestbuy.length > 0) { %>
                 <% submissions.bestbuy.forEach(sub => { %>
                   <tr data-submission-id="<%= sub.id %>">
+                    <td style="text-align: center;">
+                      <input type="checkbox" class="bot-checkbox" data-submission-id="<%= sub.id %>" <%= sub.added_to_bot ? 'checked' : '' %>>
+                    </td>
                     <td><%= sub.id %></td>
                     <td><strong><%= sub.discord_username %></strong></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.account_email || '' %>', this)"><%= sub.account_email || 'N/A' %></td>
@@ -283,18 +301,19 @@
                     <td class="copy-cell" onclick="copyText('<%= sub.exp_month %>/<%= sub.exp_year %>', this)"><%= sub.exp_month %>/<%= sub.exp_year %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.cvv || '' %>', this)"><%= sub.cvv || 'N/A' %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.phone || '' %>', this)"><%= sub.phone || 'N/A' %></td>
+                    <td class="copy-cell" onclick="copyText('<%= sub.notes || '' %>', this)" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="<%= sub.notes || '' %>"><%= sub.notes || 'N/A' %></td>
                     <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
                     <td>
                       <div class="submission-actions">
-                        <button class="btn btn-sm btn-primary" onclick="editSubmission(<%= sub.id %>)" title="Edit Submission">✏️ Edit</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)" title="Delete Submission">🗑️ Delete</button>
+                        <button class="btn btn-sm btn-primary" onclick="editSubmission(<%= sub.id %>)" title="Edit Submission">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)" title="Delete Submission">🗑️</button>
                       </div>
                     </td>
                   </tr>
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="13" style="text-align: center; padding: var(--space-8); color: var(--muted);">
+                  <td colspan="14" style="text-align: center; padding: var(--space-8); color: var(--muted);">
                     No Best Buy submissions yet
                   </td>
                 </tr>
@@ -310,6 +329,7 @@
           <table>
             <thead>
               <tr>
+                <th>Bot</th>
                 <th>ID</th>
                 <th>Username</th>
                 <th>Email</th>
@@ -332,6 +352,9 @@
                   const shippingFull = [sub.address1, sub.city, sub.state, sub.zip_code].filter(v => v).join(', ');
                 %>
                   <tr data-submission-id="<%= sub.id %>">
+                    <td style="text-align: center;">
+                      <input type="checkbox" class="bot-checkbox" data-submission-id="<%= sub.id %>" <%= sub.added_to_bot ? 'checked' : '' %>>
+                    </td>
                     <td><%= sub.id %></td>
                     <td><strong><%= sub.discord_username %></strong></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.email || '' %>', this)"><%= sub.email || 'N/A' %></td>
@@ -346,15 +369,15 @@
                     <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
                     <td>
                       <div class="submission-actions">
-                        <button class="btn btn-sm btn-primary" onclick="editSubmission(<%= sub.id %>)" title="Edit Submission">✏️ Edit</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)" title="Delete Submission">🗑️ Delete</button>
+                        <button class="btn btn-sm btn-primary" onclick="editSubmission(<%= sub.id %>)" title="Edit Submission">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)" title="Delete Submission">🗑️</button>
                       </div>
                     </td>
                   </tr>
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="13" style="text-align: center; padding: var(--space-8); color: var(--muted);">
+                  <td colspan="14" style="text-align: center; padding: var(--space-8); color: var(--muted);">
                     No Pokemon Center submissions yet
                   </td>
                 </tr>
@@ -370,6 +393,7 @@
           <table>
             <thead>
               <tr>
+                <th>Bot</th>
                 <th>ID</th>
                 <th>Username</th>
                 <th>Email</th>
@@ -392,6 +416,9 @@
                   const shippingFull = [sub.address1, sub.city, sub.state, sub.zip_code].filter(v => v).join(', ');
                 %>
                   <tr data-submission-id="<%= sub.id %>">
+                    <td style="text-align: center;">
+                      <input type="checkbox" class="bot-checkbox" data-submission-id="<%= sub.id %>" <%= sub.added_to_bot ? 'checked' : '' %>>
+                    </td>
                     <td><%= sub.id %></td>
                     <td><strong><%= sub.discord_username %></strong></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.email || '' %>', this)"><%= sub.email || 'N/A' %></td>
@@ -402,18 +429,19 @@
                     <td class="copy-cell" onclick="copyText('<%= billingFull %>', this)"><%= billingFull || 'N/A' %></td>
                     <td class="copy-cell" onclick="copyText('<%= shippingFull %>', this)"><%= shippingFull || 'N/A' %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.phone || '' %>', this)"><%= sub.phone || 'N/A' %></td>
+                    <td class="copy-cell" onclick="copyText('<%= sub.notes || '' %>', this)" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="<%= sub.notes || '' %>"><%= sub.notes || 'N/A' %></td>
                     <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
                     <td>
                       <div class="submission-actions">
-                        <button class="btn btn-sm btn-primary" onclick="editSubmission(<%= sub.id %>)" title="Edit Submission">✏️ Edit</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)" title="Delete Submission">🗑️ Delete</button>
+                        <button class="btn btn-sm btn-primary" onclick="editSubmission(<%= sub.id %>)" title="Edit Submission">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)" title="Delete Submission">🗑️</button>
                       </div>
                     </td>
                   </tr>
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="13" style="text-align: center; padding: var(--space-8); color: var(--muted);">
+                  <td colspan="14" style="text-align: center; padding: var(--space-8); color: var(--muted);">
                     No Shopify submissions yet
                   </td>
                 </tr>
@@ -718,6 +746,38 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.getElementById(`${tabName}-tab`).classList.add('active');
       });
+    });
+
+    // Bot checkbox toggle
+    document.addEventListener('change', async (e) => {
+      if (e.target.classList.contains('bot-checkbox')) {
+        const checkbox = e.target;
+        const submissionId = checkbox.dataset.submissionId;
+        const addedToBot = checkbox.checked ? 1 : 0;
+
+        try {
+          const response = await fetch(`/admin/api/submissions/${submissionId}/toggle-bot`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ added_to_bot: addedToBot })
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            showToast(checkbox.checked ? '✅ Marked as added to bot' : '⬜ Unmarked from bot');
+          } else {
+            showToast('Failed to update checkbox');
+            // Revert checkbox on error
+            checkbox.checked = !checkbox.checked;
+          }
+        } catch (error) {
+          console.error('Toggle bot error:', error);
+          showToast('Error updating checkbox');
+          // Revert checkbox on error
+          checkbox.checked = !checkbox.checked;
+        }
+      }
     });
   </script>
 </body>
