@@ -945,7 +945,7 @@ router.get('/orders', ensureAdminAuth, (req, res) => {
   const pendingOrders = db.prepare(`
     SELECT o.*, u.discord_username, u.email, u.customer_id
     FROM orders o
-    JOIN users u ON u.id = o.user_id
+    LEFT JOIN users u ON u.id = o.user_id
     WHERE o.status = 'pending_review'
     ORDER BY o.created_at ASC
   `).all();
@@ -954,7 +954,7 @@ router.get('/orders', ensureAdminAuth, (req, res) => {
   const approvedOrders = db.prepare(`
     SELECT o.*, u.discord_username, u.email
     FROM orders o
-    JOIN users u ON u.id = o.user_id
+    LEFT JOIN users u ON u.id = o.user_id
     WHERE o.status IN ('pending_payment', 'paid', 'payment_failed')
     ORDER BY o.updated_at DESC
     LIMIT 50
@@ -985,7 +985,7 @@ router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
     const order = db.prepare(`
       SELECT o.*, u.email, u.discord_username, u.customer_id, u.discord_id
       FROM orders o
-      JOIN users u ON u.id = o.user_id
+      LEFT JOIN users u ON u.id = o.user_id
       WHERE o.id = ?
     `).get(orderId);
 
