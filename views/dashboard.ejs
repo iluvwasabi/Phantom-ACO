@@ -92,7 +92,7 @@
           </div>
           <div class="card-footer">
             <% if (panel.description) { %>
-            <p class="muted" style="font-size: 0.9rem; margin-bottom: 0.75rem;"><%= panel.description %></p>
+            <p class="muted" style="font-size: 0.9rem; margin-bottom: 0.75rem; white-space: pre-line;"><%= panel.description %></p>
             <% } %>
             <div class="card-status">
               <% if (subscribedServices[panel.service_id] && subscribedServices[panel.service_id].length > 0) { %>
