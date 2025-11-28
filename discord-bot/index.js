@@ -181,14 +181,14 @@ function createPublicCheckoutEmbed(checkoutData) {
 
   // Create embed with only public information
   const embed = new EmbedBuilder()
-    .setTitle('Successful Checkout')
+    .setTitle('✅ Successful Checkout')
     .setColor(color)
     .addFields(
-      { name: 'Retailer', value: checkoutData.retailer || 'N/A', inline: true },
-      { name: 'Product', value: checkoutData.product || 'N/A', inline: false },
-      { name: 'Price', value: `$${checkoutData.price.toFixed(2)}`, inline: true },
-      { name: 'Quantity', value: checkoutData.quantity.toString(), inline: true },
-      { name: 'Bot', value: checkoutData.bot, inline: true }
+      { name: '🏪 Retailer', value: checkoutData.retailer || 'N/A', inline: true },
+      { name: '📦 Product', value: checkoutData.product || 'N/A', inline: false },
+      { name: '💰 Price', value: `$${checkoutData.price.toFixed(2)}`, inline: true },
+      { name: '🔢 Quantity', value: checkoutData.quantity.toString(), inline: true },
+      { name: '🤖 Bot', value: checkoutData.bot, inline: true }
     )
     .setTimestamp()
     .setFooter({ text: 'ACO Service' });
