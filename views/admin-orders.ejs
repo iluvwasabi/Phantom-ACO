@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Review - Phantom ACO Admin</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
+          <span style="margin-left: 12px; padding: 4px 12px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">ADMIN</span>
+        </div>
+        <div class="header-actions">
+          <a href="/admin" class="btn btn-ghost">Admin Home</a>
+          <a href="/dashboard" class="btn btn-ghost">User Dashboard</a>
+          <a href="/auth/logout" class="btn btn-ghost">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div class="toolbar">
+        <h1 class="title">Order Review & Approval</h1>
+        <div class="chip" style="background: rgba(251, 191, 36, 0.2); color: #f59e0b; border: 1px solid rgba(251, 191, 36, 0.3);">
+          ⏳ <%= pendingOrders.length %> Pending
+        </div>
+      </div>
+
+      <!-- Pending Orders Table -->
+      <div class="submissions-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Retailer</th>
+              <th>Product</th>
+              <th>Order #</th>
+              <th>Order Total</th>
+              <th>Fee (7%)</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (pendingOrders.length === 0) { %>
+              <tr>
+                <td colspan="9" style="text-align: center; color: var(--muted); padding: var(--space-8);">
+                  No pending orders. All caught up! 🎉
+                </td>
+              </tr>
+            <% } else { %>
+              <% pendingOrders.forEach(order => { %>
+                <tr data-order-id="<%= order.id %>">
+                  <td><strong>#<%= order.id %></strong></td>
+                  <td>
+                    <%= order.discord_username %>
+                    <br>
+                    <span style="font-size: 0.85rem; color: var(--muted);"><%= order.email %></span>
+                  </td>
+                  <td><%= order.retailer %></td>
+                  <td><%= order.product_name || 'N/A' %></td>
+                  <td>
+                    <code style="font-size: 0.85rem; background: var(--surface-100); padding: 2px 6px; border-radius: 4px;">
+                      <%= order.order_number %>
+                    </code>
+                  </td>
+                  <td>
+                    <input type="number"
+                           class="control"
+                           id="total-<%= order.id %>"
+                           value="<%= order.order_total %>"
+                           step="0.01"
+                           style="width: 100px; padding: 6px 8px; font-size: 0.9rem;"
+                           onchange="updateFee(<%= order.id %>)">
+                  </td>
+                  <td>
+                    <strong id="fee-<%= order.id %>" style="color: #10b981;">
+                      $<%= order.fee_amount %>
+                    </strong>
+                  </td>
+                  <td>
+                    <span style="font-size: 0.85rem; color: var(--muted);">
+                      <%= new Date(order.order_date).toLocaleDateString() %>
+                    </span>
+                  </td>
+                  <td>
+                    <div class="submission-actions" style="display: flex; gap: 8px;">
+                      <button class="btn btn-sm btn-success" onclick="approveOrder(<%= order.id %>)">
+                        ✅ Approve & Send
+                      </button>
+                      <button class="btn btn-sm btn-danger" onclick="rejectOrder(<%= order.id %>)">
+                        ❌ Reject
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Approved Orders (Recent) -->
+      <div class="toolbar" style="margin-top: var(--space-10);">
+        <h2 class="title" style="font-size: clamp(20px, 2vw, 24px);">Recently Approved Orders</h2>
+      </div>
+
+      <div class="submissions-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Retailer</th>
+              <th>Order Total</th>
+              <th>Fee (7%)</th>
+              <th>Status</th>
+              <th>Approved</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (approvedOrders.length === 0) { %>
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--muted); padding: var(--space-8);">
+                  No approved orders yet
+                </td>
+              </tr>
+            <% } else { %>
+              <% approvedOrders.forEach(order => { %>
+                <tr>
+                  <td><strong>#<%= order.id %></strong></td>
+                  <td><%= order.discord_username %></td>
+                  <td><%= order.retailer %></td>
+                  <td>$<%= order.order_total %></td>
+                  <td><strong style="color: #10b981;">$<%= order.fee_amount %></strong></td>
+                  <td>
+                    <% if (order.status === 'paid') { %>
+                      <div class="badge badge-success">✅ Paid</div>
+                    <% } else if (order.status === 'pending_payment') { %>
+                      <div class="badge badge-info">💳 Invoice Sent</div>
+                    <% } else if (order.status === 'payment_failed') { %>
+                      <div class="badge badge-danger">❌ Payment Failed</div>
+                    <% } %>
+                  </td>
+                  <td>
+                    <span style="font-size: 0.85rem; color: var(--muted);">
+                      <%= new Date(order.updated_at).toLocaleDateString() %>
+                    </span>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script>
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function updateFee(orderId) {
+      const totalInput = document.getElementById(`total-${orderId}`);
+      const feeDisplay = document.getElementById(`fee-${orderId}`);
+
+      const orderTotal = parseFloat(totalInput.value);
+      const fee = (orderTotal * 0.07).toFixed(2);
+
+      feeDisplay.textContent = `$${fee}`;
+    }
+
+    async function approveOrder(orderId) {
+      const totalInput = document.getElementById(`total-${orderId}`);
+      const orderTotal = parseFloat(totalInput.value);
+
+      if (!orderTotal || orderTotal <= 0) {
+        alert('Please enter a valid order total');
+        return;
+      }
+
+      if (!confirm(`Approve order #${orderId} for $${orderTotal} (7% fee = $${(orderTotal * 0.07).toFixed(2)})?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/admin/orders/${orderId}/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ orderTotal })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast('✅ Order approved! Invoice sent to customer.');
+
+          // Remove row from pending table
+          const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+          if (row) row.remove();
+
+          // Reload after 2 seconds to update approved orders section
+          setTimeout(() => location.reload(), 2000);
+        } else {
+          showToast('❌ Failed to approve order: ' + (result.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Approve error:', error);
+        showToast('❌ Error approving order');
+      }
+    }
+
+    async function rejectOrder(orderId) {
+      if (!confirm(`Reject order #${orderId}? This will permanently delete it.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/admin/orders/${orderId}/reject`, {
+          method: 'DELETE',
+          credentials: 'same-origin'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast('🗑️ Order rejected and deleted');
+
+          // Remove row from table
+          const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+          if (row) row.remove();
+        } else {
+          showToast('❌ Failed to reject order');
+        }
+      } catch (error) {
+        console.error('Reject error:', error);
+        showToast('❌ Error rejecting order');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -7,6 +7,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const CryptoJS = require('crypto-js');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // Configure multer for logo uploads
 const storage = multer.diskStorage({
@@ -928,6 +929,161 @@ router.get('/changelog', ensureAdminAuth, (req, res) => {
   } catch (error) {
     console.error('Error loading admin changelog:', error);
     res.status(500).send('Error loading changelog');
+  }
+});
+
+// GET /admin/orders - Order review page
+router.get('/orders', ensureAdminAuth, (req, res) => {
+  // Get pending orders
+  const pendingOrders = db.prepare(`
+    SELECT o.*, u.discord_username, u.email, u.customer_id
+    FROM orders o
+    JOIN users u ON u.id = o.user_id
+    WHERE o.status = 'pending_review'
+    ORDER BY o.created_at ASC
+  `).all();
+
+  // Get recently approved/processed orders
+  const approvedOrders = db.prepare(`
+    SELECT o.*, u.discord_username, u.email
+    FROM orders o
+    JOIN users u ON u.id = o.user_id
+    WHERE o.status IN ('pending_payment', 'paid', 'payment_failed')
+    ORDER BY o.updated_at DESC
+    LIMIT 50
+  `).all();
+
+  const brandNameSetting = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('brand_name');
+  const brandName = brandNameSetting ? brandNameSetting.setting_value : 'Phantom ACO';
+
+  res.render('admin-orders', {
+    pendingOrders,
+    approvedOrders,
+    brandName
+  });
+});
+
+// POST /admin/orders/:id/approve - Approve order and send invoice
+router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { orderTotal } = req.body;
+
+    // Get order details
+    const order = db.prepare(`
+      SELECT o.*, u.email, u.discord_username, u.customer_id, u.discord_id
+      FROM orders o
+      JOIN users u ON u.id = o.user_id
+      WHERE o.id = ?
+    `).get(orderId);
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    if (order.status !== 'pending_review') {
+      return res.status(400).json({ error: 'Order already processed' });
+    }
+
+    // Recalculate fee with corrected total
+    const feeAmount = Math.round(orderTotal * 0.07 * 100); // In cents
+    const feeDisplay = (orderTotal * 0.07).toFixed(2);
+
+    // Update order with corrected total
+    db.prepare(`
+      UPDATE orders
+      SET order_total = ?, fee_amount = ?, status = 'pending_payment', updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(orderTotal, feeDisplay, orderId);
+
+    // Create or get Stripe customer
+    let customerId = order.customer_id;
+
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: order.email,
+        name: order.discord_username,
+        metadata: {
+          user_id: order.user_id,
+          discord_id: order.discord_id
+        }
+      });
+
+      customerId = customer.id;
+
+      // Save customer ID
+      db.prepare('UPDATE users SET customer_id = ? WHERE id = ?')
+        .run(customerId, order.user_id);
+    }
+
+    // Create Stripe invoice
+    const invoice = await stripe.invoices.create({
+      customer: customerId,
+      collection_method: 'send_invoice',
+      days_until_due: 7,
+      description: `ACO Service Fee - ${order.retailer} checkout`,
+      metadata: {
+        order_id: orderId,
+        order_number: order.order_number,
+        submission_id: order.submission_id
+      }
+    });
+
+    // Add invoice item
+    await stripe.invoiceItems.create({
+      customer: customerId,
+      invoice: invoice.id,
+      amount: feeAmount,
+      currency: 'usd',
+      description: `${order.product_name || 'Product'} - Order #${order.order_number} (7% service fee)`
+    });
+
+    // Finalize and send
+    const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+    await stripe.invoices.sendInvoice(invoice.id);
+
+    // Update order with invoice ID
+    db.prepare('UPDATE orders SET stripe_invoice_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .run(invoice.id, orderId);
+
+    console.log(`✅ Order ${orderId} approved - Invoice sent to ${order.email}`);
+
+    res.json({
+      success: true,
+      invoice_url: finalizedInvoice.hosted_invoice_url
+    });
+
+  } catch (error) {
+    console.error('Approve order error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /admin/orders/:id/reject - Reject and delete order
+router.delete('/orders/:id/reject', ensureAdminAuth, (req, res) => {
+  try {
+    const orderId = req.params.id;
+
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    if (order.status !== 'pending_review') {
+      return res.status(400).json({ error: 'Can only reject pending orders' });
+    }
+
+    // Delete order
+    db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
+
+    console.log(`🗑️ Order ${orderId} rejected and deleted`);
+
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error('Reject order error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

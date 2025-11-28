@@ -396,4 +396,36 @@ router.delete('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, asy
   }
 });
 
+// PUT /api/submissions/:id/toggle-bot - Toggle added_to_bot flag
+router.put('/api/submissions/:id/toggle-bot', ensureAuthenticated, ensureHasACORole, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const submissionId = req.params.id;
+    const { added_to_bot } = req.body;
+
+    // Find subscription and verify ownership
+    const subscription = db.prepare('SELECT * FROM service_subscriptions WHERE id = ? AND user_id = ?').get(submissionId, userId);
+
+    if (!subscription) {
+      return res.status(404).json({ error: 'Submission not found or you do not have permission to edit it' });
+    }
+
+    // Update added_to_bot flag
+    db.prepare(`
+      UPDATE service_subscriptions
+      SET added_to_bot = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(added_to_bot, submissionId);
+
+    res.json({
+      success: true,
+      message: added_to_bot ? 'Marked as added to bot' : 'Unmarked from bot'
+    });
+
+  } catch (error) {
+    console.error('Toggle bot error:', error);
+    res.status(500).json({ error: 'Failed to update added_to_bot flag' });
+  }
+});
+
 module.exports = router;

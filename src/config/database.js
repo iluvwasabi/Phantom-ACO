@@ -147,6 +147,29 @@ const initSchema = () => {
     insertSetting.run('brand_name', 'Phantom ACO', 'text');
   }
 
+  // Orders table - track successful checkouts and payments
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      submission_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      retailer TEXT NOT NULL,
+      product_name TEXT,
+      order_number TEXT,
+      order_total REAL NOT NULL,
+      fee_amount REAL NOT NULL,
+      fee_percentage INTEGER DEFAULT 7,
+      stripe_invoice_id TEXT,
+      status TEXT DEFAULT 'pending_review',
+      order_date DATETIME,
+      payment_date DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (submission_id) REFERENCES service_subscriptions(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
   console.log('Database schema initialized successfully');
 };
 
@@ -224,3 +247,13 @@ const runMigrations = () => {
 // Initialize schema and run migrations on first load
 initSchema();
 runMigrations();
+
+// Add added_to_bot column to service_subscriptions if it doesn't exist
+try {
+  db.exec(`ALTER TABLE service_subscriptions ADD COLUMN added_to_bot INTEGER DEFAULT 0;`);
+  console.log('✓ Added added_to_bot column to service_subscriptions');
+} catch (e) {
+  if (e.message.includes('duplicate')) {
+    console.log('✓ added_to_bot column already exists');
+  }
+}
