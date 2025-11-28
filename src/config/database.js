@@ -165,8 +165,6 @@ const initSchema = () => {
       payment_date DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      discord_id TEXT,
-      discord_username TEXT,
       FOREIGN KEY (submission_id) REFERENCES service_subscriptions(id) ON DELETE SET NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     )
