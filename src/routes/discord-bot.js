@@ -112,8 +112,10 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
         fee_amount,
         fee_percentage,
         status,
-        order_date
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending_review', ?)
+        order_date,
+        discord_id,
+        discord_username
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending_review', ?, ?, ?)
     `).run(
       submissionId,
       user ? user.user_id : null,
@@ -123,7 +125,9 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
       orderTotal,
       feeAmount,
       7,
-      timestamp || new Date().toISOString()
+      timestamp || new Date().toISOString(),
+      user ? user.discord_id : null,
+      user ? user.discord_username : null
     );
 
     const orderId = orderResult.lastInsertRowid;

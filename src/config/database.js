@@ -151,8 +151,8 @@ const initSchema = () => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS orders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      submission_id INTEGER NOT NULL,
-      user_id INTEGER NOT NULL,
+      submission_id INTEGER,
+      user_id INTEGER,
       retailer TEXT NOT NULL,
       product_name TEXT,
       order_number TEXT,
@@ -165,8 +165,10 @@ const initSchema = () => {
       payment_date DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (submission_id) REFERENCES service_subscriptions(id) ON DELETE CASCADE,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      discord_id TEXT,
+      discord_username TEXT,
+      FOREIGN KEY (submission_id) REFERENCES service_subscriptions(id) ON DELETE SET NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     )
   `);
 
