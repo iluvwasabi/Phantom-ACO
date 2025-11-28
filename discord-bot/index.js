@@ -351,6 +351,7 @@ client.on('error', (error) => {
 });
 
 // Login to Discord
-client.login(process.env.DISCORD_BOT_TOKEN);
-
 console.log('🤖 Starting Discord checkout monitor bot...');
+console.log('📝 Debug: Token length:', process.env.DISCORD_BOT_TOKEN ? process.env.DISCORD_BOT_TOKEN.length : 'undefined');
+console.log('📝 Debug: Token first 20 chars:', process.env.DISCORD_BOT_TOKEN ? process.env.DISCORD_BOT_TOKEN.substring(0, 20) : 'undefined');
+client.login(process.env.DISCORD_BOT_TOKEN);
