@@ -19,25 +19,39 @@ const API_SECRET = process.env.DISCORD_BOT_API_SECRET;
 // Parse Refract checkout message
 function parseRefractCheckout(embed) {
   try {
-    const title = embed.title || '';
-    const description = embed.description || '';
+    // Title is in author.name field (e.g., "Successful Checkout | Target")
+    const authorName = embed.author?.name || '';
 
-    // Extract retailer from title (e.g., "Successful Checkout | Target")
-    const retailerMatch = title.match(/Successful Checkout \| (.+)/);
+    // Extract retailer from author name (e.g., "Successful Checkout | Target")
+    const retailerMatch = authorName.match(/Successful Checkout \| (.+)/);
     const retailer = retailerMatch ? retailerMatch[1] : 'Unknown';
 
     // Parse fields
     const fields = {};
     embed.fields?.forEach(field => {
-      fields[field.name] = field.value;
+      // Clean up field values (remove markdown links and spoiler tags)
+      let cleanValue = field.value;
+
+      // Remove markdown links [text](url) -> text
+      cleanValue = cleanValue.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+      // Remove spoiler tags || text || -> text
+      cleanValue = cleanValue.replace(/\|\| ([^|]+) \|\|/g, '$1');
+
+      fields[field.name] = cleanValue.trim();
     });
+
+    // Extract product name from markdown link if present
+    const productRaw = fields['Product'] || 'N/A';
+    const productMatch = productRaw.match(/\[([^\]]+)\]/);
+    const product = productMatch ? productMatch[1] : productRaw;
 
     return {
       bot: 'Refract',
       retailer: retailer,
-      product: fields['Product'] || 'N/A',
+      product: product,
       price: parseFloat((fields['Price'] || '0').replace(/[$,]/g, '')),
-      orderNumber: (fields['Order Number'] || '').replace('#', ''),
+      orderNumber: (fields['Order Number'] || fields['Order #'] || '').replace(/[#\s]/g, ''),
       email: fields['Email'] || null,
       profile: fields['Profile'] || null,
       proxyDetails: fields['Proxy Details'] || null,
@@ -117,8 +131,8 @@ function parseCheckoutMessage(message) {
   const author = embed.author?.name || '';
   const footer = embed.footer?.text || '';
 
-  // Detect Refract
-  if (title.includes('Successful Checkout |') || author.includes('Prism Technologies')) {
+  // Detect Refract - check author.name and footer
+  if (author.includes('Successful Checkout |') || footer.includes('Prism Technologies')) {
     return parseRefractCheckout(embed);
   }
 
@@ -164,6 +178,56 @@ client.on('ready', () => {
   console.log(`✅ Discord bot logged in as ${client.user.tag}`);
   console.log(`📡 Monitoring channel: ${CHECKOUT_CHANNEL_ID}`);
   console.log(`🌐 Website API: ${WEBSITE_API_URL}`);
+
+  // Poll for DM queue every 5 seconds
+  setInterval(async () => {
+    try {
+      const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/dm-queue`, {
+        headers: {
+          'X-Bot-Secret': API_SECRET
+        }
+      });
+
+      if (response.data.queue && response.data.queue.length > 0) {
+        for (const dmData of response.data.queue) {
+          try {
+            const user = await client.users.fetch(dmData.discord_id);
+            await user.send({
+              embeds: [{
+                title: '💳 Payment Required for Your Checkout',
+                description: `Hi ${dmData.discord_username}! Your checkout for **${dmData.product_name}** from **${dmData.retailer}** was successful!`,
+                color: 0x3b82f6, // Blue
+                fields: [
+                  { name: 'Order Total', value: `$${dmData.order_total}`, inline: true },
+                  { name: 'Service Fee (7%)', value: `$${dmData.fee_amount}`, inline: true },
+                  { name: 'Order Number', value: dmData.order_number || 'N/A', inline: false }
+                ],
+                footer: { text: 'Please pay within 7 days • Phantom ACO' },
+                timestamp: new Date().toISOString()
+              }],
+              components: [{
+                type: 1, // Action row
+                components: [{
+                  type: 2, // Button
+                  style: 5, // Link button
+                  label: 'Pay Invoice Now',
+                  url: dmData.invoice_url
+                }]
+              }]
+            });
+            console.log(`✅ DM sent to ${dmData.discord_username} with invoice link`);
+          } catch (dmError) {
+            console.error(`Failed to DM ${dmData.discord_username}:`, dmError.message);
+          }
+        }
+      }
+    } catch (error) {
+      // Silently fail - don't spam logs if website is down
+      if (error.response?.status !== 404) {
+        console.error('Error checking DM queue:', error.message);
+      }
+    }
+  }, 5000); // Check every 5 seconds
 });
 
 // Message create event
@@ -173,18 +237,60 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
+  // Check if this is a command to process a previous message
+  if (message.content.toLowerCase() === '!process' && message.reference) {
+    try {
+      // Fetch the referenced message
+      const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
+
+      if (referencedMessage && referencedMessage.embeds && referencedMessage.embeds.length > 0) {
+        console.log('\n🔄 Manual processing requested for message:', referencedMessage.id);
+
+        // Process the referenced message
+        await processCheckoutMessage(referencedMessage);
+
+        // Delete the command message to keep channel clean
+        await message.delete().catch(() => {});
+        return;
+      }
+    } catch (error) {
+      console.error('Error processing referenced message:', error);
+      await message.react('❌');
+      return;
+    }
+  }
+
   // Ignore messages without embeds
   if (!message.embeds || message.embeds.length === 0) {
     return;
   }
 
-  console.log('\n📨 New message in checkout channel');
+  // Process new checkout message
+  await processCheckoutMessage(message);
+});
+
+// Function to process checkout messages
+async function processCheckoutMessage(message) {
+
+  console.log('\n📨 Processing checkout message');
+  console.log('Message author:', message.author?.tag);
+  console.log('Number of embeds:', message.embeds.length);
+
+  if (message.embeds.length > 0) {
+    const embed = message.embeds[0];
+    console.log('Embed title:', embed.title);
+    console.log('Embed description:', embed.description);
+    console.log('Embed author:', embed.author?.name);
+    console.log('Embed footer:', embed.footer?.text);
+    console.log('Embed fields:', JSON.stringify(embed.fields, null, 2));
+  }
 
   // Parse the checkout message
   const checkoutData = parseCheckoutMessage(message);
 
   if (!checkoutData) {
     console.log('⚠️  Could not parse checkout message (might not be a checkout)');
+    console.log('Full embed data:', JSON.stringify(message.embeds[0], null, 2));
     return;
   }
 
@@ -192,17 +298,52 @@ client.on('messageCreate', async (message) => {
 
   // Send to website
   try {
-    await sendToWebsite(checkoutData);
+    const result = await sendToWebsite(checkoutData);
     console.log('🎉 Checkout successfully sent to website!');
+    console.log('Result:', result);
 
     // Optional: React to the message to show it was processed
     await message.react('✅');
+
+    // If we got a discord_id and invoice_url, DM the user
+    if (result.discord_id && result.invoice_url) {
+      try {
+        const user = await client.users.fetch(result.discord_id);
+        await user.send({
+          embeds: [{
+            title: '💳 Payment Required for Your Checkout',
+            description: `Hi ${result.discord_username || 'there'}! Your checkout for **${checkoutData.product}** from **${checkoutData.retailer}** was successful!`,
+            color: 0x3b82f6, // Blue
+            fields: [
+              { name: 'Order Total', value: `$${checkoutData.price * checkoutData.quantity}`, inline: true },
+              { name: 'Service Fee (7%)', value: `$${(checkoutData.price * checkoutData.quantity * 0.07).toFixed(2)}`, inline: true },
+              { name: 'Order Number', value: checkoutData.orderNumber || 'N/A', inline: false }
+            ],
+            footer: { text: 'Please pay within 7 days' },
+            timestamp: new Date().toISOString()
+          }],
+          components: [{
+            type: 1, // Action row
+            components: [{
+              type: 2, // Button
+              style: 5, // Link button
+              label: 'Pay Invoice',
+              url: result.invoice_url
+            }]
+          }]
+        });
+        console.log(`✅ DM sent to ${result.discord_username} with invoice link`);
+      } catch (dmError) {
+        console.error('Failed to DM user:', dmError.message);
+        console.log('(User may have DMs disabled)');
+      }
+    }
   } catch (error) {
     console.error('❌ Failed to send checkout to website');
     // Optional: React with error emoji
     await message.react('❌');
   }
-});
+}
 
 // Error handling
 client.on('error', (error) => {

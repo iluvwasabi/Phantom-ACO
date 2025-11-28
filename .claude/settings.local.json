@@ -27,7 +27,8 @@
       "Bash($null)",
       "Bash(tasklist:*)",
       "WebSearch",
-      "WebFetch(domain:dashboard.render.com)"
+      "WebFetch(domain:dashboard.render.com)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []

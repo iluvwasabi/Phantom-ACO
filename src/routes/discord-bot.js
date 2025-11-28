@@ -167,11 +167,74 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
       order_id: orderId,
       status: 'pending_review',
       matched_user: !!user,
-      submission_id: submissionId
+      submission_id: submissionId,
+      discord_id: user ? user.discord_id : null,
+      discord_username: user ? user.discord_username : null
     });
 
   } catch (error) {
     console.error('Discord bot checkout error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/discord-bot/send-dm - Queue invoice DM for user
+router.post('/api/discord-bot/send-dm', express.json(), verifyBotSecret, async (req, res) => {
+  try {
+    const {
+      discord_id,
+      discord_username,
+      product_name,
+      retailer,
+      order_total,
+      fee_amount,
+      order_number,
+      invoice_url
+    } = req.body;
+
+    console.log(`📧 DM request received for ${discord_username} (${discord_id})`);
+
+    // Store this data in a global queue for the Discord bot to process
+    global.dmQueue = global.dmQueue || [];
+    global.dmQueue.push({
+      discord_id,
+      discord_username,
+      product_name,
+      retailer,
+      order_total,
+      fee_amount,
+      order_number,
+      invoice_url,
+      timestamp: Date.now()
+    });
+
+    res.json({
+      success: true,
+      message: 'DM queued for delivery'
+    });
+
+  } catch (error) {
+    console.error('Send invoice DM error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/discord-bot/dm-queue - Get and clear DM queue
+router.get('/api/discord-bot/dm-queue', verifyBotSecret, (req, res) => {
+  try {
+    global.dmQueue = global.dmQueue || [];
+
+    // Return queue and clear it
+    const queue = [...global.dmQueue];
+    global.dmQueue = [];
+
+    res.json({
+      success: true,
+      queue: queue
+    });
+
+  } catch (error) {
+    console.error('Get DM queue error:', error);
     res.status(500).json({ error: error.message });
   }
 });
