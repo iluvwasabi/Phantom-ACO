@@ -986,7 +986,9 @@ router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
 
     // Get order details
     const order = db.prepare(`
-      SELECT o.*, u.email, u.discord_username, u.customer_id, u.discord_id
+      SELECT o.*,
+             COALESCE(o.email, u.email) as email,
+             u.discord_username, u.customer_id, u.discord_id
       FROM orders o
       LEFT JOIN users u ON u.id = o.user_id
       WHERE o.id = ?
@@ -1000,9 +1002,10 @@ router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
       return res.status(400).json({ error: 'Order already processed' });
     }
 
-    // Recalculate fee with corrected total
-    const feeAmount = Math.round(orderTotal * 0.07 * 100); // In cents
-    const feeDisplay = (orderTotal * 0.07).toFixed(2);
+    // Recalculate fee with corrected total (7% or $4 minimum)
+    const calculatedFee = orderTotal * 0.07;
+    const feeDisplay = Math.max(calculatedFee, 4).toFixed(2);
+    const feeAmount = Math.round(parseFloat(feeDisplay) * 100); // In cents
 
     // Update order with corrected total
     db.prepare(`
