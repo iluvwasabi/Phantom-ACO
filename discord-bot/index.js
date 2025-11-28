@@ -178,56 +178,6 @@ client.on('ready', () => {
   console.log(`✅ Discord bot logged in as ${client.user.tag}`);
   console.log(`📡 Monitoring channel: ${CHECKOUT_CHANNEL_ID}`);
   console.log(`🌐 Website API: ${WEBSITE_API_URL}`);
-
-  // Poll for DM queue every 5 seconds
-  setInterval(async () => {
-    try {
-      const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/dm-queue`, {
-        headers: {
-          'X-Bot-Secret': API_SECRET
-        }
-      });
-
-      if (response.data.queue && response.data.queue.length > 0) {
-        for (const dmData of response.data.queue) {
-          try {
-            const user = await client.users.fetch(dmData.discord_id);
-            await user.send({
-              embeds: [{
-                title: '💳 Payment Required for Your Checkout',
-                description: `Hi ${dmData.discord_username}! Your checkout for **${dmData.product_name}** from **${dmData.retailer}** was successful!`,
-                color: 0x3b82f6, // Blue
-                fields: [
-                  { name: 'Order Total', value: `$${dmData.order_total}`, inline: true },
-                  { name: 'Service Fee (7%)', value: `$${dmData.fee_amount}`, inline: true },
-                  { name: 'Order Number', value: dmData.order_number || 'N/A', inline: false }
-                ],
-                footer: { text: 'Please pay within 7 days • Phantom ACO' },
-                timestamp: new Date().toISOString()
-              }],
-              components: [{
-                type: 1, // Action row
-                components: [{
-                  type: 2, // Button
-                  style: 5, // Link button
-                  label: 'Pay Invoice Now',
-                  url: dmData.invoice_url
-                }]
-              }]
-            });
-            console.log(`✅ DM sent to ${dmData.discord_username} with invoice link`);
-          } catch (dmError) {
-            console.error(`Failed to DM ${dmData.discord_username}:`, dmError.message);
-          }
-        }
-      }
-    } catch (error) {
-      // Silently fail - don't spam logs if website is down
-      if (error.response?.status !== 404) {
-        console.error('Error checking DM queue:', error.message);
-      }
-    }
-  }, 5000); // Check every 5 seconds
 });
 
 // Message create event

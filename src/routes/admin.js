@@ -1077,35 +1077,6 @@ router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
 
     console.log(`✅ Order ${orderId} approved - Invoice sent to ${order.email}`);
 
-    // Try to send Discord DM to user
-    if (order.discord_id) {
-      try {
-        await axios.post(
-          `${process.env.APP_URL}/api/discord-bot/send-dm`,
-          {
-            discord_id: order.discord_id,
-            discord_username: order.discord_username,
-            product_name: order.product_name,
-            retailer: order.retailer,
-            order_total: orderTotal,
-            fee_amount: feeDisplay,
-            order_number: order.order_number,
-            invoice_url: finalizedInvoice.hosted_invoice_url
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Bot-Secret': process.env.DISCORD_BOT_API_SECRET
-            }
-          }
-        );
-        console.log(`📧 Discord DM sent to ${order.discord_username}`);
-      } catch (dmError) {
-        console.error('Failed to queue Discord DM:', dmError.message);
-        // Don't fail the whole request if DM fails
-      }
-    }
-
     res.json({
       success: true,
       invoice_url: finalizedInvoice.hosted_invoice_url
