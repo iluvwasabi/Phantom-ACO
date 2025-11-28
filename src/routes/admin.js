@@ -7,7 +7,11 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const CryptoJS = require('crypto-js');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// Initialize Stripe only if API key is provided
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? require('stripe')(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 // Configure multer for logo uploads
 const storage = multer.diskStorage({
@@ -966,6 +970,11 @@ router.get('/orders', ensureAdminAuth, (req, res) => {
 // POST /admin/orders/:id/approve - Approve order and send invoice
 router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(503).json({ error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to environment variables.' });
+    }
+
     const orderId = req.params.id;
     const { orderTotal } = req.body;
 

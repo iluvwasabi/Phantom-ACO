@@ -1,12 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const db = require('../config/database');
+
+// Initialize Stripe only if API key is provided
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? require('stripe')(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 // POST /webhooks/stripe - Handle Stripe webhook events
 router.post('/webhooks/stripe',
   express.raw({ type: 'application/json' }),
   async (req, res) => {
+    // Check if Stripe is configured
+    if (!stripe) {
+      console.warn('⚠️ Stripe webhook received but Stripe is not configured');
+      return res.status(503).json({ error: 'Stripe not configured' });
+    }
+
     const sig = req.headers['stripe-signature'];
     let event;
 
