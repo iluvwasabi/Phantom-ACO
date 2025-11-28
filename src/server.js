@@ -158,10 +158,12 @@ const { router: tosRoutes, ensureTOSAccepted } = require('./routes/tos');
 const changelogRoutes = require('./routes/changelog');
 const botWebhooksRoutes = require('./routes/bot-webhooks');
 const stripeWebhooksRoutes = require('./routes/stripe-webhooks');
+const discordBotRoutes = require('./routes/discord-bot');
 
 // Webhooks must come BEFORE body parsing middleware
 app.use(botWebhooksRoutes);
 app.use(stripeWebhooksRoutes);
+app.use(discordBotRoutes);
 
 app.use('/auth', authRoutes);
 app.use('/', tosRoutes); // TOS routes

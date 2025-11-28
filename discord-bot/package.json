@@ -1,0 +1,21 @@
+{
+  "name": "phantom-aco-discord-bot",
+  "version": "1.0.0",
+  "description": "Discord bot to monitor checkout messages and send to Phantom ACO website",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": ["discord", "bot", "checkout", "automation"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "axios": "^1.6.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
