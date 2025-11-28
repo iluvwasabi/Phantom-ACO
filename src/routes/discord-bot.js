@@ -40,11 +40,16 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
     // Don't try to match to submissions - just use the checkout email directly
     console.log(`📧 Using checkout email: ${email}`);
 
-    // Calculate 7% fee
+    // Calculate 7% fee with $4 minimum
     const orderTotal = price * (quantity || 1);
-    const feeAmount = (orderTotal * 0.07).toFixed(2);
+    const calculatedFee = orderTotal * 0.07;
+    const feeAmount = Math.max(calculatedFee, 4).toFixed(2);
 
-    console.log(`💰 Order total: $${orderTotal} → Fee: $${feeAmount} (7%)`);
+    if (calculatedFee < 4) {
+      console.log(`💰 Order total: $${orderTotal} → Fee: $${feeAmount} (minimum $4 fee applied)`);
+    } else {
+      console.log(`💰 Order total: $${orderTotal} → Fee: $${feeAmount} (7%)`);
+    }
 
     // Create order record in "pending_review" status with checkout email
     const orderResult = db.prepare(`
@@ -96,7 +101,7 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
                 { name: 'Retailer', value: retailer, inline: true },
                 { name: 'Product', value: product, inline: false },
                 { name: 'Order Total', value: `$${orderTotal}`, inline: true },
-                { name: 'Fee (7%)', value: `$${feeAmount}`, inline: true },
+                { name: 'Fee', value: `$${feeAmount} (${calculatedFee < 4 ? '$4 min' : '7%'})`, inline: true },
                 { name: 'Order #', value: orderNumber || 'N/A', inline: true }
               ],
               footer: { text: `Review at: ${process.env.APP_URL}/admin/orders` },
