@@ -27,3 +27,5 @@ Thumbs.db
 # Session store
 sessions/
 nul
+
+*.tmp
