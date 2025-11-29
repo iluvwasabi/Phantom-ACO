@@ -177,4 +177,29 @@ router.post('/switch-server', ensureAuthenticated, (req, res) => {
   res.json({ success: true, message: 'Server switched successfully' });
 });
 
+// IMAP Guide page
+router.get('/submission-guide', ensureAuthenticated, ensureInServer, ensureHasACORole, (req, res) => {
+    const db = require('../config/database');
+    const brandNameSetting = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('brand_name');
+    const brandName = brandNameSetting ? brandNameSetting.setting_value : 'Phantom ACO';
+    const logoSetting = db.prepare('SELECT setting_value FROM admin_settings WHERE setting_key = ?').get('login_page_logo');
+    const logo = logoSetting ? logoSetting.setting_value : '👻';
+
+    // Get user's available servers to populate the server switcher
+    const userGuildIds = req.user.guilds ? req.user.guilds.map(g => g.id) : [];
+    const placeholders = userGuildIds.map(() => '?').join(',');
+    const userServers = userGuildIds.length > 0
+        ? db.prepare(`SELECT * FROM registered_servers WHERE server_id IN (${placeholders}) AND is_active = 1`).all(...userGuildIds)
+        : [];
+    const selectedServer = db.prepare('SELECT * FROM registered_servers WHERE server_id = ?').get(req.session.selectedServerId);
+
+    res.render('guide', {
+        user: req.user,
+        brandName: brandName,
+        logo: logo,
+        userServers: userServers,
+        selectedServer: selectedServer
+    });
+});
+
 module.exports = router;

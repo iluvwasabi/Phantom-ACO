@@ -213,37 +213,15 @@
                 <h2>Login Required Services</h2>
                 <p>This applies to services where we need to log into a retail account for you (e.g., Target, Best Buy). It includes all fields from "No Login Services" plus the following:</p>
 
-                <h3>Retailer Account Credentials</h3>
-                <div class="info-box">Please provide the actual password for your email account associated with the retailer. Your account password will be encrypted and used to access your retailer account for automated checkouts.</div>
-                
+                <h3>Gmail App Password for IMAP</h3>
+                <div class="info-box">
+                    To find a Gmail app password for IMAP, go to your Google Account's "App passwords" page at <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a>.
+                    Enable 2-Step Verification if you haven't already. Then, click "Generate". Select the app and device you're using, and a 16-digit password will be created for you to use in your email client's IMAP settings instead of your regular password.
+                </div>
+                <p>Please enter this 16-digit app password in the "IMAP App Password" field when submitting your information.</p>
                 <ul class="field-list">
-                    <li><span class="field-name">Retailer Account Username:</span> <span class="field-desc">The email address you use for the retailer's website.</span></li>
-                    <li><span class="field-name">Retailer Account Password:</span> <span class="field-desc">Your actual password for the email account associated with the retailer.</span></li>
+                    <li><span class="field-name">IMAP App Password:</span> <span class="field-desc">The 16-digit app password generated from your Google Account.</span></li>
                 </ul>
-
-                <h3>IMAP for Identity Verification</h3>
-                <p>We use IMAP to confirm you own the email address associated with the store account. We do not read your emails.</p>
-                <ul class="field-list">
-                    <li><span class="field-name">iMap:</span> <span class="field-desc">Enter the server address for your email provider from the list below.</span></li>
-                </ul>
-
-                <h4>Gmail</h4>
-                <div class="code-block">
-                    <code>imap.gmail.com</code>
-                    <button class="copy-btn" onclick="copyToClipboard('imap.gmail.com')">Copy</button>
-                </div>
-
-                <h4 style="margin-top: 1rem;">Outlook/Hotmail</h4>
-                <div class="code-block">
-                    <code>outlook.office365.com</code>
-                    <button class="copy-btn" onclick="copyToClipboard('outlook.office365.com')">Copy</button>
-                </div>
-
-                <h4 style="margin-top: 1rem;">Yahoo Mail</h4>
-                <div class="code-block">
-                    <code>imap.mail.yahoo.com</code>
-                    <button class="copy-btn" onclick="copyToClipboard('imap.mail.yahoo.com')">Copy</button>
-                </div>
             </div>
         </div>
     </div>
