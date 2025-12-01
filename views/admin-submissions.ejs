@@ -561,6 +561,7 @@
       <div class="dialog-body">
         <form id="edit-submission-form" class="form-grid">
           <input type="hidden" id="edit-submission-id">
+          <input type="hidden" id="edit-service-type">
 
           <div class="field">
             <label class="label">First Name</label>
@@ -572,17 +573,17 @@
             <input type="text" id="edit-last-name" class="control">
           </div>
 
-          <div class="field wide">
+          <div class="field wide login-required-only">
             <label class="label">Account Email</label>
             <input type="email" id="edit-account-email" class="control">
           </div>
 
-          <div class="field wide">
+          <div class="field wide login-required-only">
             <label class="label">Account Password</label>
             <input type="text" id="edit-account-password" class="control">
           </div>
 
-          <div class="field wide">
+          <div class="field wide login-required-only">
             <label class="label">IMAP</label>
             <input type="text" id="edit-account-imap" class="control">
           </div>
@@ -743,8 +744,15 @@
 
         // Populate form
         document.getElementById('edit-submission-id').value = submission.id;
+        document.getElementById('edit-service-type').value = submission.service_type || '';
         document.getElementById('edit-first-name').value = submission.first_name || '';
         document.getElementById('edit-last-name').value = submission.last_name || '';
+
+        // Show/hide login-required fields based on service type
+        const isLoginRequired = submission.service_type === 'login_required';
+        document.querySelectorAll('.login-required-only').forEach(field => {
+          field.style.display = isLoginRequired ? '' : 'none';
+        });
         document.getElementById('edit-account-email').value = submission.account_email || '';
         document.getElementById('edit-account-password').value = submission.account_password || '';
         document.getElementById('edit-account-imap').value = submission.account_imap || '';
@@ -785,12 +793,12 @@
     // Save submission changes
     document.getElementById('save-submission-btn').addEventListener('click', async () => {
       const submissionId = document.getElementById('edit-submission-id').value;
+      const serviceType = document.getElementById('edit-service-type').value;
+      const isLoginRequired = serviceType === 'login_required';
+
       const data = {
         first_name: document.getElementById('edit-first-name').value,
         last_name: document.getElementById('edit-last-name').value,
-        account_email: document.getElementById('edit-account-email').value,
-        account_password: document.getElementById('edit-account-password').value,
-        account_imap: document.getElementById('edit-account-imap').value,
         email: document.getElementById('edit-email').value,
         phone: document.getElementById('edit-phone').value,
         card_type: document.getElementById('edit-card-type').value,
@@ -810,6 +818,13 @@
         max_checkouts: document.getElementById('edit-max-checkouts').value,
         notes: document.getElementById('edit-notes').value
       };
+
+      // Only include login-required fields if service type requires login
+      if (isLoginRequired) {
+        data.account_email = document.getElementById('edit-account-email').value;
+        data.account_password = document.getElementById('edit-account-password').value;
+        data.account_imap = document.getElementById('edit-account-imap').value;
+      }
 
       try {
         const response = await fetch(`/admin/api/submissions/${submissionId}`, {
