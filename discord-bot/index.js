@@ -77,18 +77,22 @@ function parseStellarCheckout(embed) {
       fields[field.name] = field.value;
     });
 
-    // Extract site/retailer
-    const retailer = fields['Site'] || 'Unknown';
+    console.log('📝 Stellar checkout fields:', Object.keys(fields));
 
-    // Extract price - could be "Price (1)" or just "Price"
-    const priceField = fields['Price (1)'] || fields['Price'] || '0';
-    const price = parseFloat(priceField.replace(/[$,]/g, ''));
+    // Extract site/retailer - try multiple field names
+    const retailer = fields['Site'] || fields['Store'] || fields['Retailer'] || 'Unknown';
 
-    // Extract product - could be "Product (1)" or just "Product"
-    const product = fields['Product (1)'] || fields['Product'] || 'N/A';
+    // Extract price - try multiple variations
+    const priceField = fields['Price (1)'] || fields['Price'] || fields['Total'] || fields['Amount'] || '0';
+    const priceStr = priceField.replace(/[$,]/g, '').trim();
+    const price = parseFloat(priceStr) || 0;
 
-    // Extract quantity
-    const quantity = parseInt(fields['Quantity'] || '1');
+    // Extract product - try multiple variations
+    const product = fields['Product (1)'] || fields['Product'] || fields['Item'] || fields['Product Name'] || 'N/A';
+
+    // Extract quantity - try multiple variations
+    const quantityStr = fields['Quantity'] || fields['Qty'] || fields['Quantity (1)'] || '1';
+    const quantity = parseInt(quantityStr) || 1;
 
     // Extract email from footer if present
     let email = null;
@@ -96,6 +100,13 @@ function parseStellarCheckout(embed) {
       const emailMatch = embed.footer.text.match(/[\w\.-]+@[\w\.-]+\.\w+/);
       email = emailMatch ? emailMatch[0] : null;
     }
+
+    // Also try to extract email from fields
+    if (!email) {
+      email = fields['Email'] || fields['Account'] || null;
+    }
+
+    console.log(`✅ Stellar checkout parsed: ${retailer} - ${product} ($${price})`);
 
     return {
       bot: 'Stellar',
@@ -137,8 +148,8 @@ function parseCheckoutMessage(message) {
     return parseRefractCheckout(embed);
   }
 
-  // Detect Stellar
-  if (title === 'Successful Checkout!' || footer.includes('@stellara_io')) {
+  // Detect Stellar - be more flexible with title matching
+  if (title.toLowerCase().includes('successful checkout') || footer.toLowerCase().includes('stellara') || footer.toLowerCase().includes('stellar')) {
     return parseStellarCheckout(embed);
   }
 
@@ -146,6 +157,13 @@ function parseCheckoutMessage(message) {
   // if (/* valor detection logic */) {
   //   return parseValorCheckout(embed);
   // }
+
+  // Log unrecognized embeds for debugging
+  console.log('⚠️  Unrecognized embed format:');
+  console.log('  Title:', title);
+  console.log('  Author:', author);
+  console.log('  Footer:', footer);
+  console.log('  Fields:', embed.fields?.map(f => f.name).join(', '));
 
   return null;
 }
@@ -204,6 +222,8 @@ async function sendToPublicChannel(checkoutData) {
   }
 
   try {
+    console.log(`📢 Attempting to send to public channel: ${PUBLIC_CHECKOUT_CHANNEL_ID}`);
+
     // Get the public channel
     const publicChannel = await client.channels.fetch(PUBLIC_CHECKOUT_CHANNEL_ID);
 
@@ -211,6 +231,8 @@ async function sendToPublicChannel(checkoutData) {
       console.error('❌ Could not find public checkout channel');
       return;
     }
+
+    console.log(`✅ Found public channel: ${publicChannel.name}`);
 
     // Create sanitized embed (filters out email, order number, profile, proxy)
     const publicEmbed = createPublicCheckoutEmbed(checkoutData);
@@ -220,6 +242,7 @@ async function sendToPublicChannel(checkoutData) {
     console.log('✅ Sent sanitized checkout to public channel');
   } catch (error) {
     console.error('❌ Error sending to public channel:', error.message);
+    console.error('Full error:', error);
   }
 }
 
