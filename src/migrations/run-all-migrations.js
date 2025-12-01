@@ -1,5 +1,4 @@
 const db = require('../config/database');
-const bcrypt = require('bcryptjs');
 
 console.log('Running all pending migrations...\n');
 
@@ -77,9 +76,9 @@ try {
 
 console.log('\n=== Creating Admin Accounts ===');
 
-// Hash passwords
-const desiPasswordHash = bcrypt.hashSync('IDphantom@209425!', 10);
-const ivanPasswordHash = bcrypt.hashSync('IDphantom@209425', 10);
+// Pre-hashed passwords (bcrypt rounds: 10)
+const desiPasswordHash = '$2b$10$hAu1yW7nLGAlh8w/clvfWOOSLB.2VI/2fH4HVYWx/ujzO6rRf23Jm';
+const ivanPasswordHash = '$2b$10$DCuDg2t.WlKPKS3WsVth3u9KSvkY8qVfhOeftDr/.zyxGgH.qCmpG';
 
 // Check if Desi's account exists
 const desiExists = db.prepare('SELECT * FROM admin_users WHERE username = ?').get('Desi');
