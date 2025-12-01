@@ -4,6 +4,38 @@ All notable changes to the Phantom ACO service are documented here.
 
 ---
 
+## [December 1, 2025]
+
+### ✨ Features
+- **Admin Assignment Tracking** - Replace single "added to bot" checkbox with dropdown to track which admin (Desi or Ivan) added submissions to their bot
+- **Individual Admin Accounts** - Created separate login accounts for Desi and Ivan with unique passwords
+- **Enhanced Submission Forms** - Added First Name and Last Name fields to all submission forms
+- **Billing Address Control** - Added "Billing Address Same as Shipping" checkbox with conditional billing fields
+- **Quantity Controls** - Added Max Quantity per Checkout and Max Checkouts per Drop fields
+
+### 🐛 Bug Fixes
+- **Notes Field Visibility** - Fixed notes/special instructions not displaying in admin submissions view
+- **Conditional Login Fields** - Account Email, Password, and IMAP fields now only show for login-required services (Target, Walmart, Best Buy)
+- **Migration Script Dependencies** - Fixed bcryptjs dependency issue in migration script by using pre-hashed passwords
+
+### 🎨 UI Improvements
+- **Scrollable Edit Modal** - Admin edit dialog now scrollable with max-height: 70vh for better usability
+- **Enhanced Notes Display** - Notes field now displays with 6 rows and visual separator for better readability
+- **Assignment Column** - Changed "Bot" column to "Assigned To" with dropdown selector (Unassigned, Desi, Ivan)
+
+### 🔧 Technical
+- Added database columns: `first_name`, `last_name`, `billing_same_as_shipping`, `max_qty`, `max_checkouts`, `assigned_to`
+- Created admin accounts table with bcrypt password hashing
+- Updated API endpoint from `/toggle-bot` to `/assign` for assignment tracking
+- Added conditional field display logic based on `service_type`
+- Created `run-all-migrations.js` unified migration script for Render deployment
+- Added bcryptjs to package.json dependencies
+
+### 📚 Documentation
+- Created `RENDER_MIGRATION_INSTRUCTIONS.md` with step-by-step migration guide for Render shell
+
+---
+
 ## [November 27, 2025]
 
 ### ✨ Features
@@ -85,5 +117,5 @@ All notable changes to the Phantom ACO service are documented here.
 
 ---
 
-_Last Updated: November 27, 2025_
+_Last Updated: December 1, 2025_
 _Generated with ❤️ by [Claude Code](https://claude.com/claude-code)_
