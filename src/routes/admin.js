@@ -409,6 +409,8 @@ router.put('/api/submissions/:id', ensureAdminAuth, async (req, res) => {
   try {
     const submissionId = req.params.id;
     const {
+      first_name,
+      last_name,
       email,
       phone,
       name_on_card,
@@ -429,7 +431,10 @@ router.put('/api/submissions/:id', ensureAdminAuth, async (req, res) => {
       country,
       account_email,
       account_password,
-      account_imap
+      account_imap,
+      max_qty,
+      max_checkouts,
+      notes
     } = req.body;
 
     // Encryption helper
@@ -453,12 +458,14 @@ router.put('/api/submissions/:id', ensureAdminAuth, async (req, res) => {
 
     db.prepare(`
       UPDATE users
-      SET payment_email = ?, payment_method = ?, card_number = ?, exp_date = ?, cvc = ?,
+      SET first_name = ?, last_name = ?, payment_email = ?, payment_method = ?, card_number = ?, exp_date = ?, cvc = ?,
           billing_address = ?, billing_city = ?, billing_state = ?, billing_zipcode = ?,
           shipping_address = ?, shipping_city = ?, shipping_state = ?, shipping_zipcode = ?,
-          phone_number = ?
+          phone_number = ?, max_qty = ?, max_checkouts = ?
       WHERE id = ?
     `).run(
+      first_name,
+      last_name,
       email || account_email,
       card_type,
       card_number,
@@ -473,11 +480,15 @@ router.put('/api/submissions/:id', ensureAdminAuth, async (req, res) => {
       state,
       zip_code,
       phone,
+      max_qty || 1,
+      max_checkouts || 1,
       userId
     );
 
     // Prepare data object (NOT encrypted yet)
     const dataToEncrypt = {
+      first_name,
+      last_name,
       email,
       phone,
       name_on_card,
@@ -498,7 +509,9 @@ router.put('/api/submissions/:id', ensureAdminAuth, async (req, res) => {
       country,
       account_email,
       account_password,
-      account_imap
+      account_imap,
+      max_qty,
+      max_checkouts
     };
 
     // Encrypt the entire JSON object as a single string
@@ -516,8 +529,8 @@ router.put('/api/submissions/:id', ensureAdminAuth, async (req, res) => {
       subscription.id
     );
 
-    // Update subscription timestamp
-    db.prepare('UPDATE service_subscriptions SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(subscription.id);
+    // Update subscription with notes and timestamp
+    db.prepare('UPDATE service_subscriptions SET notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(notes || null, subscription.id);
 
     res.json({
       success: true,

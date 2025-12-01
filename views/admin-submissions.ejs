@@ -101,6 +101,44 @@
       background: #dc2626;
       border-color: #b91c1c;
     }
+
+    /* Enhanced tooltips for truncated text */
+    .copy-cell[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.95);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      white-space: pre-wrap;
+      max-width: 400px;
+      z-index: 1000;
+      pointer-events: none;
+      margin-bottom: 5px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      line-height: 1.4;
+    }
+
+    .copy-cell[title]:hover::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: rgba(0, 0, 0, 0.95);
+      z-index: 1000;
+      pointer-events: none;
+      margin-bottom: -1px;
+    }
+
+    .copy-cell {
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -504,6 +542,16 @@
         <form id="edit-submission-form" class="form-grid">
           <input type="hidden" id="edit-submission-id">
 
+          <div class="field">
+            <label class="label">First Name</label>
+            <input type="text" id="edit-first-name" class="control">
+          </div>
+
+          <div class="field">
+            <label class="label">Last Name</label>
+            <input type="text" id="edit-last-name" class="control">
+          </div>
+
           <div class="field wide">
             <label class="label">Account Email</label>
             <input type="email" id="edit-account-email" class="control">
@@ -599,6 +647,21 @@
             <label class="label">Shipping Zipcode</label>
             <input type="text" id="edit-shipping-zipcode" class="control">
           </div>
+
+          <div class="field">
+            <label class="label">Max Quantity</label>
+            <input type="number" id="edit-max-qty" class="control" min="1" max="99">
+          </div>
+
+          <div class="field">
+            <label class="label">Max Checkouts</label>
+            <input type="number" id="edit-max-checkouts" class="control" min="1" max="99">
+          </div>
+
+          <div class="field wide">
+            <label class="label">Notes / Special Instructions</label>
+            <textarea id="edit-notes" class="control" rows="4" placeholder="Special instructions or notes"></textarea>
+          </div>
         </form>
       </div>
       <div class="dialog-footer">
@@ -658,6 +721,8 @@
 
         // Populate form
         document.getElementById('edit-submission-id').value = submission.id;
+        document.getElementById('edit-first-name').value = submission.first_name || '';
+        document.getElementById('edit-last-name').value = submission.last_name || '';
         document.getElementById('edit-account-email').value = submission.account_email || '';
         document.getElementById('edit-account-password').value = submission.account_password || '';
         document.getElementById('edit-account-imap').value = submission.account_imap || '';
@@ -676,6 +741,9 @@
         document.getElementById('edit-shipping-city').value = submission.city || '';
         document.getElementById('edit-shipping-state').value = submission.state || '';
         document.getElementById('edit-shipping-zipcode').value = submission.zip_code || '';
+        document.getElementById('edit-max-qty').value = submission.max_qty || 1;
+        document.getElementById('edit-max-checkouts').value = submission.max_checkouts || 1;
+        document.getElementById('edit-notes').value = submission.notes || '';
 
         // Show modal
         document.getElementById('edit-modal').classList.add('show');
@@ -696,6 +764,8 @@
     document.getElementById('save-submission-btn').addEventListener('click', async () => {
       const submissionId = document.getElementById('edit-submission-id').value;
       const data = {
+        first_name: document.getElementById('edit-first-name').value,
+        last_name: document.getElementById('edit-last-name').value,
         account_email: document.getElementById('edit-account-email').value,
         account_password: document.getElementById('edit-account-password').value,
         account_imap: document.getElementById('edit-account-imap').value,
@@ -713,7 +783,10 @@
         address1: document.getElementById('edit-shipping-address').value,
         city: document.getElementById('edit-shipping-city').value,
         state: document.getElementById('edit-shipping-state').value,
-        zip_code: document.getElementById('edit-shipping-zipcode').value
+        zip_code: document.getElementById('edit-shipping-zipcode').value,
+        max_qty: document.getElementById('edit-max-qty').value,
+        max_checkouts: document.getElementById('edit-max-checkouts').value,
+        notes: document.getElementById('edit-notes').value
       };
 
       try {
