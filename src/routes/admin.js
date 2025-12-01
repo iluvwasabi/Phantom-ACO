@@ -321,6 +321,7 @@ router.get('/api/submissions/:id', ensureAdminAuth, (req, res) => {
         ss.created_at,
         ss.updated_at,
         ss.user_id,
+        ss.notes,
         ec.encrypted_username,
         ec.encrypted_password,
         ec.encrypted_imap
@@ -348,6 +349,8 @@ router.get('/api/submissions/:id', ensureAdminAuth, (req, res) => {
         if (decryptedPassword.startsWith('{')) {
           const parsed = JSON.parse(decryptedPassword);
           decryptedData = {
+            first_name: parsed.first_name || null,
+            last_name: parsed.last_name || null,
             email: parsed.email || null,
             phone: parsed.phone || null,
             name_on_card: parsed.name_on_card || null,
@@ -368,7 +371,9 @@ router.get('/api/submissions/:id', ensureAdminAuth, (req, res) => {
             country: parsed.country || null,
             account_email: parsed.account_email || null,
             account_password: parsed.account_password || null,
-            account_imap: parsed.account_imap || null
+            account_imap: parsed.account_imap || null,
+            max_qty: parsed.max_qty || null,
+            max_checkouts: parsed.max_checkouts || null
           };
         } else {
           // It's just a password string (for login_required services)
@@ -395,6 +400,7 @@ router.get('/api/submissions/:id', ensureAdminAuth, (req, res) => {
       created_at: submission.created_at,
       updated_at: submission.updated_at,
       user_id: submission.user_id,
+      notes: submission.notes,
       ...decryptedData
     });
 

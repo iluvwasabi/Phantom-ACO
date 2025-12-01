@@ -4,7 +4,9 @@
       "Bash(git push)",
       "Bash(tasklist:*)",
       "Bash(findstr:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(node:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
