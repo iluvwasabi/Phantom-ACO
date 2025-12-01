@@ -204,7 +204,7 @@
           <table>
             <thead>
               <tr>
-                <th>Bot</th>
+                <th>Assigned To</th>
                 <th>ID</th>
                 <th>Username</th>
                 <th>First Name</th>
@@ -229,7 +229,11 @@
                 <% submissions.target.forEach(sub => { %>
                   <tr data-submission-id="<%= sub.id %>">
                     <td style="text-align: center;">
-                      <input type="checkbox" class="bot-checkbox" data-submission-id="<%= sub.id %>" <%= sub.added_to_bot ? 'checked' : '' %>>
+                      <select class="assignment-dropdown" data-submission-id="<%= sub.id %>" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-100); color: var(--text-900); font-size: 0.85rem;">
+                        <option value="">Unassigned</option>
+                        <option value="Desi" <%= sub.assigned_to === 'Desi' ? 'selected' : '' %>>Desi</option>
+                        <option value="Ivan" <%= sub.assigned_to === 'Ivan' ? 'selected' : '' %>>Ivan</option>
+                      </select>
                     </td>
                     <td><%= sub.id %></td>
                     <td><strong><%= sub.discord_username %></strong></td>
@@ -273,7 +277,7 @@
           <table>
             <thead>
               <tr>
-                <th>Bot</th>
+                <th>Assigned To</th>
                 <th>ID</th>
                 <th>Username</th>
                 <th>First Name</th>
@@ -298,7 +302,11 @@
                 <% submissions.walmart.forEach(sub => { %>
                   <tr data-submission-id="<%= sub.id %>">
                     <td style="text-align: center;">
-                      <input type="checkbox" class="bot-checkbox" data-submission-id="<%= sub.id %>" <%= sub.added_to_bot ? 'checked' : '' %>>
+                      <select class="assignment-dropdown" data-submission-id="<%= sub.id %>" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-100); color: var(--text-900); font-size: 0.85rem;">
+                        <option value="">Unassigned</option>
+                        <option value="Desi" <%= sub.assigned_to === 'Desi' ? 'selected' : '' %>>Desi</option>
+                        <option value="Ivan" <%= sub.assigned_to === 'Ivan' ? 'selected' : '' %>>Ivan</option>
+                      </select>
                     </td>
                     <td><%= sub.id %></td>
                     <td><strong><%= sub.discord_username %></strong></td>
@@ -342,7 +350,7 @@
           <table>
             <thead>
               <tr>
-                <th>Bot</th>
+                <th>Assigned To</th>
                 <th>ID</th>
                 <th>Username</th>
                 <th>First Name</th>
@@ -367,7 +375,11 @@
                 <% submissions.bestbuy.forEach(sub => { %>
                   <tr data-submission-id="<%= sub.id %>">
                     <td style="text-align: center;">
-                      <input type="checkbox" class="bot-checkbox" data-submission-id="<%= sub.id %>" <%= sub.added_to_bot ? 'checked' : '' %>>
+                      <select class="assignment-dropdown" data-submission-id="<%= sub.id %>" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-100); color: var(--text-900); font-size: 0.85rem;">
+                        <option value="">Unassigned</option>
+                        <option value="Desi" <%= sub.assigned_to === 'Desi' ? 'selected' : '' %>>Desi</option>
+                        <option value="Ivan" <%= sub.assigned_to === 'Ivan' ? 'selected' : '' %>>Ivan</option>
+                      </select>
                     </td>
                     <td><%= sub.id %></td>
                     <td><strong><%= sub.discord_username %></strong></td>
@@ -439,7 +451,11 @@
                 %>
                   <tr data-submission-id="<%= sub.id %>">
                     <td style="text-align: center;">
-                      <input type="checkbox" class="bot-checkbox" data-submission-id="<%= sub.id %>" <%= sub.added_to_bot ? 'checked' : '' %>>
+                      <select class="assignment-dropdown" data-submission-id="<%= sub.id %>" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-100); color: var(--text-900); font-size: 0.85rem;">
+                        <option value="">Unassigned</option>
+                        <option value="Desi" <%= sub.assigned_to === 'Desi' ? 'selected' : '' %>>Desi</option>
+                        <option value="Ivan" <%= sub.assigned_to === 'Ivan' ? 'selected' : '' %>>Ivan</option>
+                      </select>
                     </td>
                     <td><%= sub.id %></td>
                     <td><strong><%= sub.discord_username %></strong></td>
@@ -511,7 +527,11 @@
                 %>
                   <tr data-submission-id="<%= sub.id %>">
                     <td style="text-align: center;">
-                      <input type="checkbox" class="bot-checkbox" data-submission-id="<%= sub.id %>" <%= sub.added_to_bot ? 'checked' : '' %>>
+                      <select class="assignment-dropdown" data-submission-id="<%= sub.id %>" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-100); color: var(--text-900); font-size: 0.85rem;">
+                        <option value="">Unassigned</option>
+                        <option value="Desi" <%= sub.assigned_to === 'Desi' ? 'selected' : '' %>>Desi</option>
+                        <option value="Ivan" <%= sub.assigned_to === 'Ivan' ? 'selected' : '' %>>Ivan</option>
+                      </select>
                     </td>
                     <td><%= sub.id %></td>
                     <td><strong><%= sub.discord_username %></strong></td>
@@ -900,26 +920,32 @@
 
     // Bot checkbox toggle
     document.addEventListener('change', async (e) => {
-      if (e.target.classList.contains('bot-checkbox')) {
-        const checkbox = e.target;
-        const submissionId = checkbox.dataset.submissionId;
-        const addedToBot = checkbox.checked ? 1 : 0;
+      if (e.target.classList.contains('assignment-dropdown')) {
+        const dropdown = e.target;
+        const submissionId = dropdown.dataset.submissionId;
+        const assignedTo = dropdown.value;
+        const previousValue = dropdown.getAttribute('data-previous-value') || '';
 
         try {
-          const response = await fetch(`/admin/api/submissions/${submissionId}/toggle-bot`, {
+          const response = await fetch(`/admin/api/submissions/${submissionId}/assign`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
-            body: JSON.stringify({ added_to_bot: addedToBot })
+            body: JSON.stringify({ assigned_to: assignedTo })
           });
 
           const result = await response.json();
           if (result.success) {
-            showToast(checkbox.checked ? '✅ Marked as added to bot' : '⬜ Unmarked from bot');
+            dropdown.setAttribute('data-previous-value', assignedTo);
+            if (assignedTo === '') {
+              showToast('⬜ Unassigned from bot');
+            } else {
+              showToast(`✅ Assigned to ${assignedTo}`);
+            }
           } else {
-            showToast('Failed to update checkbox');
-            // Revert checkbox on error
-            checkbox.checked = !checkbox.checked;
+            showToast('Failed to update assignment');
+            // Revert dropdown on error
+            dropdown.value = previousValue;
           }
         } catch (error) {
           console.error('Toggle bot error:', error);

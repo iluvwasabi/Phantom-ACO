@@ -197,6 +197,7 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
       ss.created_at,
       ss.notes,
       ss.added_to_bot,
+      ss.assigned_to,
       u.discord_username,
       u.discord_id,
       ec.encrypted_password
@@ -231,6 +232,7 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
         created_at: sub.created_at,
         notes: sub.notes,
         added_to_bot: sub.added_to_bot,
+        assigned_to: sub.assigned_to,
         first_name: parsed.first_name || null,
         last_name: parsed.last_name || null,
         email: parsed.email || null,
@@ -1146,11 +1148,11 @@ router.delete('/orders/:id/reject', ensureAdminAuth, (req, res) => {
   }
 });
 
-// PUT /admin/api/submissions/:id/toggle-bot - Toggle added_to_bot flag (admin version)
-router.put('/api/submissions/:id/toggle-bot', ensureAdminAuth, async (req, res) => {
+// PUT /admin/api/submissions/:id/assign - Assign submission to admin
+router.put('/api/submissions/:id/assign', ensureAdminAuth, async (req, res) => {
   try {
     const submissionId = req.params.id;
-    const { added_to_bot } = req.body;
+    const { assigned_to } = req.body;
 
     // Find subscription
     const subscription = db.prepare('SELECT * FROM service_subscriptions WHERE id = ?').get(submissionId);
@@ -1159,21 +1161,27 @@ router.put('/api/submissions/:id/toggle-bot', ensureAdminAuth, async (req, res) 
       return res.status(404).json({ error: 'Submission not found' });
     }
 
-    // Update added_to_bot flag
+    // Validate assigned_to value (must be empty, 'Desi', or 'Ivan')
+    if (assigned_to !== '' && assigned_to !== 'Desi' && assigned_to !== 'Ivan') {
+      return res.status(400).json({ error: 'Invalid assignment value' });
+    }
+
+    // Update assigned_to field and set added_to_bot based on assignment
+    const addedToBot = assigned_to ? 1 : 0;
     db.prepare(`
       UPDATE service_subscriptions
-      SET added_to_bot = ?, updated_at = CURRENT_TIMESTAMP
+      SET assigned_to = ?, added_to_bot = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(added_to_bot, submissionId);
+    `).run(assigned_to || null, addedToBot, submissionId);
 
     res.json({
       success: true,
-      message: added_to_bot ? 'Marked as added to bot' : 'Unmarked from bot'
+      message: assigned_to ? `Assigned to ${assigned_to}` : 'Unassigned'
     });
 
   } catch (error) {
-    console.error('Toggle bot error:', error);
-    res.status(500).json({ error: 'Failed to update added_to_bot flag' });
+    console.error('Assignment error:', error);
+    res.status(500).json({ error: 'Failed to update assignment' });
   }
 });
 
