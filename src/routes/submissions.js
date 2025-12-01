@@ -48,6 +48,8 @@ router.get('/api/submissions', ensureAuthenticated, ensureHasACORole, async (req
             const parsed = JSON.parse(decryptedPassword);
             // It's a full data object - decrypt each field
             decryptedData = {
+              first_name: parsed.first_name || null,
+              last_name: parsed.last_name || null,
               email: parsed.email || null,
               phone: parsed.phone || null,
               name_on_card: parsed.name_on_card || null,
@@ -60,6 +62,7 @@ router.get('/api/submissions', ensureAuthenticated, ensureHasACORole, async (req
               billing_city: parsed.billing_city || null,
               billing_state: parsed.billing_state || null,
               billing_zipcode: parsed.billing_zipcode || null,
+              billing_same_as_shipping: parsed.billing_same_as_shipping || null,
               address1: parsed.address1 || null,
               unit_number: parsed.unit_number || null,
               city: parsed.city || null,
@@ -68,7 +71,9 @@ router.get('/api/submissions', ensureAuthenticated, ensureHasACORole, async (req
               country: parsed.country || null,
               account_email: parsed.account_email || null,
               account_password: parsed.account_password || null,
-              account_imap: parsed.account_imap || null
+              account_imap: parsed.account_imap || null,
+              max_qty: parsed.max_qty || null,
+              max_checkouts: parsed.max_checkouts || null
             };
           } else {
             // It's just a password string (for login_required services)
@@ -120,6 +125,8 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
     const userId = req.user.id;
     const {
       service,
+      first_name,
+      last_name,
       email,
       phone,
       name_on_card,
@@ -132,6 +139,7 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       billing_city,
       billing_state,
       billing_zipcode,
+      billing_same_as_shipping,
       address1,
       unit_number,
       city,
@@ -141,6 +149,8 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       account_email,
       account_password,
       account_imap,
+      max_qty,
+      max_checkouts,
       notes
     } = req.body;
 
@@ -150,12 +160,14 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
 
     db.prepare(`
       UPDATE users
-      SET payment_email = ?, payment_method = ?, card_number = ?, exp_date = ?, cvc = ?,
+      SET first_name = ?, last_name = ?, payment_email = ?, payment_method = ?, card_number = ?, exp_date = ?, cvc = ?,
           billing_address = ?, billing_city = ?, billing_state = ?, billing_zipcode = ?,
           shipping_address = ?, shipping_city = ?, shipping_state = ?, shipping_zipcode = ?,
-          phone_number = ?
+          phone_number = ?, billing_same_as_shipping = ?, max_qty = ?, max_checkouts = ?
       WHERE id = ?
     `).run(
+      first_name,
+      last_name,
       email || account_email,
       card_type,
       card_number,
@@ -170,6 +182,9 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       state,
       zip_code,
       phone,
+      billing_same_as_shipping ? 1 : 0,
+      max_qty || 1,
+      max_checkouts || 1,
       userId
     );
 
@@ -194,6 +209,8 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
 
     // Prepare data object (NOT encrypted yet)
     const dataToEncrypt = {
+      first_name,
+      last_name,
       email,
       phone,
       name_on_card,
@@ -206,6 +223,7 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       billing_city,
       billing_state,
       billing_zipcode,
+      billing_same_as_shipping,
       address1,
       unit_number,
       city,
@@ -214,7 +232,9 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       country,
       account_email,
       account_password,
-      account_imap
+      account_imap,
+      max_qty,
+      max_checkouts
     };
 
     // Encrypt the entire JSON object as a single string
@@ -255,6 +275,8 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
     const userId = req.user.id;
     const submissionId = req.params.id;
     const {
+      first_name,
+      last_name,
       email,
       phone,
       name_on_card,
@@ -267,6 +289,7 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       billing_city,
       billing_state,
       billing_zipcode,
+      billing_same_as_shipping,
       address1,
       unit_number,
       city,
@@ -276,6 +299,8 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       account_email,
       account_password,
       account_imap,
+      max_qty,
+      max_checkouts,
       notes
     } = req.body;
 
@@ -292,12 +317,14 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
 
     db.prepare(`
       UPDATE users
-      SET payment_email = ?, payment_method = ?, card_number = ?, exp_date = ?, cvc = ?,
+      SET first_name = ?, last_name = ?, payment_email = ?, payment_method = ?, card_number = ?, exp_date = ?, cvc = ?,
           billing_address = ?, billing_city = ?, billing_state = ?, billing_zipcode = ?,
           shipping_address = ?, shipping_city = ?, shipping_state = ?, shipping_zipcode = ?,
-          phone_number = ?
+          phone_number = ?, billing_same_as_shipping = ?, max_qty = ?, max_checkouts = ?
       WHERE id = ?
     `).run(
+      first_name,
+      last_name,
       email || account_email,
       card_type,
       card_number,
@@ -312,11 +339,16 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       state,
       zip_code,
       phone,
+      billing_same_as_shipping ? 1 : 0,
+      max_qty || 1,
+      max_checkouts || 1,
       userId
     );
 
     // Prepare data object (NOT encrypted yet)
     const dataToEncrypt = {
+      first_name,
+      last_name,
       email,
       phone,
       name_on_card,
@@ -329,6 +361,7 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       billing_city,
       billing_state,
       billing_zipcode,
+      billing_same_as_shipping,
       address1,
       unit_number,
       city,
@@ -337,7 +370,9 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       country,
       account_email,
       account_password,
-      account_imap
+      account_imap,
+      max_qty,
+      max_checkouts
     };
 
     // Encrypt the entire JSON object as a single string

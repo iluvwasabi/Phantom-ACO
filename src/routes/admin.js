@@ -231,6 +231,8 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
         created_at: sub.created_at,
         notes: sub.notes,
         added_to_bot: sub.added_to_bot,
+        first_name: parsed.first_name || null,
+        last_name: parsed.last_name || null,
         email: parsed.email || null,
         phone: parsed.phone || null,
         name_on_card: parsed.name_on_card || null,
@@ -243,6 +245,7 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
         billing_city: parsed.billing_city || null,
         billing_state: parsed.billing_state || null,
         billing_zipcode: parsed.billing_zipcode || null,
+        billing_same_as_shipping: parsed.billing_same_as_shipping || null,
         address1: parsed.address1 || null,
         unit_number: parsed.unit_number || null,
         city: parsed.city || null,
@@ -251,7 +254,9 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
         country: parsed.country || null,
         account_email: parsed.account_email || null,
         account_password: parsed.account_password || null,
-        account_imap: parsed.account_imap || null
+        account_imap: parsed.account_imap || null,
+        max_qty: parsed.max_qty || null,
+        max_checkouts: parsed.max_checkouts || null
       };
 
       if (submissions[sub.service_name]) {
