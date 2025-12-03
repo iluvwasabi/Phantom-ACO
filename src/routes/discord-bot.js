@@ -40,15 +40,15 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
     // Don't try to match to submissions - just use the checkout email directly
     console.log(`📧 Using checkout email: ${email}`);
 
-    // Calculate 7% fee with $4 minimum
+    // Calculate 8% fee with $5 minimum
     const orderTotal = price * (quantity || 1);
-    const calculatedFee = orderTotal * 0.07;
-    const feeAmount = Math.max(calculatedFee, 4).toFixed(2);
+    const calculatedFee = orderTotal * 0.08;
+    const feeAmount = Math.max(calculatedFee, 5).toFixed(2);
 
-    if (calculatedFee < 4) {
-      console.log(`💰 Order total: $${orderTotal} → Fee: $${feeAmount} (minimum $4 fee applied)`);
+    if (calculatedFee < 5) {
+      console.log(`💰 Order total: $${orderTotal} → Fee: $${feeAmount} (minimum $5 fee applied)`);
     } else {
-      console.log(`💰 Order total: $${orderTotal} → Fee: $${feeAmount} (7%)`);
+      console.log(`💰 Order total: $${orderTotal} → Fee: $${feeAmount} (8%)`);
     }
 
     // Create order record in "pending_review" status with checkout email
@@ -74,7 +74,7 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
       orderNumber,
       orderTotal,
       feeAmount,
-      7,
+      8,
       email,  // Store checkout email
       timestamp || new Date().toISOString()
     );
@@ -101,7 +101,7 @@ router.post('/api/discord-bot/checkout', express.json(), verifyBotSecret, async 
                 { name: 'Retailer', value: retailer, inline: true },
                 { name: 'Product', value: product, inline: false },
                 { name: 'Order Total', value: `$${orderTotal}`, inline: true },
-                { name: 'Fee', value: `$${feeAmount} (${calculatedFee < 4 ? '$4 min' : '7%'})`, inline: true },
+                { name: 'Fee', value: `$${feeAmount} (${calculatedFee < 5 ? '$5 min' : '8%'})`, inline: true },
                 { name: 'Order #', value: orderNumber || 'N/A', inline: true }
               ],
               footer: { text: `Review at: ${process.env.APP_URL}/admin/orders` },

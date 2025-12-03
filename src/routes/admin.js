@@ -1028,9 +1028,9 @@ router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
       return res.status(400).json({ error: 'Order already processed' });
     }
 
-    // Recalculate fee with corrected total (7% or $4 minimum)
-    const calculatedFee = orderTotal * 0.07;
-    const feeDisplay = Math.max(calculatedFee, 4).toFixed(2);
+    // Recalculate fee with corrected total (8% or $5 minimum)
+    const calculatedFee = orderTotal * 0.08;
+    const feeDisplay = Math.max(calculatedFee, 5).toFixed(2);
     const feeAmount = Math.round(parseFloat(feeDisplay) * 100); // In cents
 
     // Update order with corrected total
@@ -1096,7 +1096,7 @@ router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
       invoice: invoice.id,
       amount: feeAmount,
       currency: 'usd',
-      description: `${order.product_name || 'Product'} - Order #${order.order_number} (7% service fee)`
+      description: `${order.product_name || 'Product'} - Order #${order.order_number} (8% service fee)`
     });
 
     // Finalize and send

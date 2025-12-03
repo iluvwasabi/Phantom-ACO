@@ -36,8 +36,8 @@ router.post('/webhooks/bot', express.json(), async (req, res) => {
       return res.status(404).json({ error: 'Submission not found' });
     }
 
-    // Calculate 7% fee (but this might be wrong - admin will review)
-    const feeAmount = (order_total * 0.07).toFixed(2);
+    // Calculate 8% fee (but this might be wrong - admin will review)
+    const feeAmount = (order_total * 0.08).toFixed(2);
 
     console.log(`📋 New order pending review: $${order_total} → Fee: $${feeAmount}`);
 
@@ -63,7 +63,7 @@ router.post('/webhooks/bot', express.json(), async (req, res) => {
       order_number,
       order_total,
       feeAmount,
-      7,
+      8,
       timestamp || new Date().toISOString()
     );
 
@@ -87,7 +87,7 @@ router.post('/webhooks/bot', express.json(), async (req, res) => {
                 { name: 'Customer', value: submission.discord_username, inline: true },
                 { name: 'Retailer', value: retailer, inline: true },
                 { name: 'Order Total', value: `$${order_total}`, inline: true },
-                { name: 'Fee (7%)', value: `$${feeAmount}`, inline: true },
+                { name: 'Fee (8%)', value: `$${feeAmount}`, inline: true },
                 { name: 'Order #', value: order_number || 'N/A', inline: true }
               ],
               footer: { text: `Review at: ${process.env.APP_URL}/admin/orders` },
