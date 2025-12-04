@@ -96,10 +96,6 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background-image: url('/images/Boo_Pic.png');
-  background-position: center top;
-  background-size: 50%;
-  background-repeat: no-repeat;
 }
 
 .container {
@@ -107,6 +103,11 @@ body {
   max-width: 1600px;
   margin: 0 auto;
   padding: var(--space-8);
+  background-image: url('/images/Boo_Pic.png');
+  background-position: center top;
+  background-size: 50%;
+  background-repeat: no-repeat;
+  background-attachment: local;
 }
 
 /* =============================
