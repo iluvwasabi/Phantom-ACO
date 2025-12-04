@@ -6,7 +6,9 @@
       "Bash(findstr:*)",
       "Bash(git commit:*)",
       "Bash(node:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm install:*)",
+      "Bash(sqlite3:*)"
     ],
     "deny": [],
     "ask": []

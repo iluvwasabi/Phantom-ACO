@@ -224,7 +224,7 @@
                 <label for="product_${idx}" style="flex: 1; font-weight: 500;">${product.name}</label>
                 <div style="display: flex; gap: 8px; align-items: center;">
                   <label style="font-size: 0.9rem; color: var(--muted);">Quantity:</label>
-                  <select name="product_${idx}_quantity" style="width: 80px; padding: 4px 8px;" class="control">
+                  <select name="product_${idx}_quantity" style="width: 100px; padding: 4px 8px;" class="control">
                     <option value="1" ${quantity === 1 ? 'selected' : ''}>1</option>
                     <option value="2" ${quantity === 2 ? 'selected' : ''}>2</option>
                     <option value="${product.max_qty}" ${quantity === product.max_qty || quantity === 'max' ? 'selected' : ''}>Max (${product.max_qty})</option>
@@ -233,7 +233,7 @@
                   <select name="product_${idx}_checkouts" style="width: 80px; padding: 4px 8px;" class="control">
                     <option value="1" ${checkouts === 1 ? 'selected' : ''}>1</option>
                     <option value="2" ${checkouts === 2 ? 'selected' : ''}>2</option>
-                    <option value="${product.max_checkouts}" ${checkouts === product.max_checkouts || checkouts === 'many' ? 'selected' : ''}>Many (${product.max_checkouts})</option>
+                    <option value="${product.max_checkouts}" ${checkouts === product.max_checkouts || checkouts === 'many' ? 'selected' : ''}>Many</option>
                   </select>
                 </div>
               </div>
@@ -275,6 +275,12 @@
       } else if (field.type === 'number') {
         const value = existingData[field.name] || field.default || '';
         html += `<input class="control" type="number" name="${field.name}" placeholder="${field.label.replace(' *', '')}" ${field.required ? 'required' : ''} ${field.min !== undefined ? `min="${field.min}"` : ''} ${field.max !== undefined ? `max="${field.max}"` : ''} value="${value}">`;
+      } else if (field.type === 'password') {
+        const value = existingData[field.name] || '';
+        html += `<div style="position: relative;">`;
+        html += `<input class="control" type="password" name="${field.name}" placeholder="${field.label.replace(' *', '')}" ${field.required ? 'required' : ''} ${field.maxlength ? `maxlength="${field.maxlength}"` : ''} value="${value}">`;
+        html += `<button type="button" class="password-toggle" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px 8px; color: var(--muted); font-size: 1.2rem;" onclick="togglePasswordVisibility(this)">👁️</button>`;
+        html += `</div>`;
       } else {
         const value = existingData[field.name] || '';
         html += `<input class="control" type="${field.type}" name="${field.name}" placeholder="${field.label.replace(' *', '')}" ${field.required ? 'required' : ''} ${field.maxlength ? `maxlength="${field.maxlength}"` : ''} value="${value}">`;
@@ -893,3 +899,15 @@
 
   console.log('✅ Dashboard app initialized');
 })();
+
+// Global function for password visibility toggle
+function togglePasswordVisibility(button) {
+  const input = button.previousElementSibling;
+  if (input.type === 'password') {
+    input.type = 'text';
+    button.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    button.textContent = '👁️';
+  }
+}

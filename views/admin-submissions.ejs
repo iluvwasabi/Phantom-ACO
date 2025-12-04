@@ -219,6 +219,7 @@
                 <th>Phone</th>
                 <th>Max Qty</th>
                 <th>Max Checkouts</th>
+                <th>Selected Products</th>
                 <th>Notes</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -227,6 +228,12 @@
             <tbody>
               <% if (submissions.target.length > 0) { %>
                 <% submissions.target.forEach(sub => { %>
+                  <%
+                    let productsDisplay = 'N/A';
+                    if (sub.selected_products && sub.selected_products.length > 0) {
+                      productsDisplay = sub.selected_products.map(p => `${p.product} (Qty: ${p.quantity}, CO: ${p.checkouts})`).join(', ');
+                    }
+                  %>
                   <tr data-submission-id="<%= sub.id %>">
                     <td style="text-align: center;">
                       <select class="assignment-dropdown" data-submission-id="<%= sub.id %>" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-100); color: var(--text-900); font-size: 0.85rem;">
@@ -249,6 +256,7 @@
                     <td class="copy-cell" onclick="copyText('<%= sub.phone || '' %>', this)"><%= sub.phone || 'N/A' %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.max_qty || '' %>', this)"><%= sub.max_qty || 'N/A' %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.max_checkouts || '' %>', this)"><%= sub.max_checkouts || 'N/A' %></td>
+                    <td class="copy-cell" onclick="copyText('<%= productsDisplay %>', this)" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;" title="<%= productsDisplay %>"><%= productsDisplay %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.notes || '' %>', this)" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="<%= sub.notes || '' %>"><%= sub.notes || 'N/A' %></td>
                     <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
                     <td>
@@ -292,6 +300,7 @@
                 <th>Phone</th>
                 <th>Max Qty</th>
                 <th>Max Checkouts</th>
+                <th>Selected Products</th>
                 <th>Notes</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -300,6 +309,12 @@
             <tbody>
               <% if (submissions.walmart.length > 0) { %>
                 <% submissions.walmart.forEach(sub => { %>
+                  <%
+                    let productsDisplay = 'N/A';
+                    if (sub.selected_products && sub.selected_products.length > 0) {
+                      productsDisplay = sub.selected_products.map(p => `${p.product} (Qty: ${p.quantity}, CO: ${p.checkouts})`).join(', ');
+                    }
+                  %>
                   <tr data-submission-id="<%= sub.id %>">
                     <td style="text-align: center;">
                       <select class="assignment-dropdown" data-submission-id="<%= sub.id %>" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-100); color: var(--text-900); font-size: 0.85rem;">
@@ -322,6 +337,7 @@
                     <td class="copy-cell" onclick="copyText('<%= sub.phone || '' %>', this)"><%= sub.phone || 'N/A' %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.max_qty || '' %>', this)"><%= sub.max_qty || 'N/A' %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.max_checkouts || '' %>', this)"><%= sub.max_checkouts || 'N/A' %></td>
+                    <td class="copy-cell" onclick="copyText('<%= productsDisplay %>', this)" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;" title="<%= productsDisplay %>"><%= productsDisplay %></td>
                     <td class="copy-cell" onclick="copyText('<%= sub.notes || '' %>', this)" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="<%= sub.notes || '' %>"><%= sub.notes || 'N/A' %></td>
                     <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
                     <td>
