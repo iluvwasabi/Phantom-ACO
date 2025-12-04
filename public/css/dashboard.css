@@ -272,7 +272,7 @@ body {
 .card {
   border-radius: var(--radius-lg);
   background: var(--surface);
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.75);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   display: flex;
@@ -296,7 +296,7 @@ body {
 }
 
 [data-theme="dark"] .card {
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.75);
 }
 
 .card-media {
