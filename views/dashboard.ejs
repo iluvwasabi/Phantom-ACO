@@ -68,6 +68,9 @@
           <div class="chip">
             📊 <%= Object.keys(subscribedServices).length %> Active
           </div>
+          <div class="chip" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">
+            🎉 <%= user.successful_orders_count || 0 %> Successful Orders
+          </div>
           <a href="/changelog" class="chip" style="text-decoration: none; cursor: pointer; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">
             📋 What's New
           </a>
