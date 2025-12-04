@@ -279,7 +279,7 @@
         // SECURITY: Never pre-fill password fields, use placeholder instead
         const placeholderText = existingData[field.name] ? 'Current password (unchanged)' : field.label.replace(' *', '');
         html += `<div style="position: relative;">`;
-        html += `<input class="control" type="password" name="${field.name}" placeholder="${placeholderText}" ${field.maxlength ? `maxlength="${field.maxlength}"` : ''}>`;
+        html += `<input class="control" type="password" name="${field.name}" placeholder="${placeholderText}" autocomplete="new-password" data-lpignore="true" data-form-type="other" ${field.maxlength ? `maxlength="${field.maxlength}"` : ''}>`;
         html += `<button type="button" class="password-toggle" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px 8px; color: var(--muted); font-size: 1.2rem;" onclick="togglePasswordVisibility(this)">👁️</button>`;
         html += `</div>`;
       } else {
