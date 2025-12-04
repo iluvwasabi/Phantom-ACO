@@ -97,8 +97,8 @@ body {
   display: flex;
   flex-direction: column;
   background-image: url('/images/Boo_Pic.png');
-  background-position: center;
-  background-size: 50%;
+  background-position: center top;
+  background-size: 80%;
   background-repeat: no-repeat;
 }
 
