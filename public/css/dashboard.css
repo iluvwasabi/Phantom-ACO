@@ -92,43 +92,31 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Parallax Wrapper */
-.parallax-wrapper {
-  height: 100vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-  perspective: 1px;
+/* Floating Ghost Companion */
+.companion-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: none;
 }
 
-.parallax-group {
-  position: relative;
-  height: 100vh;
-  transform-style: preserve-3d;
+.floating-character {
+  width: 400px;
+  animation: floaty 3s ease-in-out infinite;
 }
 
-.layer {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-
-/* Background Layer (Ghost) */
-.layer-back {
-  transform: translateZ(0.5px) scale(0.5);
-  background-image: url('/images/Boo_Pic.png');
-  background-size: 400px 400px;
-  background-repeat: no-repeat;
-  background-position: center 150px;
-  z-index: -1;
-}
-
-/* Foreground Layer (Content) */
-.layer-base {
-  transform: translateZ(0);
-  position: relative;
-  z-index: 1;
+@keyframes floaty {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .shell {
