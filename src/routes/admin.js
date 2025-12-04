@@ -1313,22 +1313,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
       }
     });
 
-    // Helper function to set column widths (20% wider = 1.2x multiplier)
-    const setColumnWidths = (ws) => {
-      const baseWidth = 15; // Base width in Excel units
-      const multiplier = 1.2; // 20% wider = 1.2x total
-      const cols = [];
-
-      // Get number of columns from the worksheet range
-      if (ws['!ref']) {
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        for (let i = 0; i <= range.e.c; i++) {
-          cols.push({ wch: baseWidth * multiplier });
-        }
-        ws['!cols'] = cols;
-      }
-    };
-
     // Create workbook
     const wb = XLSX.utils.book_new();
 
@@ -1370,7 +1354,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
         };
       });
       const ws = XLSX.utils.json_to_sheet(targetData);
-      setColumnWidths(ws);
       XLSX.utils.book_append_sheet(wb, ws, 'Target');
     }
 
@@ -1413,7 +1396,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
         };
       });
       const ws = XLSX.utils.json_to_sheet(walmartData);
-      setColumnWidths(ws);
       XLSX.utils.book_append_sheet(wb, ws, 'Walmart');
     }
 
@@ -1445,7 +1427,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
         'Created': new Date(sub.created_at).toLocaleDateString()
       }));
       const ws = XLSX.utils.json_to_sheet(bestbuyData);
-      setColumnWidths(ws);
       XLSX.utils.book_append_sheet(wb, ws, 'Best Buy');
     }
 
@@ -1477,7 +1458,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
         'Created': new Date(sub.created_at).toLocaleDateString()
       }));
       const ws = XLSX.utils.json_to_sheet(pokemonData);
-      setColumnWidths(ws);
       XLSX.utils.book_append_sheet(wb, ws, 'Pokemon Center');
     }
 
@@ -1509,7 +1489,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
         'Created': new Date(sub.created_at).toLocaleDateString()
       }));
       const ws = XLSX.utils.json_to_sheet(shopifyData);
-      setColumnWidths(ws);
       XLSX.utils.book_append_sheet(wb, ws, 'Shopify');
     }
 
