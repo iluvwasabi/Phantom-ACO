@@ -92,10 +92,11 @@ router.get('/api/submissions', ensureAuthenticated, ensureHasACORole, async (req
               zip_code: parsed.zip_code || null,
               country: parsed.country || null,
               account_email: parsed.account_email || null,
-              account_password: parsed.account_password || null,
+              account_password: null,  // SECURITY: Never send password to frontend
               account_imap: parsed.account_imap || null,
               max_qty: parsed.max_qty || null,
-              max_checkouts: parsed.max_checkouts || null
+              max_checkouts: parsed.max_checkouts || null,
+              selected_products: parsed.selected_products || []
             };
           } else {
             // It's just a password string (for login_required services)
@@ -104,7 +105,7 @@ router.get('/api/submissions', ensureAuthenticated, ensureHasACORole, async (req
 
             decryptedData = {
               account_email: username && username.trim() !== '' ? username : null,
-              account_password: decryptedPassword,
+              account_password: null,  // SECURITY: Never send password to frontend
               account_imap: imap && imap.trim() !== '' ? imap : null
             };
           }
