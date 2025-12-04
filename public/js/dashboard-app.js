@@ -12,9 +12,110 @@
   let currentService = null;
   let currentSubmission = null;
 
+  // Store panel products globally for product selector
+  let currentPanelProducts = [];
+
   // Form Templates
   const FORM_FIELDS = {
+    target: [
+      // User Information Section
+      { type: 'section_header', label: 'User Information' },
+      { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+      { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+      { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+      { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
+      { name: 'separator', type: 'separator' },
+
+      // Billing Information Section
+      { type: 'section_header', label: 'Billing Information' },
+      { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+      { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+      { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+      { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+      { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+      { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+      { name: 'separator', type: 'separator' },
+
+      // Address Section
+      { type: 'section_header', label: 'Address' },
+      { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+      { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+      { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+      { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+      { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+      { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+      { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'separator', type: 'separator' },
+
+      // Account Information Section (NO IMAP for Target)
+      { type: 'section_header', label: 'Account Information' },
+      { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
+      { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+      { name: 'separator', type: 'separator' },
+
+      // Checkouts Section (dynamic product selector)
+      { type: 'section_header', label: 'Checkouts' },
+      { type: 'product_selector', name: 'selected_products' },
+      { name: 'separator', type: 'separator' },
+
+      // Notes Section
+      { type: 'section_header', label: 'Notes' },
+      { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+    ],
+    walmart: [
+      // User Information Section
+      { type: 'section_header', label: 'User Information' },
+      { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+      { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+      { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+      { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
+      { name: 'separator', type: 'separator' },
+
+      // Billing Information Section
+      { type: 'section_header', label: 'Billing Information' },
+      { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+      { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+      { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+      { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+      { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+      { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+      { name: 'separator', type: 'separator' },
+
+      // Address Section
+      { type: 'section_header', label: 'Address' },
+      { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+      { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+      { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+      { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+      { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+      { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+      { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'separator', type: 'separator' },
+
+      // Account Information Section (includes IMAP for Walmart)
+      { type: 'section_header', label: 'Account Information' },
+      { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
+      { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+      { name: 'account_imap', label: 'IMAP *', type: 'textarea', required: true, wide: true },
+      { name: 'separator', type: 'separator' },
+
+      // Checkouts Section (dynamic product selector)
+      { type: 'section_header', label: 'Checkouts' },
+      { type: 'product_selector', name: 'selected_products' },
+      { name: 'separator', type: 'separator' },
+
+      // Notes Section
+      { type: 'section_header', label: 'Notes' },
+      { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+    ],
     login_required: [
+      // Keep old login_required for backwards compatibility with bestbuy
       { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
       { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
       { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
@@ -97,6 +198,49 @@
         return;
       }
 
+      // Handle section headers
+      if (field.type === 'section_header') {
+        html += `<div class="form-section-header" style="grid-column: 1 / -1; margin-top: var(--space-6); margin-bottom: var(--space-3);">
+          <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text);">${field.label}</h3>
+        </div>`;
+        return;
+      }
+
+      // Handle product selector
+      if (field.type === 'product_selector') {
+        html += '<div class="product-selector" style="grid-column: 1 / -1;">';
+
+        if (currentPanelProducts && currentPanelProducts.length > 0) {
+          currentPanelProducts.forEach((product, idx) => {
+            const existingProduct = existingData.selected_products?.find(p => p.product === product.name) || {};
+            const isChecked = existingProduct.product ? 'checked' : '';
+            const quantity = existingProduct.quantity || 1;
+            const checkouts = existingProduct.checkouts || 1;
+
+            html += `
+              <div class="product-item" style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px;">
+                <input type="checkbox" name="product_${idx}_selected" id="product_${idx}" ${isChecked}
+                  style="width: 20px; height: 20px;">
+                <label for="product_${idx}" style="flex: 1; font-weight: 500;">${product.name}</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <label style="font-size: 0.9rem; color: var(--muted);">Quantity:</label>
+                  <input type="number" name="product_${idx}_quantity" min="1" max="${product.max_qty}"
+                    value="${quantity}" style="width: 60px; padding: 4px 8px;" class="control">
+                  <label style="font-size: 0.9rem; color: var(--muted);">Checkouts:</label>
+                  <input type="number" name="product_${idx}_checkouts" min="1" max="10"
+                    value="${checkouts}" style="width: 60px; padding: 4px 8px;" class="control">
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          html += '<p style="color: var(--muted); font-style: italic;">No products configured for this panel. Contact admin.</p>';
+        }
+
+        html += '</div>';
+        return;
+      }
+
       // Handle conditional fields
       const conditionalAttr = field.conditional ? `data-conditional="${field.conditional}" data-conditional-value="${field.conditionalValue}"` : '';
       const conditionalClass = field.conditional ? 'conditional-field' : '';
@@ -139,7 +283,7 @@
   }
 
   // Show Modal
-  function showModal(service, submissionData = null) {
+  async function showModal(service, submissionData = null) {
     currentService = service;
     currentSubmission = submissionData;
 
@@ -147,8 +291,29 @@
     const serviceType = card.dataset.type;
     const serviceTitle = card.dataset.title;
 
+    // Fetch panel products for target/walmart
+    if (service === 'target' || service === 'walmart') {
+      try {
+        const response = await fetch(`/api/panels/${service}/products`);
+        if (response.ok) {
+          const data = await response.json();
+          currentPanelProducts = data.products || [];
+        }
+      } catch (error) {
+        console.error('Error fetching panel products:', error);
+        currentPanelProducts = [];
+      }
+    } else {
+      currentPanelProducts = [];
+    }
+
+    // Map service name to form type (target, walmart, or fallback to service type)
+    let formType = serviceType;
+    if (service === 'target') formType = 'target';
+    else if (service === 'walmart') formType = 'walmart';
+
     modalTitle.textContent = submissionData ? `Edit ${serviceTitle}` : `Add ${serviceTitle} Submission`;
-    modalBody.innerHTML = generateForm(serviceType, submissionData || {});
+    modalBody.innerHTML = generateForm(formType, submissionData || {});
 
     // Set up conditional field toggle for billing_same_as_shipping checkbox
     setTimeout(() => {
@@ -222,7 +387,10 @@
     const formData = new FormData(form);
     const data = {};
     formData.forEach((value, key) => {
-      data[key] = value;
+      // Skip product selector fields (we'll handle them separately)
+      if (!key.startsWith('product_')) {
+        data[key] = value;
+      }
     });
 
     // Handle checkbox fields (they don't appear in FormData if unchecked)
@@ -230,6 +398,24 @@
     if (billingCheckbox) {
       data.billing_same_as_shipping = billingCheckbox.checked;
     }
+
+    // Collect selected products
+    const selectedProducts = [];
+    if (currentPanelProducts && currentPanelProducts.length > 0) {
+      currentPanelProducts.forEach((product, idx) => {
+        const checkbox = document.querySelector(`input[name="product_${idx}_selected"]`);
+        if (checkbox && checkbox.checked) {
+          const quantity = parseInt(document.querySelector(`input[name="product_${idx}_quantity"]`).value) || 1;
+          const checkouts = parseInt(document.querySelector(`input[name="product_${idx}_checkouts"]`).value) || 1;
+          selectedProducts.push({
+            product: product.name,
+            quantity: quantity,
+            checkouts: checkouts
+          });
+        }
+      });
+    }
+    data.selected_products = selectedProducts;
 
     // Add service
     data.service = currentService;
