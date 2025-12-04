@@ -1313,10 +1313,10 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
       }
     });
 
-    // Helper function to set column widths (150% wider = 1.5x multiplier)
+    // Helper function to set column widths (20% wider = 1.2x multiplier)
     const setColumnWidths = (ws) => {
       const baseWidth = 15; // Base width in Excel units
-      const multiplier = 2.5; // 150% wider = 2.5x total
+      const multiplier = 1.2; // 20% wider = 1.2x total
       const cols = [];
 
       // Get number of columns from the worksheet range
