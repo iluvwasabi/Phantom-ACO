@@ -106,8 +106,7 @@ body {
   background-image: url('/images/Boo_Pic.png');
   background-position: center top;
   background-size: 50%;
-  background-repeat: no-repeat;
-  background-attachment: local;
+  background-repeat: repeat-y;
 }
 
 /* =============================
