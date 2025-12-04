@@ -35,7 +35,8 @@
     "multer": "^2.0.2",
     "passport": "^0.6.0",
     "passport-discord": "^0.1.4",
-    "stripe": "^20.0.0"
+    "stripe": "^20.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

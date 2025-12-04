@@ -201,7 +201,7 @@
       <!-- Target Tab -->
       <div id="target-tab" class="tab-content active">
         <div style="margin-bottom: 16px; display: flex; justify-content: flex-end;">
-          <button class="btn btn-primary" onclick="exportToCSV('target')">📥 Export to CSV</button>
+          <a href="/admin/export/excel" class="btn btn-primary" style="text-decoration: none;">📥 Export to Excel</a>
         </div>
         <div class="submissions-table">
           <table id="target-table">
@@ -285,7 +285,7 @@
       <!-- Walmart Tab -->
       <div id="walmart-tab" class="tab-content">
         <div style="margin-bottom: 16px; display: flex; justify-content: flex-end;">
-          <button class="btn btn-primary" onclick="exportToCSV('walmart')">📥 Export to CSV</button>
+          <a href="/admin/export/excel" class="btn btn-primary" style="text-decoration: none;">📥 Export to Excel</a>
         </div>
         <div class="submissions-table">
           <table id="walmart-table">
@@ -977,139 +977,6 @@
         }
       }
     });
-
-    // Export to CSV function
-    function exportToCSV(serviceName) {
-      const submissions = <%- JSON.stringify(submissions) %>;
-      const data = submissions[serviceName];
-
-      if (!data || data.length === 0) {
-        showToast('No data to export for ' + serviceName);
-        return;
-      }
-
-      // Define columns based on service type
-      let headers, rows;
-
-      if (serviceName === 'target' || serviceName === 'walmart') {
-        // Login-required services
-        headers = [
-          'ID', 'Username', 'Assigned To', 'First Name', 'Last Name',
-          'Account Email', 'Account Password',
-          serviceName === 'walmart' ? 'iMap' : null,
-          'Card Type', 'Card Number', 'Exp Month', 'Exp Year', 'CVC',
-          'Phone', 'Billing Address', 'Billing City', 'Billing State', 'Billing Zip',
-          'Shipping Address', 'Shipping City', 'Shipping State', 'Shipping Zip',
-          'Country', 'Max Qty', 'Max Checkouts', 'Selected Products', 'Notes', 'Created'
-        ].filter(h => h !== null);
-
-        rows = data.map(sub => {
-          const productsStr = sub.selected_products && sub.selected_products.length > 0
-            ? sub.selected_products.map(p => `${p.product} (Qty: ${p.quantity}, CO: ${p.checkouts})`).join('; ')
-            : '';
-
-          const shippingAddr = [sub.address1, sub.unit_number].filter(Boolean).join(' ');
-
-          const row = [
-            sub.id,
-            sub.discord_username || '',
-            sub.assigned_to || '',
-            sub.first_name || '',
-            sub.last_name || '',
-            sub.account_email || '',
-            sub.account_password || '',
-            serviceName === 'walmart' ? (sub.account_imap || '') : null,
-            sub.card_type || '',
-            sub.card_number || '',
-            sub.exp_month || '',
-            sub.exp_year || '',
-            sub.cvv || '',
-            sub.phone || '',
-            sub.billing_address || '',
-            sub.billing_city || '',
-            sub.billing_state || '',
-            sub.billing_zipcode || '',
-            shippingAddr,
-            sub.city || '',
-            sub.state || '',
-            sub.zip_code || '',
-            sub.country || '',
-            sub.max_qty || '',
-            sub.max_checkouts || '',
-            productsStr,
-            sub.notes || '',
-            new Date(sub.created_at).toLocaleDateString()
-          ].filter((_, i) => headers[i] !== null);
-
-          return row;
-        });
-      } else {
-        // No-login services
-        headers = [
-          'ID', 'Username', 'Assigned To', 'First Name', 'Last Name', 'Email',
-          'Card Type', 'Card Number', 'Exp Month', 'Exp Year', 'CVC',
-          'Phone', 'Billing Address', 'Billing City', 'Billing State', 'Billing Zip',
-          'Shipping Address', 'Shipping City', 'Shipping State', 'Shipping Zip',
-          'Country', 'Notes', 'Created'
-        ];
-
-        rows = data.map(sub => {
-          const shippingAddr = [sub.address1, sub.unit_number].filter(Boolean).join(' ');
-
-          return [
-            sub.id,
-            sub.discord_username || '',
-            sub.assigned_to || '',
-            sub.first_name || '',
-            sub.last_name || '',
-            sub.email || '',
-            sub.card_type || '',
-            sub.card_number || '',
-            sub.exp_month || '',
-            sub.exp_year || '',
-            sub.cvv || '',
-            sub.phone || '',
-            sub.billing_address || '',
-            sub.billing_city || '',
-            sub.billing_state || '',
-            sub.billing_zipcode || '',
-            shippingAddr,
-            sub.city || '',
-            sub.state || '',
-            sub.zip_code || '',
-            sub.country || '',
-            sub.notes || '',
-            new Date(sub.created_at).toLocaleDateString()
-          ];
-        });
-      }
-
-      // Convert to CSV
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => {
-          // Escape quotes and wrap in quotes if contains comma, quote, or newline
-          const str = String(cell || '');
-          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-            return '"' + str.replace(/"/g, '""') + '"';
-          }
-          return str;
-        }).join(','))
-      ].join('\n');
-
-      // Download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `${serviceName}_submissions_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      showToast(`Exported ${data.length} ${serviceName} submissions`);
-    }
   </script>
 </body>
 </html>

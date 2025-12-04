@@ -8,6 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const CryptoJS = require('crypto-js');
 const axios = require('axios');
+const XLSX = require('xlsx');
 
 // Initialize Stripe only if API key is provided
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -1227,6 +1228,276 @@ router.put('/api/submissions/:id/assign', ensureAdminAuth, async (req, res) => {
   } catch (error) {
     console.error('Assignment error:', error);
     res.status(500).json({ error: 'Failed to update assignment' });
+  }
+});
+
+// GET /admin/export/excel - Export all submissions to Excel with separate sheets
+router.get('/export/excel', ensureAdminAuth, async (req, res) => {
+  try {
+    // Fetch all submissions
+    const allSubs = db.prepare(`
+      SELECT ss.*, ec.encrypted_username, ec.encrypted_password, ec.encrypted_imap,
+             u.discord_username, u.discord_id
+      FROM service_subscriptions ss
+      LEFT JOIN encrypted_credentials ec ON ec.subscription_id = ss.id
+      LEFT JOIN users u ON ss.user_id = u.id
+      ORDER BY ss.service_name, ss.created_at DESC
+    `).all();
+
+    // Group by service
+    const submissions = {
+      target: [],
+      walmart: [],
+      bestbuy: [],
+      pokemoncenter: [],
+      shopify: []
+    };
+
+    // Decrypt and organize submissions
+    allSubs.forEach(sub => {
+      if (!sub.encrypted_password) return;
+
+      try {
+        const decryptedPassword = decrypt(sub.encrypted_password);
+        if (!decryptedPassword || !decryptedPassword.startsWith('{')) return;
+
+        const parsed = JSON.parse(decryptedPassword);
+        const decrypted = {
+          id: sub.id,
+          discord_username: sub.discord_username,
+          discord_id: sub.discord_id,
+          service_name: sub.service_name,
+          created_at: sub.created_at,
+          notes: sub.notes,
+          assigned_to: sub.assigned_to,
+          first_name: parsed.first_name || '',
+          last_name: parsed.last_name || '',
+          email: parsed.email || '',
+          phone: parsed.phone || '',
+          name_on_card: parsed.name_on_card || '',
+          card_type: parsed.card_type || '',
+          card_number: parsed.card_number || '',
+          cvv: parsed.cvv || '',
+          exp_month: parsed.exp_month || '',
+          exp_year: parsed.exp_year || '',
+          billing_address: parsed.billing_address || '',
+          billing_city: parsed.billing_city || '',
+          billing_state: parsed.billing_state || '',
+          billing_zipcode: parsed.billing_zipcode || '',
+          billing_same_as_shipping: parsed.billing_same_as_shipping || '',
+          address1: parsed.address1 || '',
+          unit_number: parsed.unit_number || '',
+          city: parsed.city || '',
+          state: parsed.state || '',
+          zip_code: parsed.zip_code || '',
+          country: parsed.country || '',
+          account_email: parsed.account_email || '',
+          account_password: parsed.account_password || '',
+          account_imap: parsed.account_imap || '',
+          max_qty: parsed.max_qty || '',
+          max_checkouts: parsed.max_checkouts || '',
+          selected_products: parsed.selected_products || []
+        };
+
+        if (submissions[sub.service_name]) {
+          submissions[sub.service_name].push(decrypted);
+        }
+      } catch (e) {
+        console.error('Decryption error for submission:', sub.id, e.message);
+      }
+    });
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+
+    // Target Sheet
+    if (submissions.target.length > 0) {
+      const targetData = submissions.target.map(sub => {
+        const productsStr = sub.selected_products && sub.selected_products.length > 0
+          ? sub.selected_products.map(p => `${p.product} (Qty: ${p.quantity}, CO: ${p.checkouts})`).join('; ')
+          : '';
+
+        return {
+          'ID': sub.id,
+          'Username': sub.discord_username,
+          'Assigned To': sub.assigned_to || '',
+          'First Name': sub.first_name,
+          'Last Name': sub.last_name,
+          'Account Email': sub.account_email,
+          'Account Password': sub.account_password,
+          'Card Type': sub.card_type,
+          'Card Number': sub.card_number,
+          'Exp Month': sub.exp_month,
+          'Exp Year': sub.exp_year,
+          'CVC': sub.cvv,
+          'Phone': sub.phone,
+          'Billing Address': sub.billing_address,
+          'Billing City': sub.billing_city,
+          'Billing State': sub.billing_state,
+          'Billing Zip': sub.billing_zipcode,
+          'Shipping Address': [sub.address1, sub.unit_number].filter(Boolean).join(' '),
+          'Shipping City': sub.city,
+          'Shipping State': sub.state,
+          'Shipping Zip': sub.zip_code,
+          'Country': sub.country,
+          'Max Qty': sub.max_qty,
+          'Max Checkouts': sub.max_checkouts,
+          'Selected Products': productsStr,
+          'Notes': sub.notes || '',
+          'Created': new Date(sub.created_at).toLocaleDateString()
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(targetData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Target');
+    }
+
+    // Walmart Sheet
+    if (submissions.walmart.length > 0) {
+      const walmartData = submissions.walmart.map(sub => {
+        const productsStr = sub.selected_products && sub.selected_products.length > 0
+          ? sub.selected_products.map(p => `${p.product} (Qty: ${p.quantity}, CO: ${p.checkouts})`).join('; ')
+          : '';
+
+        return {
+          'ID': sub.id,
+          'Username': sub.discord_username,
+          'Assigned To': sub.assigned_to || '',
+          'First Name': sub.first_name,
+          'Last Name': sub.last_name,
+          'Account Email': sub.account_email,
+          'Account Password': sub.account_password,
+          'iMap': sub.account_imap,
+          'Card Type': sub.card_type,
+          'Card Number': sub.card_number,
+          'Exp Month': sub.exp_month,
+          'Exp Year': sub.exp_year,
+          'CVC': sub.cvv,
+          'Phone': sub.phone,
+          'Billing Address': sub.billing_address,
+          'Billing City': sub.billing_city,
+          'Billing State': sub.billing_state,
+          'Billing Zip': sub.billing_zipcode,
+          'Shipping Address': [sub.address1, sub.unit_number].filter(Boolean).join(' '),
+          'Shipping City': sub.city,
+          'Shipping State': sub.state,
+          'Shipping Zip': sub.zip_code,
+          'Country': sub.country,
+          'Max Qty': sub.max_qty,
+          'Max Checkouts': sub.max_checkouts,
+          'Selected Products': productsStr,
+          'Notes': sub.notes || '',
+          'Created': new Date(sub.created_at).toLocaleDateString()
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(walmartData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Walmart');
+    }
+
+    // Best Buy Sheet
+    if (submissions.bestbuy.length > 0) {
+      const bestbuyData = submissions.bestbuy.map(sub => ({
+        'ID': sub.id,
+        'Username': sub.discord_username,
+        'Assigned To': sub.assigned_to || '',
+        'First Name': sub.first_name,
+        'Last Name': sub.last_name,
+        'Email': sub.email,
+        'Card Type': sub.card_type,
+        'Card Number': sub.card_number,
+        'Exp Month': sub.exp_month,
+        'Exp Year': sub.exp_year,
+        'CVC': sub.cvv,
+        'Phone': sub.phone,
+        'Billing Address': sub.billing_address,
+        'Billing City': sub.billing_city,
+        'Billing State': sub.billing_state,
+        'Billing Zip': sub.billing_zipcode,
+        'Shipping Address': [sub.address1, sub.unit_number].filter(Boolean).join(' '),
+        'Shipping City': sub.city,
+        'Shipping State': sub.state,
+        'Shipping Zip': sub.zip_code,
+        'Country': sub.country,
+        'Notes': sub.notes || '',
+        'Created': new Date(sub.created_at).toLocaleDateString()
+      }));
+      const ws = XLSX.utils.json_to_sheet(bestbuyData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Best Buy');
+    }
+
+    // Pokemon Center Sheet
+    if (submissions.pokemoncenter.length > 0) {
+      const pokemonData = submissions.pokemoncenter.map(sub => ({
+        'ID': sub.id,
+        'Username': sub.discord_username,
+        'Assigned To': sub.assigned_to || '',
+        'First Name': sub.first_name,
+        'Last Name': sub.last_name,
+        'Email': sub.email,
+        'Card Type': sub.card_type,
+        'Card Number': sub.card_number,
+        'Exp Month': sub.exp_month,
+        'Exp Year': sub.exp_year,
+        'CVC': sub.cvv,
+        'Phone': sub.phone,
+        'Billing Address': sub.billing_address,
+        'Billing City': sub.billing_city,
+        'Billing State': sub.billing_state,
+        'Billing Zip': sub.billing_zipcode,
+        'Shipping Address': [sub.address1, sub.unit_number].filter(Boolean).join(' '),
+        'Shipping City': sub.city,
+        'Shipping State': sub.state,
+        'Shipping Zip': sub.zip_code,
+        'Country': sub.country,
+        'Notes': sub.notes || '',
+        'Created': new Date(sub.created_at).toLocaleDateString()
+      }));
+      const ws = XLSX.utils.json_to_sheet(pokemonData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Pokemon Center');
+    }
+
+    // Shopify Sheet
+    if (submissions.shopify.length > 0) {
+      const shopifyData = submissions.shopify.map(sub => ({
+        'ID': sub.id,
+        'Username': sub.discord_username,
+        'Assigned To': sub.assigned_to || '',
+        'First Name': sub.first_name,
+        'Last Name': sub.last_name,
+        'Email': sub.email,
+        'Card Type': sub.card_type,
+        'Card Number': sub.card_number,
+        'Exp Month': sub.exp_month,
+        'Exp Year': sub.exp_year,
+        'CVC': sub.cvv,
+        'Phone': sub.phone,
+        'Billing Address': sub.billing_address,
+        'Billing City': sub.billing_city,
+        'Billing State': sub.billing_state,
+        'Billing Zip': sub.billing_zipcode,
+        'Shipping Address': [sub.address1, sub.unit_number].filter(Boolean).join(' '),
+        'Shipping City': sub.city,
+        'Shipping State': sub.state,
+        'Shipping Zip': sub.zip_code,
+        'Country': sub.country,
+        'Notes': sub.notes || '',
+        'Created': new Date(sub.created_at).toLocaleDateString()
+      }));
+      const ws = XLSX.utils.json_to_sheet(shopifyData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Shopify');
+    }
+
+    // Generate buffer
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+    // Send file
+    const filename = `submissions_${new Date().toISOString().split('T')[0]}.xlsx`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buffer);
+
+  } catch (error) {
+    console.error('Excel export error:', error);
+    res.status(500).json({ error: 'Failed to export Excel file' });
   }
 });
 
