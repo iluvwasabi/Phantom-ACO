@@ -87,9 +87,9 @@ body {
   font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg);
   background-image: url('/images/Boo_Pic.png');
-  background-attachment: scroll;
+  background-attachment: fixed;
   background-position: center;
-  background-size: cover;
+  background-size: 50%;
   background-repeat: no-repeat;
   color: var(--text-900);
   line-height: 1.5;
