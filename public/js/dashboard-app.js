@@ -224,11 +224,17 @@
                 <label for="product_${idx}" style="flex: 1; font-weight: 500;">${product.name}</label>
                 <div style="display: flex; gap: 8px; align-items: center;">
                   <label style="font-size: 0.9rem; color: var(--muted);">Quantity:</label>
-                  <input type="number" name="product_${idx}_quantity" min="1" max="${product.max_qty}"
-                    value="${quantity}" style="width: 60px; padding: 4px 8px;" class="control">
+                  <select name="product_${idx}_quantity" style="width: 80px; padding: 4px 8px;" class="control">
+                    <option value="1" ${quantity === 1 ? 'selected' : ''}>1</option>
+                    <option value="2" ${quantity === 2 ? 'selected' : ''}>2</option>
+                    <option value="${product.max_qty}" ${quantity === product.max_qty || quantity === 'max' ? 'selected' : ''}>Max (${product.max_qty})</option>
+                  </select>
                   <label style="font-size: 0.9rem; color: var(--muted);">Checkouts:</label>
-                  <input type="number" name="product_${idx}_checkouts" min="1" max="${product.max_checkouts}"
-                    value="${checkouts}" style="width: 60px; padding: 4px 8px;" class="control">
+                  <select name="product_${idx}_checkouts" style="width: 80px; padding: 4px 8px;" class="control">
+                    <option value="1" ${checkouts === 1 ? 'selected' : ''}>1</option>
+                    <option value="2" ${checkouts === 2 ? 'selected' : ''}>2</option>
+                    <option value="${product.max_checkouts}" ${checkouts === product.max_checkouts || checkouts === 'many' ? 'selected' : ''}>Many (${product.max_checkouts})</option>
+                  </select>
                 </div>
               </div>
             `;
@@ -405,8 +411,8 @@
       currentPanelProducts.forEach((product, idx) => {
         const checkbox = document.querySelector(`input[name="product_${idx}_selected"]`);
         if (checkbox && checkbox.checked) {
-          const quantity = parseInt(document.querySelector(`input[name="product_${idx}_quantity"]`).value) || 1;
-          const checkouts = parseInt(document.querySelector(`input[name="product_${idx}_checkouts"]`).value) || 1;
+          const quantity = parseInt(document.querySelector(`select[name="product_${idx}_quantity"]`).value) || 1;
+          const checkouts = parseInt(document.querySelector(`select[name="product_${idx}_checkouts"]`).value) || 1;
           selectedProducts.push({
             product: product.name,
             quantity: quantity,
