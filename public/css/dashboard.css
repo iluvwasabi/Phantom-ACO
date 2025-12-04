@@ -127,12 +127,16 @@ body {
 /* Foreground Layer (Content) */
 .layer-base {
   transform: translateZ(0);
+  position: relative;
+  z-index: 1;
 }
 
 .shell {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 .container {
@@ -140,6 +144,8 @@ body {
   max-width: 1600px;
   margin: 0 auto;
   padding: var(--space-8);
+  position: relative;
+  z-index: 1;
 }
 
 /* =============================
