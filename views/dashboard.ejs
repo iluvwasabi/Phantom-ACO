@@ -94,7 +94,17 @@
           data-submissions="<%= JSON.stringify(subscribedServices[panel.service_id] || []) %>">
           <div class="card-body">
             <h3><%= panel.icon ? panel.icon + ' ' : '' %><%= panel.service_name %></h3>
-            <p class="muted"><%= panel.service_type === 'login_required' ? 'Requires account login + iMap' : 'No login required' %></p>
+            <p class="muted"><%
+              if (panel.service_type === 'no_login') {
+                %>No login required<%
+              } else if (panel.service_id === 'target') {
+                %>Requires account login<%
+              } else if (panel.service_id === 'walmart') {
+                %>Requires account login + iMap<%
+              } else {
+                %>Requires account login + iMap<%
+              }
+            %></p>
           </div>
           <div class="card-footer">
             <% if (panel.description) { %>

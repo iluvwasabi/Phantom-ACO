@@ -227,7 +227,7 @@
                   <select name="product_${idx}_quantity" style="width: 100px; padding: 4px 8px;" class="control">
                     <option value="1" ${quantity === 1 ? 'selected' : ''}>1</option>
                     <option value="2" ${quantity === 2 ? 'selected' : ''}>2</option>
-                    <option value="${product.max_qty}" ${quantity === product.max_qty || quantity === 'max' ? 'selected' : ''}>Max (${product.max_qty})</option>
+                    <option value="${product.max_qty}" ${quantity === product.max_qty || quantity === 'max' ? 'selected' : ''}>Max</option>
                   </select>
                   <label style="font-size: 0.9rem; color: var(--muted);">Checkouts:</label>
                   <select name="product_${idx}_checkouts" style="width: 80px; padding: 4px 8px;" class="control">
@@ -684,7 +684,6 @@
               <th>Last 4 Digits</th>
               <th>Notes</th>
               <th>Status</th>
-              <th>Added to Bot</th>
               <th>Created</th>
               <th>Actions</th>
             </tr>
@@ -720,8 +719,6 @@
       const errorClass = hasError ? 'style="background: rgba(239, 68, 68, 0.1);"' : '';
       const errorWarning = hasError ? '<span style="color: #ef4444; font-size: 0.85rem;"> ⚠ Error</span>' : '';
 
-      const addedToBotChecked = sub.added_to_bot ? 'checked' : '';
-
       html += `
         <tr ${errorClass}>
           <td><strong>${serviceName}</strong>${errorWarning}</td>
@@ -730,13 +727,6 @@
           <td>****${last4}</td>
           <td title="${notesTitle}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${notes}</td>
           <td>${status}</td>
-          <td style="text-align: center;">
-            <input type="checkbox"
-                   class="bot-checkbox"
-                   data-submission-id="${sub.id}"
-                   ${addedToBotChecked}
-                   style="width: 20px; height: 20px; cursor: pointer;">
-          </td>
           <td>${created}</td>
           <td>
             <div class="submission-actions">
@@ -849,34 +839,6 @@
     }
   }
 
-  // Handle added_to_bot checkbox toggle
-  document.addEventListener('change', async (e) => {
-    if (e.target.classList.contains('bot-checkbox')) {
-      const checkbox = e.target;
-      const submissionId = checkbox.dataset.submissionId;
-      const addedToBot = checkbox.checked ? 1 : 0;
-
-      try {
-        const response = await fetch(`/api/submissions/${submissionId}/toggle-bot`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ added_to_bot: addedToBot })
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to update checkbox');
-        }
-
-        showToast(checkbox.checked ? '✅ Marked as added to bot' : '⬜ Unmarked from bot');
-      } catch (error) {
-        console.error('Toggle bot checkbox error:', error);
-        // Revert checkbox on error
-        checkbox.checked = !checkbox.checked;
-        showToast('Failed to update. Please try again.');
-      }
-    }
-  });
 
   // Handle edit/delete button clicks
   document.addEventListener('click', (e) => {
