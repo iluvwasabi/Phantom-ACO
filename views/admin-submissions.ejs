@@ -590,6 +590,94 @@
           </table>
         </div>
       </div>
+
+      <!-- Dynamic tabs for services not hardcoded above -->
+      <% servicePanels.forEach((panel, index) => { %>
+        <% if (!['target', 'walmart', 'bestbuy', 'pokemoncenter', 'shopify'].includes(panel.service_id)) { %>
+          <div id="<%= panel.service_id %>-tab" class="tab-content">
+            <div style="margin-bottom: 16px; display: flex; justify-content: flex-end;">
+              <a href="/admin/export/excel" class="btn btn-primary" style="text-decoration: none;">📥 Export to Excel</a>
+            </div>
+            <div class="submissions-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Assigned To</th>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Account Email</th>
+                    <th>Account Password</th>
+                    <th>iMap</th>
+                    <th>Card Type</th>
+                    <th>Card #</th>
+                    <th>Exp</th>
+                    <th>CVC</th>
+                    <th>Phone</th>
+                    <th>Max Qty</th>
+                    <th>Max Checkouts</th>
+                    <th>Selected Products</th>
+                    <th>Notes</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (submissions[panel.service_id] && submissions[panel.service_id].length > 0) { %>
+                    <% submissions[panel.service_id].forEach(sub => { %>
+                      <%
+                        let productsDisplay = 'N/A';
+                        if (sub.selected_products && sub.selected_products.length > 0) {
+                          productsDisplay = sub.selected_products.map(p => `${p.product} (Qty: ${p.quantity}, CO: ${p.checkouts})`).join(', ');
+                        }
+                      %>
+                      <tr data-submission-id="<%= sub.id %>">
+                        <td style="text-align: center;">
+                          <select class="assignment-dropdown" data-submission-id="<%= sub.id %>" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-100); color: var(--text-900); font-size: 0.85rem;">
+                            <option value="">Unassigned</option>
+                            <option value="Desi" <%= sub.assigned_to === 'Desi' ? 'selected' : '' %>>Desi</option>
+                            <option value="Ivan" <%= sub.assigned_to === 'Ivan' ? 'selected' : '' %>>Ivan</option>
+                          </select>
+                        </td>
+                        <td><%= sub.id %></td>
+                        <td><strong><%= sub.discord_username %></strong></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.first_name || '' %>', this)"><%= sub.first_name || 'N/A' %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.last_name || '' %>', this)"><%= sub.last_name || 'N/A' %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.account_email || '' %>', this)"><%= sub.account_email || 'N/A' %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.account_password || '' %>', this)"><%= sub.account_password ? '••••••••' : 'N/A' %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.account_imap || '' %>', this)"><%= sub.account_imap ? (sub.account_imap.length > 20 ? sub.account_imap.substring(0, 20) + '...' : sub.account_imap) : 'N/A' %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.card_type || '' %>', this)"><%= sub.card_type || 'N/A' %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.card_number || '' %>', this)"><%= sub.card_number ? '****' + sub.card_number.slice(-4) : 'N/A' %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.exp_month %>/<%= sub.exp_year %>', this)"><%= sub.exp_month %>/<%= sub.exp_year %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.cvv || '' %>', this)"><%= sub.cvv || 'N/A' %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.phone || '' %>', this)"><%= sub.phone || 'N/A' %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.max_qty || '' %>', this)"><%= sub.max_qty || 'N/A' %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.max_checkouts || '' %>', this)"><%= sub.max_checkouts || 'N/A' %></td>
+                        <td class="copy-cell" onclick="copyText('<%= productsDisplay %>', this)" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;" title="<%= productsDisplay %>"><%= productsDisplay %></td>
+                        <td class="copy-cell" onclick="copyText('<%= sub.notes || '' %>', this)" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="<%= sub.notes || '' %>"><%= sub.notes || 'N/A' %></td>
+                        <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
+                        <td>
+                          <div class="submission-actions">
+                            <button class="btn btn-sm btn-primary" onclick="editSubmission(<%= sub.id %>)" title="Edit Submission">✏️</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSubmission(<%= sub.id %>)" title="Delete Submission">🗑️</button>
+                          </div>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="19" style="text-align: center; padding: var(--space-8); color: var(--muted);">
+                        No <%= panel.service_name %> submissions yet
+                      </td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% } %>
+      <% }); %>
     </div>
   </div>
 
