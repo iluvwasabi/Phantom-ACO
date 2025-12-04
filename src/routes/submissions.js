@@ -14,6 +14,28 @@ function decrypt(ciphertext) {
   return bytes.toString(CryptoJS.enc.Utf8);
 }
 
+// GET /api/panels/:service/products - Get products for a service panel (public for authenticated users)
+router.get('/api/panels/:service/products', ensureAuthenticated, ensureHasACORole, (req, res) => {
+  try {
+    const { service } = req.params;
+
+    const panel = db.prepare(`
+      SELECT products FROM service_panels
+      WHERE service_id = ?
+    `).get(service);
+
+    if (!panel) {
+      return res.status(404).json({ error: 'Panel not found' });
+    }
+
+    const products = panel.products ? JSON.parse(panel.products) : [];
+    res.json({ products });
+  } catch (error) {
+    console.error('Get panel products error:', error);
+    res.status(500).json({ error: 'Failed to get panel products' });
+  }
+});
+
 // GET /api/submissions - Get all user submissions
 router.get('/api/submissions', ensureAuthenticated, ensureHasACORole, async (req, res) => {
   try {
