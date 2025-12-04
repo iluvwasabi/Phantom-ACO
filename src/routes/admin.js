@@ -10,6 +10,12 @@ const CryptoJS = require('crypto-js');
 const axios = require('axios');
 const XLSX = require('xlsx');
 
+// Decrypt function for encrypted credentials
+function decrypt(ciphertext) {
+  const bytes = CryptoJS.AES.decrypt(ciphertext, process.env.ENCRYPTION_KEY);
+  return bytes.toString(CryptoJS.enc.Utf8);
+}
+
 // Initialize Stripe only if API key is provided
 const stripe = process.env.STRIPE_SECRET_KEY
   ? require('stripe')(process.env.STRIPE_SECRET_KEY)
