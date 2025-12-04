@@ -86,10 +86,6 @@ body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg);
-  background-image: url('/images/Boo_Pic.png');
-  background-position: center top;
-  background-size: 50%;
-  background-repeat: no-repeat;
   color: var(--text-900);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -100,6 +96,23 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.shell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 800px;
+  background-image: url('/images/Boo_Pic.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center top;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .container {
@@ -107,6 +120,8 @@ body {
   max-width: 1600px;
   margin: 0 auto;
   padding: var(--space-8);
+  position: relative;
+  z-index: 1;
 }
 
 /* =============================

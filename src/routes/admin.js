@@ -1324,7 +1324,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
           : '';
 
         return {
-          'ID': sub.id,
           'Username': sub.discord_username,
           'Assigned To': sub.assigned_to || '',
           'First Name': sub.first_name,
@@ -1365,7 +1364,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
           : '';
 
         return {
-          'ID': sub.id,
           'Username': sub.discord_username,
           'Assigned To': sub.assigned_to || '',
           'First Name': sub.first_name,
@@ -1402,7 +1400,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
     // Best Buy Sheet
     if (submissions.bestbuy.length > 0) {
       const bestbuyData = submissions.bestbuy.map(sub => ({
-        'ID': sub.id,
         'Username': sub.discord_username,
         'Assigned To': sub.assigned_to || '',
         'First Name': sub.first_name,
@@ -1433,7 +1430,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
     // Pokemon Center Sheet
     if (submissions.pokemoncenter.length > 0) {
       const pokemonData = submissions.pokemoncenter.map(sub => ({
-        'ID': sub.id,
         'Username': sub.discord_username,
         'Assigned To': sub.assigned_to || '',
         'First Name': sub.first_name,
@@ -1464,7 +1460,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
     // Shopify Sheet
     if (submissions.shopify.length > 0) {
       const shopifyData = submissions.shopify.map(sub => ({
-        'ID': sub.id,
         'Username': sub.discord_username,
         'Assigned To': sub.assigned_to || '',
         'First Name': sub.first_name,
