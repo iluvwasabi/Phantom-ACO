@@ -340,6 +340,21 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       return res.status(404).json({ error: 'Submission not found or you do not have permission to edit it' });
     }
 
+    // Get existing encrypted data to preserve password if not provided
+    let existingPassword = account_password;
+    if (!account_password || account_password.trim() === '') {
+      const existingCreds = db.prepare('SELECT encrypted_password FROM encrypted_credentials WHERE subscription_id = ?').get(submissionId);
+      if (existingCreds && existingCreds.encrypted_password) {
+        try {
+          const decryptedData = decrypt(existingCreds.encrypted_password);
+          const parsedData = JSON.parse(decryptedData);
+          existingPassword = parsedData.account_password || '';
+        } catch (e) {
+          console.error('Error retrieving existing password:', e);
+        }
+      }
+    }
+
     // Update user's payment information in users table
     const expDate = exp_month && exp_year ? `${exp_month}/${exp_year}` : null;
     const shippingFullAddress = address1 ? address1 + (unit_number ? ` ${unit_number}` : '') : null;
@@ -398,7 +413,7 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       zip_code,
       country,
       account_email,
-      account_password,
+      account_password: existingPassword,  // Use existing password if not provided
       account_imap,
       max_qty,
       max_checkouts

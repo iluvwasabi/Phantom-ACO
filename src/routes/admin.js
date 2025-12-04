@@ -258,7 +258,8 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
         account_password: parsed.account_password || null,
         account_imap: parsed.account_imap || null,
         max_qty: parsed.max_qty || null,
-        max_checkouts: parsed.max_checkouts || null
+        max_checkouts: parsed.max_checkouts || null,
+        selected_products: parsed.selected_products || []
       };
 
       if (submissions[sub.service_name]) {
