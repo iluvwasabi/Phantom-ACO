@@ -291,6 +291,7 @@ body {
   position: relative;
   overflow: hidden;
   transition: box-shadow 0.2s ease, transform 0.18s ease, border-color 0.2s ease;
+  z-index: 10;
 }
 
 .card:hover {
