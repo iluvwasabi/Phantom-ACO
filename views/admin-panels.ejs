@@ -43,6 +43,7 @@
               <th>Description</th>
               <th>Color</th>
               <th>Status</th>
+              <th>Products</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -70,8 +71,17 @@
                   <% } %>
                 </td>
                 <td>
+                  <%
+                    const productsArray = panel.products ? JSON.parse(panel.products) : [];
+                  %>
+                  <div class="badge" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;">
+                    <%= productsArray.length %> item<%= productsArray.length === 1 ? '' : 's' %>
+                  </div>
+                </td>
+                <td>
                   <div class="submission-actions">
                     <button class="btn btn-sm btn-primary edit-panel-btn" data-panel-id="<%= panel.id %>">✏️ Edit</button>
+                    <button class="btn btn-sm" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;" class="manage-products-btn" data-panel-id="<%= panel.id %>" data-service-id="<%= panel.service_id %>">🛍️ Products</button>
                     <button class="btn btn-sm btn-danger delete-panel-btn" data-panel-id="<%= panel.id %>">🗑️ Delete</button>
                   </div>
                 </td>
@@ -212,11 +222,37 @@
     </div>
   </div>
 
+  <!-- Products Management Modal -->
+  <div id="products-modal" class="modal" aria-hidden="true">
+    <div class="dialog animate-in" role="dialog" aria-modal="true" style="max-width: 800px;">
+      <div class="dialog-header">
+        <h2 id="products-modal-title">Manage Products</h2>
+        <button class="icon-btn close-products-modal" aria-label="Close">✕</button>
+      </div>
+      <div class="dialog-body">
+        <div style="margin-bottom: 16px;">
+          <p style="color: var(--muted); margin-bottom: 16px;">Add checkout items for this drop. Each product can have a max quantity and max checkouts limit.</p>
+          <div id="products-list">
+            <!-- Products will be rendered here -->
+          </div>
+          <button class="btn btn-ghost" id="add-product-btn" style="margin-top: 12px;">+ Add Product</button>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-ghost close-products-modal">Cancel</button>
+        <button class="btn btn-primary" id="save-products-btn">Save Products</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toast" class="toast" aria-live="polite"></div>
 
   <script>
     let panels = <%- JSON.stringify(panels) %>;
+    let currentEditingPanelId = null;
+    let currentEditingServiceId = null;
+    let currentProducts = [];
 
     function showToast(message) {
       const toast = document.getElementById('toast');
@@ -388,7 +424,125 @@
 
       // Create panel button
       document.getElementById('create-panel-btn').addEventListener('click', createPanel);
+
+      // Manage products buttons
+      document.querySelectorAll('.manage-products-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const panelId = parseInt(btn.getAttribute('data-panel-id'));
+          const serviceId = btn.getAttribute('data-service-id');
+          openProductsModal(panelId, serviceId);
+        });
+      });
+
+      // Close products modal
+      document.querySelectorAll('.close-products-modal').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('products-modal').classList.remove('show');
+        });
+      });
+
+      // Add product button
+      document.getElementById('add-product-btn').addEventListener('click', addProductRow);
+
+      // Save products button
+      document.getElementById('save-products-btn').addEventListener('click', saveProducts);
     });
+
+    // Products management functions
+    function openProductsModal(panelId, serviceId) {
+      currentEditingPanelId = panelId;
+      currentEditingServiceId = serviceId;
+
+      // Fetch current products
+      fetch(`/admin/api/panels/${serviceId}/products`)
+        .then(res => res.json())
+        .then(data => {
+          currentProducts = data.products || [];
+          renderProductsList();
+          document.getElementById('products-modal').classList.add('show');
+        })
+        .catch(error => {
+          console.error('Error fetching products:', error);
+          showToast('Error loading products');
+        });
+    }
+
+    function renderProductsList() {
+      const container = document.getElementById('products-list');
+
+      if (currentProducts.length === 0) {
+        container.innerHTML = '<p style="color: var(--muted); text-align: center; padding: 20px;">No products added yet. Click "+ Add Product" to get started.</p>';
+        return;
+      }
+
+      container.innerHTML = currentProducts.map((product, idx) => `
+        <div class="product-row" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: center; padding: 12px; background: var(--surface-100); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px;">
+          <div class="field" style="margin: 0;">
+            <label class="label" style="font-size: 0.85rem;">Product Name</label>
+            <input type="text" class="control" value="${product.name || ''}" data-idx="${idx}" data-field="name" onchange="updateProduct(${idx}, 'name', this.value)">
+          </div>
+          <div class="field" style="margin: 0;">
+            <label class="label" style="font-size: 0.85rem;">Max Qty</label>
+            <input type="number" class="control" value="${product.max_qty || 1}" min="1" max="10" data-idx="${idx}" data-field="max_qty" onchange="updateProduct(${idx}, 'max_qty', parseInt(this.value))">
+          </div>
+          <div class="field" style="margin: 0;">
+            <label class="label" style="font-size: 0.85rem;">Max Checkouts</label>
+            <input type="number" class="control" value="${product.max_checkouts || 1}" min="1" max="10" data-idx="${idx}" data-field="max_checkouts" onchange="updateProduct(${idx}, 'max_checkouts', parseInt(this.value))">
+          </div>
+          <button class="btn btn-sm btn-danger" onclick="removeProduct(${idx})" style="margin-top: 20px;">🗑️</button>
+        </div>
+      `).join('');
+    }
+
+    function addProductRow() {
+      currentProducts.push({
+        name: '',
+        max_qty: 1,
+        max_checkouts: 1
+      });
+      renderProductsList();
+    }
+
+    function updateProduct(idx, field, value) {
+      if (currentProducts[idx]) {
+        currentProducts[idx][field] = value;
+      }
+    }
+
+    function removeProduct(idx) {
+      currentProducts.splice(idx, 1);
+      renderProductsList();
+    }
+
+    async function saveProducts() {
+      // Validate that all products have names
+      const invalidProducts = currentProducts.filter(p => !p.name || p.name.trim() === '');
+      if (invalidProducts.length > 0) {
+        showToast('All products must have a name');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/admin/panels/${currentEditingPanelId}/products`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ products: currentProducts })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showToast('Products saved successfully!');
+          document.getElementById('products-modal').classList.remove('show');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showToast('Failed to save products');
+        }
+      } catch (error) {
+        console.error('Save error:', error);
+        showToast('Error saving products');
+      }
+    }
   </script>
 </body>
 </html>
