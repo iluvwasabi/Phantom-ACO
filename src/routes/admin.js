@@ -214,14 +214,14 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
     ORDER BY ss.created_at DESC
   `).all();
 
-  // Decrypt and group by service
-  const submissions = {
-    target: [],
-    walmart: [],
-    bestbuy: [],
-    pokemoncenter: [],
-    shopify: []
-  };
+  // Get all service panels to dynamically create tabs
+  const servicePanels = db.prepare('SELECT service_id, service_name, icon FROM service_panels WHERE is_active = 1 ORDER BY display_order, service_name').all();
+
+  // Decrypt and group by service - dynamically initialize based on service panels
+  const submissions = {};
+  servicePanels.forEach(panel => {
+    submissions[panel.service_id] = [];
+  });
 
   allSubmissions.forEach(sub => {
     if (!sub.encrypted_password) return;
@@ -284,6 +284,7 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
   res.render('admin-submissions', {
     user: req.user,
     submissions: submissions,
+    servicePanels: servicePanels,
     brandName: brandName
   });
 });

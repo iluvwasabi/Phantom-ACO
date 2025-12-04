@@ -191,11 +191,11 @@
 
       <!-- Tabs -->
       <div class="tabs">
-        <button class="tab active" data-tab="target">🎯 Target (<%= submissions.target.length %>)</button>
-        <button class="tab" data-tab="walmart">🛒 Walmart (<%= submissions.walmart.length %>)</button>
-        <button class="tab" data-tab="bestbuy">🔵 Best Buy (<%= submissions.bestbuy.length %>)</button>
-        <button class="tab" data-tab="pokemoncenter">⚡ Pokemon Center (<%= submissions.pokemoncenter.length %>)</button>
-        <button class="tab" data-tab="shopify">🛍️ Shopify (<%= submissions.shopify.length %>)</button>
+        <% servicePanels.forEach((panel, index) => { %>
+          <button class="tab <%= index === 0 ? 'active' : '' %>" data-tab="<%= panel.service_id %>">
+            <%= panel.icon ? panel.icon + ' ' : '' %><%= panel.service_name %> (<%= submissions[panel.service_id] ? submissions[panel.service_id].length : 0 %>)
+          </button>
+        <% }); %>
       </div>
 
       <!-- Target Tab -->
