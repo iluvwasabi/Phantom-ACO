@@ -246,6 +246,48 @@ const runMigrations = () => {
               throw e;
             }
           }
+        } else if (file === 'add-panel-products.js') {
+          console.log('Adding products column to service_panels...');
+          try {
+            db.exec(`ALTER TABLE service_panels ADD COLUMN products TEXT DEFAULT '[]';`);
+            console.log('✓ Added products column');
+          } catch (e) {
+            if (e.message.includes('duplicate')) {
+              console.log('✓ products column already exists');
+            } else {
+              throw e;
+            }
+          }
+        } else if (file === 'add-keep-running-flag.js') {
+          console.log('Adding keep_running flag to service_subscriptions...');
+          try {
+            db.exec(`ALTER TABLE service_subscriptions ADD COLUMN keep_running INTEGER DEFAULT 1;`);
+            console.log('✓ Added keep_running column');
+          } catch (e) {
+            if (e.message.includes('duplicate')) {
+              console.log('✓ keep_running column already exists');
+            } else {
+              throw e;
+            }
+          }
+        } else if (file === 'add-successful-orders-counter.js') {
+          console.log('Adding successful orders counter to users...');
+          try {
+            db.exec(`ALTER TABLE users ADD COLUMN successful_orders_count INTEGER DEFAULT 0;`);
+            console.log('✓ Added successful_orders_count column');
+          } catch (e) {
+            if (e.message.includes('duplicate')) {
+              console.log('✓ successful_orders_count column already exists');
+            }
+          }
+          try {
+            db.exec(`ALTER TABLE users ADD COLUMN notified_at_5_orders INTEGER DEFAULT 0;`);
+            console.log('✓ Added notified_at_5_orders column');
+          } catch (e) {
+            if (e.message.includes('duplicate')) {
+              console.log('✓ notified_at_5_orders column already exists');
+            }
+          }
         }
       } catch (error) {
         console.error(`Error running migration ${file}:`, error.message);
