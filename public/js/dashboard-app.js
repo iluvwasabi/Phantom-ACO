@@ -227,7 +227,7 @@
                   <input type="number" name="product_${idx}_quantity" min="1" max="${product.max_qty}"
                     value="${quantity}" style="width: 60px; padding: 4px 8px;" class="control">
                   <label style="font-size: 0.9rem; color: var(--muted);">Checkouts:</label>
-                  <input type="number" name="product_${idx}_checkouts" min="1" max="10"
+                  <input type="number" name="product_${idx}_checkouts" min="1" max="${product.max_checkouts}"
                     value="${checkouts}" style="width: 60px; padding: 4px 8px;" class="control">
                 </div>
               </div>
