@@ -42,15 +42,72 @@ router.post('/webhooks/stripe',
           .get(paidInvoice.id);
 
         if (order) {
+          // Mark order as paid
           db.prepare(`
             UPDATE orders
-            SET status = 'paid', payment_date = CURRENT_TIMESTAMP
+            SET status = 'paid', payment_date = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
           `).run(order.id);
 
           console.log(`✅ Order ${order.id} paid - $${order.fee_amount}`);
 
-          // TODO: Send thank you message to customer
+          // Increment user's successful orders count and check for milestone
+          if (order.user_id) {
+            const user = db.prepare(`
+              UPDATE users
+              SET successful_orders_count = successful_orders_count + 1
+              WHERE id = ?
+              RETURNING successful_orders_count, notified_at_5_orders, discord_username
+            `).get(order.user_id);
+
+            if (user) {
+              console.log(`📊 User ${user.discord_username} now has ${user.successful_orders_count} successful orders`);
+
+              // Check if user reached 5 orders and hasn't been notified
+              if (user.successful_orders_count === 5 && user.notified_at_5_orders === 0) {
+                // Send Discord notification to admin
+                const webhook = process.env.ADMIN_DISCORD_WEBHOOK;
+                if (webhook) {
+                  try {
+                    await fetch(webhook, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        embeds: [{
+                          title: '🎉 Milestone: User Reached 5 Successful Orders',
+                          color: 0x10b981,  // Green
+                          fields: [
+                            { name: 'User', value: user.discord_username || 'Unknown', inline: true },
+                            { name: 'Total Orders', value: '5', inline: true },
+                            { name: 'Action', value: 'Consider compensation/reward', inline: false }
+                          ],
+                          timestamp: new Date().toISOString()
+                        }]
+                      })
+                    });
+
+                    console.log(`🎉 Sent 5-order milestone notification for ${user.discord_username}`);
+                  } catch (error) {
+                    console.error('Failed to send Discord notification:', error);
+                  }
+                }
+
+                // Mark as notified
+                db.prepare(`UPDATE users SET notified_at_5_orders = 1 WHERE id = ?`).run(order.user_id);
+              }
+            }
+          }
+
+          // Auto-disable keep_running for this submission
+          if (order.submission_id) {
+            db.prepare(`
+              UPDATE service_subscriptions
+              SET keep_running = 0, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).run(order.submission_id);
+
+            console.log(`🔄 Auto-disabled keep_running for submission ${order.submission_id}`);
+          }
         }
         break;
 

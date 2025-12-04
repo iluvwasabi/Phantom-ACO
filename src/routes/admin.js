@@ -672,6 +672,50 @@ router.delete('/panels/:id', ensureAdminAuth, (req, res) => {
   }
 });
 
+// Get panel products
+router.get('/api/panels/:service/products', (req, res) => {
+  try {
+    const { service } = req.params;
+
+    const panel = db.prepare(`
+      SELECT products FROM service_panels
+      WHERE service_id = ?
+    `).get(service);
+
+    if (!panel) {
+      return res.status(404).json({ error: 'Panel not found' });
+    }
+
+    const products = panel.products ? JSON.parse(panel.products) : [];
+    res.json({ products });
+  } catch (error) {
+    console.error('Get panel products error:', error);
+    res.status(500).json({ error: 'Failed to get panel products' });
+  }
+});
+
+// Update panel products
+router.post('/panels/:id/products', ensureAdminAuth, (req, res) => {
+  try {
+    const { products } = req.body;
+
+    if (!Array.isArray(products)) {
+      return res.status(400).json({ error: 'Products must be an array' });
+    }
+
+    db.prepare(`
+      UPDATE service_panels
+      SET products = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(JSON.stringify(products), req.params.id);
+
+    res.json({ success: true, message: 'Products updated successfully' });
+  } catch (error) {
+    console.error('Update panel products error:', error);
+    res.status(500).json({ error: 'Failed to update panel products' });
+  }
+});
+
 // Update settings
 router.post('/settings', ensureAdminAuth, (req, res) => {
   try {

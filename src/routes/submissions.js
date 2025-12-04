@@ -199,10 +199,10 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       }
     }
 
-    // Create service subscription
+    // Create service subscription (with keep_running defaulting to 1)
     const subscriptionResult = db.prepare(`
-      INSERT INTO service_subscriptions (user_id, service_type, service_name, status, notes)
-      VALUES (?, ?, ?, 'active', ?)
+      INSERT INTO service_subscriptions (user_id, service_type, service_name, status, notes, keep_running)
+      VALUES (?, ?, ?, 'active', ?, 1)
     `).run(userId, account_email ? 'login_required' : 'no_login', service, notes || null);
 
     const subscriptionId = subscriptionResult.lastInsertRowid;
@@ -232,10 +232,17 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       country,
       account_email,
       account_password,
-      account_imap,
-      max_qty,
-      max_checkouts
+      selected_products: req.body.selected_products || []
     };
+
+    // Only include account_imap if not Target service
+    if (service !== 'target') {
+      dataToEncrypt.account_imap = account_imap;
+    }
+
+    // Keep legacy max_qty and max_checkouts for backwards compatibility
+    if (req.body.max_qty) dataToEncrypt.max_qty = max_qty;
+    if (req.body.max_checkouts) dataToEncrypt.max_checkouts = max_checkouts;
 
     // Encrypt the entire JSON object as a single string
     const encryptedDataString = encrypt(JSON.stringify(dataToEncrypt));
@@ -460,6 +467,42 @@ router.put('/api/submissions/:id/toggle-bot', ensureAuthenticated, ensureHasACOR
   } catch (error) {
     console.error('Toggle bot error:', error);
     res.status(500).json({ error: 'Failed to update added_to_bot flag' });
+  }
+});
+
+// POST /api/submissions/:id/toggle-running - Toggle keep_running flag
+router.post('/:id/toggle-running', ensureAuthenticated, ensureHasACORole, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const submissionId = req.params.id;
+    const { keep_running } = req.body;
+
+    // Verify ownership
+    const submission = db.prepare(`
+      SELECT * FROM service_subscriptions
+      WHERE id = ? AND user_id = ?
+    `).get(submissionId, userId);
+
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found or access denied' });
+    }
+
+    // Update keep_running flag
+    db.prepare(`
+      UPDATE service_subscriptions
+      SET keep_running = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(keep_running ? 1 : 0, submissionId);
+
+    res.json({
+      success: true,
+      keep_running: keep_running ? 1 : 0,
+      message: keep_running ? 'Profile will keep running' : 'Profile will stop after next checkout'
+    });
+
+  } catch (error) {
+    console.error('Toggle keep running error:', error);
+    res.status(500).json({ error: 'Failed to update keep_running flag' });
   }
 });
 
