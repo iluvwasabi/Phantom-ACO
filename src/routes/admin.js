@@ -1293,6 +1293,11 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
         const lastName = parsed.last_name || '';
         const fullName = `${firstName} ${lastName}`.trim() || sub.discord_username;
 
+        // Check if billing is different (handle boolean, string, and number types)
+        const billingIsDifferent = parsed.billing_same_as_shipping === false ||
+                                    parsed.billing_same_as_shipping === 'false' ||
+                                    parsed.billing_same_as_shipping === 0;
+
         const profile = {
           id: `prf-${generateUUID()}`,
           createdAt: new Date(sub.created_at).getTime(),
@@ -1312,16 +1317,16 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
             phone: String(parsed.phone || '')
           },
           billing: {
-            sameAsShipping: parsed.billing_same_as_shipping !== false,
-            firstName: parsed.billing_same_as_shipping === false ? String(parsed.first_name || '') : '',
-            lastName: parsed.billing_same_as_shipping === false ? String(parsed.last_name || '') : '',
-            address1: parsed.billing_same_as_shipping === false ? String(parsed.billing_address || '') : '',
+            sameAsShipping: !billingIsDifferent,
+            firstName: billingIsDifferent ? String(parsed.first_name || '') : '',
+            lastName: billingIsDifferent ? String(parsed.last_name || '') : '',
+            address1: billingIsDifferent ? String(parsed.billing_address || '') : '',
             address2: '',
-            city: parsed.billing_same_as_shipping === false ? String(parsed.billing_city || '') : '',
-            province: parsed.billing_same_as_shipping === false ? String(parsed.billing_state || '') : null,
-            postalCode: parsed.billing_same_as_shipping === false ? String(parsed.billing_zipcode || '') : '',
-            country: parsed.billing_same_as_shipping === false ? 'United States' : null,
-            phone: parsed.billing_same_as_shipping === false ? String(parsed.phone || '') : ''
+            city: billingIsDifferent ? String(parsed.billing_city || '') : '',
+            province: billingIsDifferent ? String(parsed.billing_state || '') : null,
+            postalCode: billingIsDifferent ? String(parsed.billing_zipcode || '') : '',
+            country: billingIsDifferent ? 'United States' : null,
+            phone: billingIsDifferent ? String(parsed.phone || '') : ''
           },
           payment: {
             name: String(parsed.name_on_card || fullName),
@@ -1338,6 +1343,10 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
         console.error('Decryption error for submission:', sub.id, e.message);
       }
     });
+
+    // Log what we're exporting for debugging
+    console.log(`Exporting ${prismProfiles.length} profiles:`);
+    prismProfiles.forEach(p => console.log(`  - ${p.name} (${p.id})`));
 
     // Send file
     const filename = `prism-profiles-${new Date().toISOString().split('T')[0]}.json`;
