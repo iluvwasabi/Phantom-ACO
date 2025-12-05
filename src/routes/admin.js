@@ -340,10 +340,13 @@ router.get('/api/submissions/:id', ensureAdminAuth, (req, res) => {
         ss.updated_at,
         ss.user_id,
         ss.notes,
+        u.discord_username,
+        u.discord_id,
         ec.encrypted_username,
         ec.encrypted_password,
         ec.encrypted_imap
       FROM service_subscriptions ss
+      LEFT JOIN users u ON ss.user_id = u.id
       LEFT JOIN encrypted_credentials ec ON ec.subscription_id = ss.id
       WHERE ss.id = ?
     `).get(submissionId);
@@ -419,6 +422,8 @@ router.get('/api/submissions/:id', ensureAdminAuth, (req, res) => {
       updated_at: submission.updated_at,
       user_id: submission.user_id,
       notes: submission.notes,
+      discord_username: submission.discord_username,
+      discord_id: submission.discord_id,
       ...decryptedData
     });
 

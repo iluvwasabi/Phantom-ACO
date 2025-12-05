@@ -737,6 +737,11 @@
           <input type="hidden" id="edit-submission-id">
           <input type="hidden" id="edit-service-type">
 
+          <div class="field wide">
+            <label class="label">Discord Username</label>
+            <input type="text" id="edit-discord-username" class="control" readonly style="background: var(--bg-900); cursor: not-allowed; opacity: 0.7;">
+          </div>
+
           <div class="field">
             <label class="label">First Name</label>
             <input type="text" id="edit-first-name" class="control">
@@ -919,6 +924,7 @@
         // Populate form
         document.getElementById('edit-submission-id').value = submission.id;
         document.getElementById('edit-service-type').value = submission.service_type || '';
+        document.getElementById('edit-discord-username').value = submission.discord_username || 'N/A';
         document.getElementById('edit-first-name').value = submission.first_name || '';
         document.getElementById('edit-last-name').value = submission.last_name || '';
 
