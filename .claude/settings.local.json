@@ -10,7 +10,9 @@
       "Bash(npm install:*)",
       "Bash(sqlite3:*)",
       "Bash(dir:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(cat:*)",
+      "Bash(python -m json.tool:*)"
     ],
     "deny": [],
     "ask": []

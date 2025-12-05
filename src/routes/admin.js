@@ -1301,34 +1301,34 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
           email: parsed.account_email || parsed.email || '',
           oneTimeUse: false,
           shipping: {
-            firstName: parsed.first_name || '',
-            lastName: parsed.last_name || '',
-            address1: parsed.address1 || '',
-            address2: parsed.unit_number || '',
-            city: parsed.city || '',
-            province: parsed.state || '',
-            postalCode: parsed.zip_code || '',
-            country: parsed.country || 'United States',
-            phone: parsed.phone || ''
+            firstName: String(parsed.first_name || ''),
+            lastName: String(parsed.last_name || ''),
+            address1: String(parsed.address1 || ''),
+            address2: String(parsed.unit_number || ''),
+            city: String(parsed.city || ''),
+            province: String(parsed.state || ''),
+            postalCode: String(parsed.zip_code || ''),
+            country: String(parsed.country || 'United States'),
+            phone: String(parsed.phone || '')
           },
           billing: {
             sameAsShipping: parsed.billing_same_as_shipping !== false,
-            firstName: parsed.billing_same_as_shipping === false ? parsed.first_name : '',
-            lastName: parsed.billing_same_as_shipping === false ? parsed.last_name : '',
-            address1: parsed.billing_same_as_shipping === false ? (parsed.billing_address || '') : '',
+            firstName: parsed.billing_same_as_shipping === false ? String(parsed.first_name || '') : '',
+            lastName: parsed.billing_same_as_shipping === false ? String(parsed.last_name || '') : '',
+            address1: parsed.billing_same_as_shipping === false ? String(parsed.billing_address || '') : '',
             address2: '',
-            city: parsed.billing_same_as_shipping === false ? (parsed.billing_city || '') : '',
-            province: parsed.billing_same_as_shipping === false ? (parsed.billing_state || null) : null,
-            postalCode: parsed.billing_same_as_shipping === false ? (parsed.billing_zipcode || '') : '',
-            country: parsed.billing_same_as_shipping === false ? (parsed.country || null) : null,
-            phone: parsed.billing_same_as_shipping === false ? (parsed.phone || '') : ''
+            city: parsed.billing_same_as_shipping === false ? String(parsed.billing_city || '') : '',
+            province: parsed.billing_same_as_shipping === false ? String(parsed.billing_state || '') : null,
+            postalCode: parsed.billing_same_as_shipping === false ? String(parsed.billing_zipcode || '') : '',
+            country: parsed.billing_same_as_shipping === false ? 'United States' : null,
+            phone: parsed.billing_same_as_shipping === false ? String(parsed.phone || '') : ''
           },
           payment: {
-            name: parsed.name_on_card || fullName,
-            num: parsed.card_number || '',
-            year: parsed.exp_year || '',
-            month: parsed.exp_month || '',
-            cvv: parsed.cvv || ''
+            name: String(parsed.name_on_card || fullName),
+            num: String(parsed.card_number || ''),
+            year: String(parsed.exp_year || ''),
+            month: String(parsed.exp_month || ''),
+            cvv: String(parsed.cvv || '')
           },
           groupId: exportGroupId
         };
