@@ -200,14 +200,21 @@
 
       <!-- Target Tab -->
       <div id="target-tab" class="tab-content active">
-        <div style="margin-bottom: 16px; display: flex; justify-content: flex-end; gap: 12px;">
-          <a href="/admin/export/prism" class="btn btn-primary" style="text-decoration: none;">📦 Export to Prism JSON</a>
-          <a href="/admin/export/excel" class="btn btn-primary" style="text-decoration: none;">📥 Export to Excel</a>
+        <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <button onclick="selectAllCheckboxes('target-table')" class="btn btn-ghost" style="padding: 8px 12px;">✅ Select All</button>
+            <button onclick="deselectAllCheckboxes('target-table')" class="btn btn-ghost" style="padding: 8px 12px;">❌ Deselect All</button>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <button onclick="exportSelectedToPrism('target-table')" class="btn btn-primary">📦 Export Selected to Prism JSON</button>
+            <a href="/admin/export/excel" class="btn btn-primary" style="text-decoration: none;">📥 Export to Excel</a>
+          </div>
         </div>
         <div class="submissions-table">
           <table id="target-table">
             <thead>
               <tr>
+                <th style="width: 40px;"><input type="checkbox" class="select-all-checkbox" onclick="toggleAllCheckboxes('target-table', this)" style="width: 18px; height: 18px; cursor: pointer;"></th>
                 <th>Assigned To</th>
                 <th>ID</th>
                 <th>Username</th>
@@ -232,6 +239,9 @@
               <% if (submissions.target.length > 0) { %>
                 <% submissions.target.forEach(sub => { %>
                   <tr data-submission-id="<%= sub.id %>">
+                    <td style="text-align: center;">
+                      <input type="checkbox" class="submission-checkbox" value="<%= sub.id %>" style="width: 18px; height: 18px; cursor: pointer;">
+                    </td>
                     <td style="text-align: center;">
                       <select class="assignment-dropdown" data-submission-id="<%= sub.id %>" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-100); color: var(--text-900); font-size: 0.85rem;">
                         <option value="">Unassigned</option>
@@ -1050,6 +1060,72 @@
         }
       }
     });
+
+    // Checkbox selection functions
+    function toggleAllCheckboxes(tableId, headerCheckbox) {
+      const table = document.getElementById(tableId);
+      const checkboxes = table.querySelectorAll('.submission-checkbox');
+      checkboxes.forEach(cb => cb.checked = headerCheckbox.checked);
+    }
+
+    function selectAllCheckboxes(tableId) {
+      const table = document.getElementById(tableId);
+      const checkboxes = table.querySelectorAll('.submission-checkbox');
+      checkboxes.forEach(cb => cb.checked = true);
+      const headerCheckbox = table.querySelector('.select-all-checkbox');
+      if (headerCheckbox) headerCheckbox.checked = true;
+    }
+
+    function deselectAllCheckboxes(tableId) {
+      const table = document.getElementById(tableId);
+      const checkboxes = table.querySelectorAll('.submission-checkbox');
+      checkboxes.forEach(cb => cb.checked = false);
+      const headerCheckbox = table.querySelector('.select-all-checkbox');
+      if (headerCheckbox) headerCheckbox.checked = false;
+    }
+
+    // Export selected submissions to Prism format
+    async function exportSelectedToPrism(tableId) {
+      const table = document.getElementById(tableId);
+      const checkboxes = table.querySelectorAll('.submission-checkbox:checked');
+      const submissionIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+      if (submissionIds.length === 0) {
+        showToast('Please select at least one submission to export');
+        return;
+      }
+
+      try {
+        const response = await fetch('/admin/export/prism', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ submissionIds })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Export failed');
+        }
+
+        // Download the file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `prism-profiles-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showToast(`Exported ${submissionIds.length} profile(s) to Prism JSON`);
+      } catch (error) {
+        console.error('Export error:', error);
+        showToast('Error exporting profiles: ' + error.message);
+      }
+    }
   </script>
 </body>
 </html>

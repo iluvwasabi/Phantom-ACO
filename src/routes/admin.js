@@ -1245,18 +1245,26 @@ router.put('/api/submissions/:id/assign', ensureAdminAuth, async (req, res) => {
   }
 });
 
-// GET /admin/export/prism - Export all submissions to Prism profiles format
-router.get('/export/prism', ensureAdminAuth, async (req, res) => {
+// POST /admin/export/prism - Export selected submissions to Prism profiles format
+router.post('/export/prism', ensureAdminAuth, async (req, res) => {
   try {
-    // Fetch all submissions
+    const { submissionIds } = req.body;
+
+    if (!submissionIds || !Array.isArray(submissionIds) || submissionIds.length === 0) {
+      return res.status(400).json({ error: 'No submissions selected' });
+    }
+
+    // Fetch selected submissions
+    const placeholders = submissionIds.map(() => '?').join(',');
     const allSubs = db.prepare(`
       SELECT ss.*, ec.encrypted_username, ec.encrypted_password,
              u.discord_username, u.discord_id
       FROM service_subscriptions ss
       LEFT JOIN encrypted_credentials ec ON ec.subscription_id = ss.id
       LEFT JOIN users u ON ss.user_id = u.id
+      WHERE ss.id IN (${placeholders})
       ORDER BY ss.created_at DESC
-    `).all();
+    `).all(...submissionIds);
 
     // Convert to Prism format
     const prismProfiles = [];
@@ -1271,11 +1279,15 @@ router.get('/export/prism', ensureAdminAuth, async (req, res) => {
         const parsed = JSON.parse(decryptedPassword);
 
         // Create Prism profile
+        const firstName = parsed.first_name || '';
+        const lastName = parsed.last_name || '';
+        const fullName = `${firstName} ${lastName}`.trim() || sub.discord_username;
+
         const profile = {
           id: `prf-${sub.id}-${Date.now()}`,
           createdAt: new Date(sub.created_at).getTime(),
           updatedAt: new Date(sub.updated_at || sub.created_at).getTime(),
-          name: `${parsed.first_name || ''} ${parsed.last_name || ''}`.trim() || sub.discord_username,
+          name: fullName,
           email: parsed.account_email || parsed.email || '',
           oneTimeUse: false,
           shipping: {
