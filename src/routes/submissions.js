@@ -481,8 +481,8 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
 
     // Send Discord notification for edit
     const user = db.prepare('SELECT discord_username, discord_id FROM users WHERE id = ?').get(userId);
-    const servicePanelInfo = db.prepare('SELECT name FROM service_panels WHERE key = ?').get(subscription.service);
-    const serviceName = servicePanelInfo ? servicePanelInfo.name : subscription.service;
+    const servicePanelInfo = db.prepare('SELECT service_name FROM service_panels WHERE service_id = ?').get(subscription.service_name);
+    const serviceName = servicePanelInfo ? servicePanelInfo.service_name : subscription.service_name;
 
     await sendUrgentDiscordNotification(
       'SUBMISSION EDITED',
@@ -524,8 +524,8 @@ router.delete('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, asy
 
     // Get user and service info before deletion
     const user = db.prepare('SELECT discord_username, discord_id FROM users WHERE id = ?').get(userId);
-    const servicePanelInfo = db.prepare('SELECT name FROM service_panels WHERE key = ?').get(subscription.service);
-    const serviceName = servicePanelInfo ? servicePanelInfo.name : subscription.service;
+    const servicePanelInfo = db.prepare('SELECT service_name FROM service_panels WHERE service_id = ?').get(subscription.service_name);
+    const serviceName = servicePanelInfo ? servicePanelInfo.service_name : subscription.service_name;
 
     // Get encrypted credentials to show email in notification
     const creds = db.prepare('SELECT encrypted_username FROM encrypted_credentials WHERE subscription_id = ?').get(submissionId);
