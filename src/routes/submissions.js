@@ -329,6 +329,25 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       VALUES (?, ?, ?)
     `).run(userId, account_email ? 'login_required' : 'no_login', service);
 
+    // Send Discord notification for new submission
+    const user = db.prepare('SELECT discord_username, discord_id FROM users WHERE id = ?').get(userId);
+    const servicePanelInfo = db.prepare('SELECT service_name FROM service_panels WHERE service_id = ?').get(service);
+    const serviceName = servicePanelInfo ? servicePanelInfo.service_name : service;
+
+    await sendUrgentDiscordNotification(
+      'NEW SUBMISSION ADDED',
+      `A user has added a new submission for **${serviceName}**`,
+      [
+        { name: 'User', value: user?.discord_username || 'Unknown', inline: true },
+        { name: 'Discord ID', value: user?.discord_id || 'N/A', inline: true },
+        { name: 'Service', value: serviceName, inline: true },
+        { name: 'Email', value: account_email || email || 'N/A', inline: false },
+        { name: 'Submission ID', value: `${subscriptionId}`, inline: true },
+        { name: 'Created At', value: new Date().toLocaleString(), inline: true }
+      ],
+      0x00FF00  // Green color for new submission
+    );
+
     res.json({
       success: true,
       message: 'Submission created successfully!'
