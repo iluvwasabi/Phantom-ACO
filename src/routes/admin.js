@@ -1446,8 +1446,13 @@ router.post('/export/stellar-csv', ensureAdminAuth, async (req, res) => {
         // Format card type for Stellar - must be exactly: Visa, Discover, Mastercard, Amex, or JCB
         let cardType = 'Visa'; // Default
         if (parsed.card_type) {
-          const typeLC = String(parsed.card_type).toLowerCase().trim();
-          if (typeLC.includes('amex') || typeLC.includes('american')) {
+          const typeStr = String(parsed.card_type).trim();
+          const typeLC = typeStr.toLowerCase();
+
+          // Check both original case and lowercase for exact matches first
+          if (typeStr === 'Visa' || typeStr === 'Discover' || typeStr === 'Mastercard' || typeStr === 'Amex' || typeStr === 'JCB') {
+            cardType = typeStr;
+          } else if (typeLC.includes('amex') || typeLC.includes('american')) {
             cardType = 'Amex';
           } else if (typeLC.includes('master')) {
             cardType = 'Mastercard';
@@ -1459,7 +1464,7 @@ router.post('/export/stellar-csv', ensureAdminAuth, async (req, res) => {
             cardType = 'JCB';
           } else {
             // If we can't determine, default to Visa
-            console.warn(`Unknown card type: ${parsed.card_type} for profile ${profileName}, defaulting to Visa`);
+            console.warn(`Unknown card type: "${parsed.card_type}" for profile ${profileName}, defaulting to Visa`);
             cardType = 'Visa';
           }
         }
