@@ -469,7 +469,7 @@ body {
 }
 
 .dialog-body {
-  padding: var(--space-6);
+  padding: var(--space-4);
   overflow-y: auto;
   flex: 1;
 }
@@ -488,7 +488,7 @@ body {
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-5);
+  gap: var(--space-3);
 }
 
 .form-grid .wide {
