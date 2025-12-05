@@ -1351,15 +1351,15 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
           },
           billing: {
             sameAsShipping: !billingIsDifferent,
-            firstName: billingIsDifferent ? String(parsed.first_name || '') : '',
-            lastName: billingIsDifferent ? String(parsed.last_name || '') : '',
-            address1: billingIsDifferent ? String(parsed.billing_address || '') : '',
-            address2: '',
-            city: billingIsDifferent ? String(parsed.billing_city || '') : '',
-            province: billingIsDifferent ? getFullStateName(parsed.billing_state) : null,
-            postalCode: billingIsDifferent ? String(parsed.billing_zipcode || '') : '',
-            country: billingIsDifferent ? 'United States' : null,
-            phone: billingIsDifferent ? String(parsed.phone || '') : ''
+            firstName: billingIsDifferent ? String(parsed.first_name || '') : String(parsed.first_name || ''),
+            lastName: billingIsDifferent ? String(parsed.last_name || '') : String(parsed.last_name || ''),
+            address1: billingIsDifferent ? String(parsed.billing_address || '') : String(parsed.address1 || ''),
+            address2: billingIsDifferent ? '' : String(parsed.unit_number || ''),
+            city: billingIsDifferent ? String(parsed.billing_city || '') : String(parsed.city || ''),
+            province: billingIsDifferent ? getFullStateName(parsed.billing_state) : getFullStateName(parsed.state),
+            postalCode: billingIsDifferent ? String(parsed.billing_zipcode || '') : String(parsed.zip_code || ''),
+            country: billingIsDifferent ? 'United States' : 'United States',
+            phone: billingIsDifferent ? String(parsed.phone || '') : String(parsed.phone || '')
           },
           payment: {
             name: String(parsed.name_on_card || fullName),
