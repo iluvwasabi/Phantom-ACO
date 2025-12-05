@@ -1393,6 +1393,122 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
   }
 });
 
+// POST /admin/export/stellar-csv - Export selected submissions to Stellar CSV format
+router.post('/export/stellar-csv', ensureAdminAuth, async (req, res) => {
+  try {
+    const { submissionIds } = req.body;
+
+    if (!submissionIds || !Array.isArray(submissionIds) || submissionIds.length === 0) {
+      return res.status(400).json({ error: 'No submissions selected' });
+    }
+
+    // Fetch selected submissions
+    const placeholders = submissionIds.map(() => '?').join(',');
+    const allSubs = db.prepare(`
+      SELECT ss.*, ec.encrypted_username, ec.encrypted_password,
+             u.discord_username, u.discord_id
+      FROM service_subscriptions ss
+      LEFT JOIN encrypted_credentials ec ON ec.subscription_id = ss.id
+      LEFT JOIN users u ON ss.user_id = u.id
+      WHERE ss.id IN (${placeholders})
+      ORDER BY ss.created_at DESC
+    `).all(...submissionIds);
+
+    // Convert to CSV rows
+    const csvRows = [];
+
+    // Add header
+    csvRows.push('PROFILE_NAME,EMAIL,PHONE,SHIPPING_FIRST_NAME,SHIPPING_LAST_NAME,SHIPPING_ADDRESS,SHIPPING_ADDRESS_2,SHIPPING_CITY,SHIPPING_ZIP,SHIPPING_STATE,SHIPPING_COUNTRY,BILLING_FIRST_NAME,BILLING_LAST_NAME,BILLING_ADDRESS,BILLING_ADDRESS_2,BILLING_CITY,BILLING_ZIP,BILLING_STATE,BILLING_COUNTRY,BILLING_SAME_AS_SHIPPING,CARD_HOLDER_NAME,CARD_TYPE,CARD_NUMBER,CARD_MONTH,CARD_YEAR,CARD_CVV,ONE_CHECKOUT_PER_PROFILE');
+
+    allSubs.forEach(sub => {
+      if (!sub.encrypted_password) return;
+
+      try {
+        const decryptedPassword = decrypt(sub.encrypted_password);
+        if (!decryptedPassword || !decryptedPassword.startsWith('{')) return;
+
+        const parsed = JSON.parse(decryptedPassword);
+
+        // Create profile name
+        const firstName = parsed.first_name || '';
+        const lastName = parsed.last_name || '';
+        const profileName = `${firstName} ${lastName}`.trim() || sub.discord_username;
+
+        // Check if billing is same as shipping
+        const billingSameAsShipping = parsed.billing_same_as_shipping === true ||
+                                       parsed.billing_same_as_shipping === 'true' ||
+                                       parsed.billing_same_as_shipping === 1;
+
+        // Map state to 2-letter code
+        const shippingState = parsed.state ? String(parsed.state).toUpperCase().substring(0, 2) : '';
+        const billingState = billingSameAsShipping ? shippingState : (parsed.billing_state ? String(parsed.billing_state).toUpperCase().substring(0, 2) : '');
+
+        // Format card type for Stellar
+        let cardType = parsed.card_type || 'Visa';
+        if (cardType.toLowerCase().includes('american')) cardType = 'Amex';
+        else if (cardType.toLowerCase().includes('mastercard')) cardType = 'Mastercard';
+        else if (cardType.toLowerCase().includes('discover')) cardType = 'Discover';
+        else cardType = 'Visa';
+
+        // Build CSV row
+        const row = [
+          profileName,
+          parsed.account_email || parsed.email || '',
+          parsed.phone || '',
+          parsed.first_name || '',
+          parsed.last_name || '',
+          parsed.address1 || '',
+          parsed.unit_number || '',
+          parsed.city || '',
+          parsed.zip_code || '',
+          shippingState,
+          'US',
+          billingSameAsShipping ? '' : (parsed.first_name || ''),
+          billingSameAsShipping ? '' : (parsed.last_name || ''),
+          billingSameAsShipping ? '' : (parsed.billing_address || ''),
+          '',
+          billingSameAsShipping ? '' : (parsed.billing_city || ''),
+          billingSameAsShipping ? '' : (parsed.billing_zipcode || ''),
+          billingSameAsShipping ? '' : billingState,
+          billingSameAsShipping ? '' : 'US',
+          billingSameAsShipping ? 'true' : 'false',
+          parsed.name_on_card || profileName,
+          cardType,
+          parsed.card_number || '',
+          formatMonth(parsed.exp_month),
+          parsed.exp_year || '',
+          parsed.cvv || '',
+          'false'
+        ];
+
+        // Escape and join
+        const escapedRow = row.map(field => {
+          const str = String(field);
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        });
+
+        csvRows.push(escapedRow.join(','));
+      } catch (e) {
+        console.error('Decryption error for submission:', sub.id, e.message);
+      }
+    });
+
+    // Send CSV file
+    const csvContent = csvRows.join('\n');
+    const filename = `stellar-profiles-${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'text/csv');
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Stellar CSV export error:', error);
+    res.status(500).json({ error: 'Failed to export Stellar CSV' });
+  }
+});
+
 // GET /admin/export/excel - Export all submissions to Excel with separate sheets
 router.get('/export/excel', ensureAdminAuth, async (req, res) => {
   try {

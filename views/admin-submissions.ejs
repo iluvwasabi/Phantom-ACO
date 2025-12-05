@@ -206,7 +206,8 @@
             <button onclick="deselectAllCheckboxes('target-table')" class="btn btn-ghost" style="padding: 8px 12px;">❌ Deselect All</button>
           </div>
           <div style="display: flex; gap: 12px;">
-            <button onclick="exportSelectedToPrism('target-table')" class="btn btn-primary">📦 Export Selected to Prism JSON</button>
+            <button onclick="exportSelectedToStellarCSV('target-table')" class="btn btn-primary">📄 Export to Stellar CSV</button>
+            <button onclick="exportSelectedToPrism('target-table')" class="btn btn-primary">📦 Export to Prism JSON</button>
             <a href="/admin/export/excel" class="btn btn-primary" style="text-decoration: none;">📥 Export to Excel</a>
           </div>
         </div>
@@ -293,7 +294,8 @@
             <button onclick="deselectAllCheckboxes('walmart-table')" class="btn btn-ghost" style="padding: 8px 12px;">❌ Deselect All</button>
           </div>
           <div style="display: flex; gap: 12px;">
-            <button onclick="exportSelectedToPrism('walmart-table')" class="btn btn-primary">📦 Export Selected to Prism JSON</button>
+            <button onclick="exportSelectedToStellarCSV('walmart-table')" class="btn btn-primary">📄 Export to Stellar CSV</button>
+            <button onclick="exportSelectedToPrism('walmart-table')" class="btn btn-primary">📦 Export to Prism JSON</button>
             <a href="/admin/export/excel" class="btn btn-primary" style="text-decoration: none;">📥 Export to Excel</a>
           </div>
         </div>
@@ -380,7 +382,8 @@
             <button onclick="deselectAllCheckboxes('bestbuy-table')" class="btn btn-ghost" style="padding: 8px 12px;">❌ Deselect All</button>
           </div>
           <div style="display: flex; gap: 12px;">
-            <button onclick="exportSelectedToPrism('bestbuy-table')" class="btn btn-primary">📦 Export Selected to Prism JSON</button>
+            <button onclick="exportSelectedToStellarCSV('bestbuy-table')" class="btn btn-primary">📄 Export to Stellar CSV</button>
+            <button onclick="exportSelectedToPrism('bestbuy-table')" class="btn btn-primary">📦 Export to Prism JSON</button>
           </div>
         </div>
         <div class="submissions-table">
@@ -466,7 +469,8 @@
             <button onclick="deselectAllCheckboxes('pokemoncenter-table')" class="btn btn-ghost" style="padding: 8px 12px;">❌ Deselect All</button>
           </div>
           <div style="display: flex; gap: 12px;">
-            <button onclick="exportSelectedToPrism('pokemoncenter-table')" class="btn btn-primary">📦 Export Selected to Prism JSON</button>
+            <button onclick="exportSelectedToStellarCSV('pokemoncenter-table')" class="btn btn-primary">📄 Export to Stellar CSV</button>
+            <button onclick="exportSelectedToPrism('pokemoncenter-table')" class="btn btn-primary">📦 Export to Prism JSON</button>
           </div>
         </div>
         <div class="submissions-table">
@@ -555,7 +559,8 @@
             <button onclick="deselectAllCheckboxes('shopify-table')" class="btn btn-ghost" style="padding: 8px 12px;">❌ Deselect All</button>
           </div>
           <div style="display: flex; gap: 12px;">
-            <button onclick="exportSelectedToPrism('shopify-table')" class="btn btn-primary">📦 Export Selected to Prism JSON</button>
+            <button onclick="exportSelectedToStellarCSV('shopify-table')" class="btn btn-primary">📄 Export to Stellar CSV</button>
+            <button onclick="exportSelectedToPrism('shopify-table')" class="btn btn-primary">📦 Export to Prism JSON</button>
           </div>
         </div>
         <div class="submissions-table">
@@ -1176,6 +1181,49 @@
         document.body.removeChild(a);
 
         showToast(`Exported ${submissionIds.length} profile(s) to Prism JSON`);
+      } catch (error) {
+        console.error('Export error:', error);
+        showToast('Error exporting profiles: ' + error.message);
+      }
+    }
+
+    // Export selected submissions to Stellar CSV format
+    async function exportSelectedToStellarCSV(tableId) {
+      const table = document.getElementById(tableId);
+      const checkboxes = table.querySelectorAll('.submission-checkbox:checked');
+      const submissionIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+      if (submissionIds.length === 0) {
+        showToast('Please select at least one submission to export');
+        return;
+      }
+
+      try {
+        const response = await fetch('/admin/export/stellar-csv', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ submissionIds })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Export failed');
+        }
+
+        // Download the file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `stellar-profiles-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showToast(`Exported ${submissionIds.length} profile(s) to Stellar CSV`);
       } catch (error) {
         console.error('Export error:', error);
         showToast('Error exporting profiles: ' + error.message);
