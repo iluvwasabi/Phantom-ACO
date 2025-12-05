@@ -264,8 +264,9 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
     }
 
     // Create service subscription (with keep_running defaulting to 1)
-    // Use service name as type for services with custom forms (target, walmart), otherwise use login_required/no_login
-    const serviceType = (service === 'target' || service === 'walmart') ? service : (account_email ? 'login_required' : 'no_login');
+    // Use service name as type for services with custom forms, otherwise use login_required/no_login
+    const servicesWithCustomForms = ['target', 'walmart', 'bestbuy', 'pokemoncenter', 'shopify'];
+    const serviceType = servicesWithCustomForms.includes(service) ? service : (account_email ? 'login_required' : 'no_login');
     const subscriptionResult = db.prepare(`
       INSERT INTO service_subscriptions (user_id, service_type, service_name, status, notes, keep_running)
       VALUES (?, ?, ?, 'active', ?, 1)

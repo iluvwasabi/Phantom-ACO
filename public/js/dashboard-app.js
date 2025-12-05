@@ -101,70 +101,211 @@
       { type: 'section_header', label: 'Notes' },
       { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
     ],
-    login_required: [
-      // Keep old login_required for backwards compatibility with bestbuy
+    bestbuy: [
+      // User Information Section
+      { type: 'section_header', label: 'User Information' },
       { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
       { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
       { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
       { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
-      { name: 'name_on_card', label: 'Name on Card *', type: 'text', required: true, wide: false },
+      { name: 'separator', type: 'separator' },
+
+      // Billing Information Section
+      { type: 'section_header', label: 'Billing Information' },
+      { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
       { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
       { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
       { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
       { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
       { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
       { name: 'separator', type: 'separator' },
-      { name: 'address1', label: 'Shipping Address *', type: 'text', required: true, wide: false },
-      { name: 'unit_number', label: 'Unit Number', type: 'text', required: false, wide: false },
-      { name: 'city', label: 'Shipping City *', type: 'text', required: true, wide: false },
-      { name: 'state', label: 'Shipping State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
-      { name: 'zip_code', label: 'Shipping Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
-      { name: 'country', label: 'Country *', type: 'select', required: true, wide: false, options: ['United States'], default: 'United States' },
-      { name: 'separator', type: 'separator' },
-      { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping?', type: 'checkbox', required: false, wide: true, default: true },
-      { name: 'billing_address', label: 'Billing Address', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+
+      // Address Section
+      { type: 'section_header', label: 'Address' },
+      { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+      { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+      { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+      { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+      { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+      { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+      { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
       { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
       { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
       { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
       { name: 'separator', type: 'separator' },
+
+      // Account Information Section
+      { type: 'section_header', label: 'Account Information' },
       { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
-      { name: 'account_password', label: 'Account Password *', type: 'text', required: true, wide: false },
-      { name: 'account_imap', label: 'Account iMap *', type: 'textarea', required: true, wide: true },
+      { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+      { name: 'account_imap', label: 'IMAP *', type: 'textarea', required: true, wide: true },
       { name: 'separator', type: 'separator' },
-      { name: 'max_qty', label: 'Max Quantity per Checkout *', type: 'number', required: true, wide: false, min: 1, max: 99, default: 1 },
-      { name: 'max_checkouts', label: 'Max Checkouts per Drop *', type: 'number', required: true, wide: false, min: 1, max: 99, default: 1 },
+
+      // Notes Section
+      { type: 'section_header', label: 'Notes' },
+      { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+    ],
+    pokemoncenter: [
+      // User Information Section
+      { type: 'section_header', label: 'User Information' },
+      { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+      { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+      { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+      { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
       { name: 'separator', type: 'separator' },
-      { name: 'notes', label: 'Special Instructions (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+
+      // Billing Information Section
+      { type: 'section_header', label: 'Billing Information' },
+      { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+      { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+      { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+      { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+      { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+      { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+      { name: 'separator', type: 'separator' },
+
+      // Address Section
+      { type: 'section_header', label: 'Address' },
+      { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+      { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+      { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+      { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+      { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+      { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+      { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'separator', type: 'separator' },
+
+      // Account Information Section
+      { type: 'section_header', label: 'Account Information' },
+      { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
+      { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+      { name: 'account_imap', label: 'IMAP *', type: 'textarea', required: true, wide: true },
+      { name: 'separator', type: 'separator' },
+
+      // Notes Section
+      { type: 'section_header', label: 'Notes' },
+      { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+    ],
+    shopify: [
+      // User Information Section
+      { type: 'section_header', label: 'User Information' },
+      { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+      { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+      { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+      { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
+      { name: 'separator', type: 'separator' },
+
+      // Billing Information Section
+      { type: 'section_header', label: 'Billing Information' },
+      { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+      { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+      { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+      { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+      { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+      { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+      { name: 'separator', type: 'separator' },
+
+      // Address Section
+      { type: 'section_header', label: 'Address' },
+      { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+      { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+      { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+      { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+      { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+      { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+      { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'separator', type: 'separator' },
+
+      // Notes Section
+      { type: 'section_header', label: 'Notes' },
+      { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+    ],
+    login_required: [
+      // Fallback template for services with login requirements that don't have custom forms
+      { type: 'section_header', label: 'User Information' },
+      { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+      { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+      { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+      { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
+      { name: 'separator', type: 'separator' },
+
+      // Billing Information Section
+      { type: 'section_header', label: 'Billing Information' },
+      { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+      { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+      { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+      { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+      { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+      { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+      { name: 'separator', type: 'separator' },
+
+      // Address Section
+      { type: 'section_header', label: 'Address' },
+      { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+      { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+      { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+      { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+      { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+      { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+      { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+      { name: 'separator', type: 'separator' },
+
+      // Account Information Section
+      { type: 'section_header', label: 'Account Information' },
+      { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
+      { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+      { name: 'account_imap', label: 'IMAP *', type: 'textarea', required: true, wide: true },
+      { name: 'separator', type: 'separator' },
+
+      // Notes Section
+      { type: 'section_header', label: 'Notes' },
+      { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
     ],
     no_login: [
+      // Fallback template for services without login requirements
+      { type: 'section_header', label: 'User Information' },
       { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
       { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
       { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
       { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
-      { name: 'name_on_card', label: 'Name on Card *', type: 'text', required: true, wide: false },
+      { name: 'separator', type: 'separator' },
+
+      // Billing Information Section
+      { type: 'section_header', label: 'Billing Information' },
+      { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
       { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
       { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
       { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
       { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
       { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
       { name: 'separator', type: 'separator' },
-      { name: 'address1', label: 'Shipping Address *', type: 'text', required: true, wide: false },
-      { name: 'unit_number', label: 'Unit Number', type: 'text', required: false, wide: false },
-      { name: 'city', label: 'Shipping City *', type: 'text', required: true, wide: false },
-      { name: 'state', label: 'Shipping State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
-      { name: 'zip_code', label: 'Shipping Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
-      { name: 'country', label: 'Country *', type: 'select', required: true, wide: false, options: ['United States'], default: 'United States' },
-      { name: 'separator', type: 'separator' },
-      { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping?', type: 'checkbox', required: false, wide: true, default: true },
-      { name: 'billing_address', label: 'Billing Address', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+
+      // Address Section
+      { type: 'section_header', label: 'Address' },
+      { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+      { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+      { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+      { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+      { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+      { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+      { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
       { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
       { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
       { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
       { name: 'separator', type: 'separator' },
-      { name: 'max_qty', label: 'Max Quantity per Checkout *', type: 'number', required: true, wide: false, min: 1, max: 99, default: 1 },
-      { name: 'max_checkouts', label: 'Max Checkouts per Drop *', type: 'number', required: true, wide: false, min: 1, max: 99, default: 1 },
-      { name: 'separator', type: 'separator' },
-      { name: 'notes', label: 'Special Instructions (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+
+      // Notes Section
+      { type: 'section_header', label: 'Notes' },
+      { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
     ]
   };
 
