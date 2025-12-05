@@ -1254,6 +1254,34 @@ function generateUUID() {
   });
 }
 
+// Map state abbreviations to full names
+const STATE_NAMES = {
+  'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+  'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+  'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+  'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+  'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+  'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+  'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+  'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+  'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+  'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming'
+};
+
+// Convert state abbreviation to full name
+function getFullStateName(state) {
+  if (!state) return '';
+  const upperState = String(state).toUpperCase().trim();
+  return STATE_NAMES[upperState] || state;
+}
+
+// Ensure month is two digits
+function formatMonth(month) {
+  if (!month) return '';
+  const monthStr = String(month).trim();
+  return monthStr.length === 1 ? '0' + monthStr : monthStr;
+}
+
 // POST /admin/export/prism - Export selected submissions to Prism profiles format
 router.post('/export/prism', ensureAdminAuth, async (req, res) => {
   try {
@@ -1311,7 +1339,7 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
             address1: String(parsed.address1 || ''),
             address2: String(parsed.unit_number || ''),
             city: String(parsed.city || ''),
-            province: String(parsed.state || ''),
+            province: getFullStateName(parsed.state),
             postalCode: String(parsed.zip_code || ''),
             country: String(parsed.country || 'United States'),
             phone: String(parsed.phone || '')
@@ -1323,7 +1351,7 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
             address1: billingIsDifferent ? String(parsed.billing_address || '') : '',
             address2: '',
             city: billingIsDifferent ? String(parsed.billing_city || '') : '',
-            province: billingIsDifferent ? String(parsed.billing_state || '') : null,
+            province: billingIsDifferent ? getFullStateName(parsed.billing_state) : null,
             postalCode: billingIsDifferent ? String(parsed.billing_zipcode || '') : '',
             country: billingIsDifferent ? 'United States' : null,
             phone: billingIsDifferent ? String(parsed.phone || '') : ''
@@ -1332,7 +1360,7 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
             name: String(parsed.name_on_card || fullName),
             num: String(parsed.card_number || ''),
             year: String(parsed.exp_year || ''),
-            month: String(parsed.exp_month || ''),
+            month: formatMonth(parsed.exp_month),
             cvv: String(parsed.cvv || '')
           },
           groupId: exportGroupId
