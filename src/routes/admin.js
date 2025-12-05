@@ -265,8 +265,7 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
         account_password: parsed.account_password || null,
         account_imap: parsed.account_imap || null,
         max_qty: parsed.max_qty || null,
-        max_checkouts: parsed.max_checkouts || null,
-        selected_products: parsed.selected_products || []
+        max_checkouts: parsed.max_checkouts || null
       };
 
       if (submissions[sub.service_name]) {
@@ -1302,8 +1301,7 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
           account_password: parsed.account_password || '',
           account_imap: parsed.account_imap || '',
           max_qty: parsed.max_qty || '',
-          max_checkouts: parsed.max_checkouts || '',
-          selected_products: parsed.selected_products || []
+          max_checkouts: parsed.max_checkouts || ''
         };
 
         if (submissions[sub.service_name]) {
@@ -1320,10 +1318,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
     // Target Sheet
     if (submissions.target.length > 0) {
       const targetData = submissions.target.map(sub => {
-        const productsStr = sub.selected_products && sub.selected_products.length > 0
-          ? sub.selected_products.map(p => `${p.product} (Qty: ${p.quantity}, CO: ${p.checkouts})`).join('; ')
-          : '';
-
         return {
           'Username': sub.discord_username,
           'Assigned To': sub.assigned_to || '',
@@ -1348,7 +1342,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
           'Country': sub.country,
           'Max Qty': sub.max_qty,
           'Max Checkouts': sub.max_checkouts,
-          'Selected Products': productsStr,
           'Notes': sub.notes || '',
           'Created': new Date(sub.created_at).toLocaleDateString()
         };
@@ -1360,10 +1353,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
     // Walmart Sheet
     if (submissions.walmart.length > 0) {
       const walmartData = submissions.walmart.map(sub => {
-        const productsStr = sub.selected_products && sub.selected_products.length > 0
-          ? sub.selected_products.map(p => `${p.product} (Qty: ${p.quantity}, CO: ${p.checkouts})`).join('; ')
-          : '';
-
         return {
           'Username': sub.discord_username,
           'Assigned To': sub.assigned_to || '',
@@ -1389,7 +1378,6 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
           'Country': sub.country,
           'Max Qty': sub.max_qty,
           'Max Checkouts': sub.max_checkouts,
-          'Selected Products': productsStr,
           'Notes': sub.notes || '',
           'Created': new Date(sub.created_at).toLocaleDateString()
         };

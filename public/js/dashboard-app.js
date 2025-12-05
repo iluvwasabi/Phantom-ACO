@@ -12,9 +12,6 @@
   let currentService = null;
   let currentSubmission = null;
 
-  // Store panel products globally for product selector
-  let currentPanelProducts = [];
-
   // Form Templates
   const FORM_FIELDS = {
     target: [
@@ -54,11 +51,6 @@
       { type: 'section_header', label: 'Account Information' },
       { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
       { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
-      { name: 'separator', type: 'separator' },
-
-      // Checkouts Section (dynamic product selector)
-      { type: 'section_header', label: 'Checkouts' },
-      { type: 'product_selector', name: 'selected_products' },
       { name: 'separator', type: 'separator' },
 
       // Notes Section
@@ -103,11 +95,6 @@
       { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
       { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
       { name: 'account_imap', label: 'IMAP *', type: 'textarea', required: true, wide: true },
-      { name: 'separator', type: 'separator' },
-
-      // Checkouts Section (dynamic product selector)
-      { type: 'section_header', label: 'Checkouts' },
-      { type: 'product_selector', name: 'selected_products' },
       { name: 'separator', type: 'separator' },
 
       // Notes Section
@@ -194,59 +181,19 @@
 
     fields.forEach(field => {
       if (field.type === 'separator') {
-        html += '</div><hr style="border: none; border-top:1px solid var(--border); margin: var(--space-6) 0;"><div class="form-grid">';
+        html += '</div><hr style="border: none; border-top:1px solid var(--border); margin: var(--space-2) 0;"><div class="form-grid">';
         return;
       }
 
       // Handle section headers
       if (field.type === 'section_header') {
-        html += `<div class="form-section-header" style="grid-column: 1 / -1; margin-top: var(--space-6); margin-bottom: var(--space-3);">
-          <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text);">${field.label}</h3>
+        html += `<div class="form-section-header" style="grid-column: 1 / -1; margin-top: var(--space-3); margin-bottom: var(--space-1);">
+          <h3 style="font-size: 0.85rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">${field.label}</h3>
         </div>`;
         return;
       }
 
       // Handle product selector
-      if (field.type === 'product_selector') {
-        html += '<div class="product-selector" style="grid-column: 1 / -1;">';
-
-        if (currentPanelProducts && currentPanelProducts.length > 0) {
-          currentPanelProducts.forEach((product, idx) => {
-            const existingProduct = existingData.selected_products?.find(p => p.product === product.name) || {};
-            const isChecked = existingProduct.product ? 'checked' : '';
-            const quantity = existingProduct.quantity || 1;
-            const checkouts = existingProduct.checkouts || 1;
-
-            html += `
-              <div class="product-item" style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px;">
-                <input type="checkbox" name="product_${idx}_selected" id="product_${idx}" ${isChecked}
-                  style="width: 20px; height: 20px;">
-                <label for="product_${idx}" style="flex: 1; font-weight: 500;">${product.name}</label>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                  <label style="font-size: 0.9rem; color: var(--muted);">Quantity:</label>
-                  <select name="product_${idx}_quantity" style="width: 100px; padding: 4px 8px;" class="control">
-                    <option value="1" ${quantity === 1 ? 'selected' : ''}>1</option>
-                    <option value="2" ${quantity === 2 ? 'selected' : ''}>2</option>
-                    <option value="${product.max_qty}" ${quantity === product.max_qty || quantity === 'max' ? 'selected' : ''}>Max</option>
-                  </select>
-                  <label style="font-size: 0.9rem; color: var(--muted);">Checkouts:</label>
-                  <select name="product_${idx}_checkouts" style="width: 80px; padding: 4px 8px;" class="control">
-                    <option value="1" ${checkouts === 1 ? 'selected' : ''}>1</option>
-                    <option value="2" ${checkouts === 2 ? 'selected' : ''}>2</option>
-                    <option value="${product.max_checkouts}" ${checkouts === product.max_checkouts || checkouts === 'many' ? 'selected' : ''}>Many</option>
-                  </select>
-                </div>
-              </div>
-            `;
-          });
-        } else {
-          html += '<p style="color: var(--muted); font-style: italic;">No products configured for this panel. Contact admin.</p>';
-        }
-
-        html += '</div>';
-        return;
-      }
-
       // Handle conditional fields
       const conditionalAttr = field.conditional ? `data-conditional="${field.conditional}" data-conditional-value="${field.conditionalValue}"` : '';
       const conditionalClass = field.conditional ? 'conditional-field' : '';
@@ -303,22 +250,6 @@
     const card = document.querySelector(`[data-id="${service}"]`);
     const serviceType = card.dataset.type;
     const serviceTitle = card.dataset.title;
-
-    // Fetch panel products for target/walmart
-    if (service === 'target' || service === 'walmart') {
-      try {
-        const response = await fetch(`/api/panels/${service}/products`);
-        if (response.ok) {
-          const data = await response.json();
-          currentPanelProducts = data.products || [];
-        }
-      } catch (error) {
-        console.error('Error fetching panel products:', error);
-        currentPanelProducts = [];
-      }
-    } else {
-      currentPanelProducts = [];
-    }
 
     // Map service name to form type (target, walmart, or fallback to service type)
     let formType = serviceType;
@@ -411,24 +342,6 @@
     if (billingCheckbox) {
       data.billing_same_as_shipping = billingCheckbox.checked;
     }
-
-    // Collect selected products
-    const selectedProducts = [];
-    if (currentPanelProducts && currentPanelProducts.length > 0) {
-      currentPanelProducts.forEach((product, idx) => {
-        const checkbox = document.querySelector(`input[name="product_${idx}_selected"]`);
-        if (checkbox && checkbox.checked) {
-          const quantity = parseInt(document.querySelector(`select[name="product_${idx}_quantity"]`).value) || 1;
-          const checkouts = parseInt(document.querySelector(`select[name="product_${idx}_checkouts"]`).value) || 1;
-          selectedProducts.push({
-            product: product.name,
-            quantity: quantity,
-            checkouts: checkouts
-          });
-        }
-      });
-    }
-    data.selected_products = selectedProducts;
 
     // Add service
     data.service = currentService;
