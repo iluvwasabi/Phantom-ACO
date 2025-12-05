@@ -1443,19 +1443,19 @@ router.post('/export/stellar-csv', ensureAdminAuth, async (req, res) => {
         const shippingState = parsed.state ? String(parsed.state).toUpperCase().substring(0, 2) : '';
         const billingState = billingSameAsShipping ? shippingState : (parsed.billing_state ? String(parsed.billing_state).toUpperCase().substring(0, 2) : '');
 
-        // Format card type for Stellar - must be exactly: Visa, Discover, Mastercard, Amex, or JCB
+        // Format card type for Stellar - must be exactly: Visa, Discover, MasterCard, Amex, or JCB
         let cardType = 'Visa'; // Default
         if (parsed.card_type) {
           const typeStr = String(parsed.card_type).trim();
           const typeLC = typeStr.toLowerCase();
 
           // Check both original case and lowercase for exact matches first
-          if (typeStr === 'Visa' || typeStr === 'Discover' || typeStr === 'Mastercard' || typeStr === 'Amex' || typeStr === 'JCB') {
+          if (typeStr === 'Visa' || typeStr === 'Discover' || typeStr === 'MasterCard' || typeStr === 'Amex' || typeStr === 'JCB') {
             cardType = typeStr;
           } else if (typeLC.includes('amex') || typeLC.includes('american')) {
             cardType = 'Amex';
           } else if (typeLC.includes('master')) {
-            cardType = 'Mastercard';
+            cardType = 'MasterCard';
           } else if (typeLC.includes('discover')) {
             cardType = 'Discover';
           } else if (typeLC.includes('visa')) {
