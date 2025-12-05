@@ -412,8 +412,8 @@ body {
   background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  max-width: 850px;
-  width: 100%;
+  max-width: 1400px;
+  width: 95%;
   max-height: 98vh;
   display: flex;
   flex-direction: column;
@@ -487,19 +487,56 @@ body {
    ============================= */
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-1);
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-1) var(--space-3);
 }
 
 .form-grid .wide {
+  grid-column: span 4;
+}
+
+.form-grid .half {
   grid-column: span 2;
+}
+
+/* Section containers for multi-column layout */
+.form-section-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  grid-column: 1 / -1;
+}
+
+.form-section-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-section-column .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-1) var(--space-2);
+}
+
+@media (max-width: 1200px) {
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .form-grid .wide {
+    grid-column: span 2;
+  }
+  .form-section-container {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 720px) {
   .form-grid {
     grid-template-columns: 1fr;
   }
-  .form-grid .wide {
+  .form-grid .wide,
+  .form-grid .half {
     grid-column: span 1;
   }
 }
