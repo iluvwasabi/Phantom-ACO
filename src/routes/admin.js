@@ -1237,6 +1237,90 @@ router.put('/api/submissions/:id/assign', ensureAdminAuth, async (req, res) => {
   }
 });
 
+// GET /admin/export/prism - Export all submissions to Prism profiles format
+router.get('/export/prism', ensureAdminAuth, async (req, res) => {
+  try {
+    // Fetch all submissions
+    const allSubs = db.prepare(`
+      SELECT ss.*, ec.encrypted_username, ec.encrypted_password,
+             u.discord_username, u.discord_id
+      FROM service_subscriptions ss
+      LEFT JOIN encrypted_credentials ec ON ec.subscription_id = ss.id
+      LEFT JOIN users u ON ss.user_id = u.id
+      ORDER BY ss.created_at DESC
+    `).all();
+
+    // Convert to Prism format
+    const prismProfiles = [];
+
+    allSubs.forEach(sub => {
+      if (!sub.encrypted_password) return;
+
+      try {
+        const decryptedPassword = decrypt(sub.encrypted_password);
+        if (!decryptedPassword || !decryptedPassword.startsWith('{')) return;
+
+        const parsed = JSON.parse(decryptedPassword);
+
+        // Create Prism profile
+        const profile = {
+          id: `prf-${sub.id}-${Date.now()}`,
+          createdAt: new Date(sub.created_at).getTime(),
+          updatedAt: new Date(sub.updated_at || sub.created_at).getTime(),
+          name: `${parsed.first_name || ''} ${parsed.last_name || ''}`.trim() || sub.discord_username,
+          email: parsed.account_email || parsed.email || '',
+          oneTimeUse: false,
+          shipping: {
+            firstName: parsed.first_name || '',
+            lastName: parsed.last_name || '',
+            address1: parsed.address1 || '',
+            address2: parsed.unit_number || '',
+            city: parsed.city || '',
+            province: parsed.state || '',
+            postalCode: parsed.zip_code || '',
+            country: parsed.country || 'United States',
+            phone: parsed.phone || ''
+          },
+          billing: {
+            sameAsShipping: parsed.billing_same_as_shipping !== false,
+            firstName: parsed.billing_same_as_shipping === false ? parsed.first_name : '',
+            lastName: parsed.billing_same_as_shipping === false ? parsed.last_name : '',
+            address1: parsed.billing_same_as_shipping === false ? (parsed.billing_address || '') : '',
+            address2: '',
+            city: parsed.billing_same_as_shipping === false ? (parsed.billing_city || '') : '',
+            province: parsed.billing_same_as_shipping === false ? (parsed.billing_state || null) : null,
+            postalCode: parsed.billing_same_as_shipping === false ? (parsed.billing_zipcode || '') : '',
+            country: parsed.billing_same_as_shipping === false ? (parsed.country || null) : null,
+            phone: parsed.billing_same_as_shipping === false ? (parsed.phone || '') : ''
+          },
+          payment: {
+            name: parsed.name_on_card || `${parsed.first_name || ''} ${parsed.last_name || ''}`.trim(),
+            num: parsed.card_number || '',
+            year: parsed.exp_year || '',
+            month: parsed.exp_month || '',
+            cvv: parsed.cvv || ''
+          },
+          groupId: `pgrp-${sub.service_name}-${sub.user_id}`
+        };
+
+        prismProfiles.push(profile);
+      } catch (e) {
+        console.error('Decryption error for submission:', sub.id, e.message);
+      }
+    });
+
+    // Send file
+    const filename = `prism-profiles-${new Date().toISOString().split('T')[0]}.json`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(prismProfiles, null, 2));
+
+  } catch (error) {
+    console.error('Prism export error:', error);
+    res.status(500).json({ error: 'Failed to export Prism profiles' });
+  }
+});
+
 // GET /admin/export/excel - Export all submissions to Excel with separate sheets
 router.get('/export/excel', ensureAdminAuth, async (req, res) => {
   try {
