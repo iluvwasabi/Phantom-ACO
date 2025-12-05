@@ -1476,7 +1476,7 @@ router.post('/export/stellar-csv', ensureAdminAuth, async (req, res) => {
           cardType,
           parsed.card_number || '',
           formatMonth(parsed.exp_month),
-          parsed.exp_year || '',
+          parsed.exp_year ? String(parsed.exp_year).slice(-2) : '',
           parsed.cvv || '',
           'false'
         ];
