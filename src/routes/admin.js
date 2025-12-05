@@ -223,6 +223,14 @@ router.get('/submissions', ensureAdminAuth, (req, res) => {
     submissions[panel.service_id] = [];
   });
 
+  // Ensure hardcoded services exist (for backwards compatibility with EJS template)
+  const hardcodedServices = ['target', 'walmart', 'bestbuy', 'pokemoncenter', 'shopify'];
+  hardcodedServices.forEach(service => {
+    if (!submissions[service]) {
+      submissions[service] = [];
+    }
+  });
+
   allSubmissions.forEach(sub => {
     if (!sub.encrypted_password) return;
 
