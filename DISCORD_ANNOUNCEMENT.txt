@@ -1,0 +1,21 @@
+🎉 **Phantom ACO Update - December 5, 2025**
+
+Hey everyone! Just pushed some awesome improvements to the service:
+
+✨ **New Features**
+• **Stellar Bot Export** - Admins can now export profiles to Stellar CSV format
+• **Discord Notifications** - Get real-time alerts when submissions are added, edited, or deleted
+• **Better Forms** - All service forms now have clean sections (User Info, Billing, Address, etc.)
+
+🐛 **Fixes**
+• Fixed Target submissions showing iMAP as required when editing
+• Fixed billing address export issues for Stellar bot
+• Fixed card type validation (MasterCard, Visa, Discover, Amex, JCB)
+
+📋 **Admin Improvements**
+• Discord usernames now visible and copyable in admin panel
+• Better organization for all service submission forms
+
+Everything is live now! If you notice any issues, let me know.
+
+- Desi

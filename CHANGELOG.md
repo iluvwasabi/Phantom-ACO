@@ -4,6 +4,49 @@ All notable changes to the Phantom ACO service are documented here.
 
 ---
 
+## [December 5, 2025]
+
+### 🔔 Notifications
+- **Discord Urgent Notifications** - Automatically sends notifications to Discord when submissions are added, edited, or deleted
+  - New submissions: Green notification with user details
+  - Edited submissions: Orange notification showing what changed
+  - Deleted submissions: Red notification for removal tracking
+  - All notifications include: User name, Discord ID, Service, Email, and Timestamp
+
+### ✨ Features
+- **Discord Username Visibility** - Discord usernames now visible and copyable in admin panel
+- **Stellar CSV Export** - Added export option for Stellar bot with proper formatting
+  - Supports all required fields: billing, shipping, payment info
+  - Auto-fills billing address when "same as shipping" is checked
+  - Proper card type formatting (Visa, Discover, MasterCard, Amex, JCB)
+  - 2-digit year format (YY) and month format for card expiration
+  - 2-letter state codes for compatibility
+
+### 🎨 UI Improvements
+- **Sectioned Forms** - All service forms now organized with clear section headers:
+  - User Information
+  - Billing Information
+  - Address
+  - Account Information (for login-required services)
+  - Notes
+- **Enhanced Forms** - Best Buy, Pokemon Center, and Shopify now match Target/Walmart's clean sectioned layout
+- **Discord Username in Edit Modal** - Shows Discord username (read-only) when editing submissions
+
+### 🐛 Bug Fixes
+- **Target iMAP Issue** - Fixed Target submissions incorrectly requiring iMAP field when editing
+- **Prism JSON Export** - Fixed billing address not populating when "billing same as shipping" is checked
+- **Card Type Validation** - Fixed MasterCard capitalization for Stellar bot compatibility
+- **Service Type Assignment** - Custom forms now properly assigned to services (Target, Walmart, Best Buy, Pokemon Center, Shopify)
+
+### 🔧 Technical
+- Added Discord Bot API integration for urgent notifications
+- Updated service type mapping for custom form services
+- Improved card type detection with case-insensitive matching
+- Enhanced CSV export with proper field escaping and formatting
+- State name to 2-letter code conversion for exports
+
+---
+
 ## [December 1, 2025]
 
 ### ✨ Features
@@ -117,5 +160,5 @@ All notable changes to the Phantom ACO service are documented here.
 
 ---
 
-_Last Updated: December 1, 2025_
+_Last Updated: December 5, 2025_
 _Generated with ❤️ by [Claude Code](https://claude.com/claude-code)_
