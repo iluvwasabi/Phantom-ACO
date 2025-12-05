@@ -532,29 +532,9 @@
     }
   });
 
-  // Scroll to submissions section and highlight service's submission
+  // Scroll to submissions section and show only this service's submissions
   function scrollToSubmissions(serviceId) {
-    const serviceSection = document.getElementById(`submissions-${serviceId}`);
-    if (serviceSection) {
-      serviceSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-      // Highlight the service section briefly
-      setTimeout(() => {
-        serviceSection.style.background = 'rgba(59, 130, 246, 0.1)';
-        serviceSection.style.borderRadius = 'var(--radius-lg)';
-        serviceSection.style.padding = 'var(--space-4)';
-        setTimeout(() => {
-          serviceSection.style.background = '';
-          serviceSection.style.padding = '';
-        }, 2000);
-      }, 500);
-    } else {
-      // Fallback: scroll to submissions-list
-      const submissionsSection = document.getElementById('submissions-list');
-      if (submissionsSection) {
-        submissionsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
+    displaySubmissionsForService(serviceId);
   }
 
   // Close modal on Escape key
@@ -661,11 +641,14 @@
     }
   }
 
-  // Display submissions grouped by service
-  function displaySubmissions(submissions) {
+  // Store all submissions globally
+  let allSubmissions = [];
+
+  // Display submissions for a specific service only
+  function displaySubmissionsForService(serviceId) {
     const container = document.getElementById('submissions-list');
 
-    if (!submissions || submissions.length === 0) {
+    if (!allSubmissions || allSubmissions.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
           <p>📋 No submissions yet</p>
@@ -690,88 +673,114 @@
       return specialCases[name.toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1);
     };
 
-    // Group submissions by service
-    const groupedByService = {};
-    submissions.forEach(sub => {
-      const serviceKey = sub.service_name.toLowerCase();
-      if (!groupedByService[serviceKey]) {
-        groupedByService[serviceKey] = [];
-      }
-      groupedByService[serviceKey].push(sub);
-    });
+    // Filter submissions for this service only
+    const serviceSubs = allSubmissions.filter(sub => sub.service_name.toLowerCase() === serviceId.toLowerCase());
 
-    // Build HTML for each service group
-    let html = '';
-    Object.keys(groupedByService).forEach(serviceKey => {
-      const serviceSubs = groupedByService[serviceKey];
-      const serviceName = formatServiceName(serviceKey);
-
-      html += `
-        <div class="service-submission-section" id="submissions-${serviceKey}" style="margin-bottom: var(--space-8);">
-          <h3 style="margin-bottom: var(--space-4); color: var(--text-900); font-size: 1.2rem;">
-            ${serviceName} Submissions (${serviceSubs.length})
-          </h3>
-          <div class="submissions-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Email</th>
-                  <th>Last 4 Digits</th>
-                  <th>Notes</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-      `;
-
-      serviceSubs.forEach(sub => {
-        const serviceType = sub.service_type === 'login_required' ? 'Login Required' : 'No Login';
-        const email = sub.email || sub.account_email || '-';
-        const last4 = sub.card_number ? sub.card_number.slice(-4) : '-';
-        const notes = sub.notes ? (sub.notes.length > 50 ? sub.notes.substring(0, 50) + '...' : sub.notes) : '-';
-        const notesTitle = sub.notes || '';
-        const status = sub.status === 'active' ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">Inactive</span>';
-        const created = new Date(sub.created_at).toLocaleDateString();
-
-        // Handle decryption errors
-        const hasError = sub.error === true || email === '[Decryption Error]';
-        const errorClass = hasError ? 'style="background: rgba(239, 68, 68, 0.1);"' : '';
-        const errorWarning = hasError ? '<span style="color: #ef4444; font-size: 0.85rem;"> ⚠ Error</span>' : '';
-
-        html += `
-          <tr ${errorClass} data-service="${serviceKey}">
-            <td>${serviceType}${errorWarning}</td>
-            <td>${hasError ? '<span style="color: #ef4444;">[Decryption Error]</span>' : email}</td>
-            <td>****${last4}</td>
-            <td title="${notesTitle}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${notes}</td>
-            <td>${status}</td>
-            <td>${created}</td>
-            <td>
-              <div class="submission-actions">
-                <button class="btn btn-primary btn-sm" data-action="edit-submission" data-id="${sub.id}" ${hasError ? 'disabled title="Cannot edit - decryption error"' : ''}>
-                  ✏️ Edit
-                </button>
-                <button class="btn btn-danger btn-sm" data-action="delete-submission" data-id="${sub.id}">
-                  🗑️ Delete
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-      });
-
-      html += `
-              </tbody>
-            </table>
-          </div>
+    if (serviceSubs.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <p>📋 No ${formatServiceName(serviceId)} submissions yet</p>
+          <p style="font-size: 0.9rem;">Click "Add Submission" to create one</p>
         </div>
       `;
+      return;
+    }
+
+    const serviceName = formatServiceName(serviceId);
+
+    let html = `
+      <div class="service-submission-section" id="submissions-${serviceId}" style="margin-bottom: var(--space-8);">
+        <h3 style="margin-bottom: var(--space-4); color: var(--text-900); font-size: 1.2rem;">
+          ${serviceName} Submissions (${serviceSubs.length})
+        </h3>
+        <div class="submissions-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Email</th>
+                <th>Last 4 Digits</th>
+                <th>Notes</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    serviceSubs.forEach(sub => {
+      const serviceType = sub.service_type === 'login_required' ? 'Login Required' : 'No Login';
+      const email = sub.email || sub.account_email || '-';
+      const last4 = sub.card_number ? sub.card_number.slice(-4) : '-';
+      const notes = sub.notes ? (sub.notes.length > 50 ? sub.notes.substring(0, 50) + '...' : sub.notes) : '-';
+      const notesTitle = sub.notes || '';
+      const status = sub.status === 'active' ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">Inactive</span>';
+      const created = new Date(sub.created_at).toLocaleDateString();
+
+      // Handle decryption errors
+      const hasError = sub.error === true || email === '[Decryption Error]';
+      const errorClass = hasError ? 'style="background: rgba(239, 68, 68, 0.1);"' : '';
+      const errorWarning = hasError ? '<span style="color: #ef4444; font-size: 0.85rem;"> ⚠ Error</span>' : '';
+
+      html += `
+        <tr ${errorClass} data-service="${serviceId}">
+          <td>${serviceType}${errorWarning}</td>
+          <td>${hasError ? '<span style="color: #ef4444;">[Decryption Error]</span>' : email}</td>
+          <td>****${last4}</td>
+          <td title="${notesTitle}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${notes}</td>
+          <td>${status}</td>
+          <td>${created}</td>
+          <td>
+            <div class="submission-actions">
+              <button class="btn btn-primary btn-sm" data-action="edit-submission" data-id="${sub.id}" ${hasError ? 'disabled title="Cannot edit - decryption error"' : ''}>
+                ✏️ Edit
+              </button>
+              <button class="btn btn-danger btn-sm" data-action="delete-submission" data-id="${sub.id}">
+                🗑️ Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
     });
 
+    html += `
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
     container.innerHTML = html;
+
+    // Scroll to the section
+    const serviceSection = document.getElementById(`submissions-${serviceId}`);
+    if (serviceSection) {
+      serviceSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // Highlight the service section briefly
+      setTimeout(() => {
+        serviceSection.style.background = 'rgba(59, 130, 246, 0.1)';
+        serviceSection.style.borderRadius = 'var(--radius-lg)';
+        serviceSection.style.padding = 'var(--space-4)';
+        setTimeout(() => {
+          serviceSection.style.background = '';
+          serviceSection.style.padding = '';
+        }, 2000);
+      }, 500);
+    }
+  }
+
+  // Initial load - just store submissions, don't display
+  function displaySubmissions(submissions) {
+    allSubmissions = submissions || [];
+    const container = document.getElementById('submissions-list');
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>📋 Click on a service panel above to view submissions</p>
+      </div>
+    `;
   }
 
   // Edit submission
