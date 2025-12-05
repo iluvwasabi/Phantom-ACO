@@ -1245,6 +1245,15 @@ router.put('/api/submissions/:id/assign', ensureAdminAuth, async (req, res) => {
   }
 });
 
+// Helper function to generate UUID
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 // POST /admin/export/prism - Export selected submissions to Prism profiles format
 router.post('/export/prism', ensureAdminAuth, async (req, res) => {
   try {
@@ -1268,6 +1277,7 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
 
     // Convert to Prism format
     const prismProfiles = [];
+    const exportGroupId = `pgrp-${generateUUID()}`; // Single group ID for all profiles in this export
 
     allSubs.forEach(sub => {
       if (!sub.encrypted_password) return;
@@ -1284,7 +1294,7 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
         const fullName = `${firstName} ${lastName}`.trim() || sub.discord_username;
 
         const profile = {
-          id: `prf-${sub.id}-${Date.now()}`,
+          id: `prf-${generateUUID()}`,
           createdAt: new Date(sub.created_at).getTime(),
           updatedAt: new Date(sub.updated_at || sub.created_at).getTime(),
           name: fullName,
@@ -1314,13 +1324,13 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
             phone: parsed.billing_same_as_shipping === false ? (parsed.phone || '') : ''
           },
           payment: {
-            name: parsed.name_on_card || `${parsed.first_name || ''} ${parsed.last_name || ''}`.trim(),
+            name: parsed.name_on_card || fullName,
             num: parsed.card_number || '',
             year: parsed.exp_year || '',
             month: parsed.exp_month || '',
             cvv: parsed.cvv || ''
           },
-          groupId: `pgrp-${sub.service_name}-${sub.user_id}`
+          groupId: exportGroupId
         };
 
         prismProfiles.push(profile);
