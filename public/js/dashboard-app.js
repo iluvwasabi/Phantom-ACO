@@ -181,14 +181,14 @@
 
     fields.forEach(field => {
       if (field.type === 'separator') {
-        html += '</div><hr style="border: none; border-top:1px solid var(--border); margin: var(--space-2) 0;"><div class="form-grid">';
+        html += '</div><hr style="border: none; border-top:1px solid var(--border); margin: var(--space-1) 0;"><div class="form-grid">';
         return;
       }
 
       // Handle section headers
       if (field.type === 'section_header') {
-        html += `<div class="form-section-header" style="grid-column: 1 / -1; margin-top: var(--space-3); margin-bottom: var(--space-1);">
-          <h3 style="font-size: 0.85rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">${field.label}</h3>
+        html += `<div class="form-section-header" style="grid-column: 1 / -1; margin-top: var(--space-2); margin-bottom: 2px;">
+          <h3 style="font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">${field.label}</h3>
         </div>`;
         return;
       }
