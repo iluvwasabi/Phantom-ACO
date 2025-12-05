@@ -333,6 +333,7 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
     const user = db.prepare('SELECT discord_username, discord_id FROM users WHERE id = ?').get(userId);
     const servicePanelInfo = db.prepare('SELECT service_name FROM service_panels WHERE service_id = ?').get(service);
     const serviceName = servicePanelInfo ? servicePanelInfo.service_name : service;
+    const fullName = `${first_name || ''} ${last_name || ''}`.trim() || 'N/A';
 
     await sendUrgentDiscordNotification(
       'NEW SUBMISSION ADDED',
@@ -340,10 +341,11 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       [
         { name: 'User', value: user?.discord_username || 'Unknown', inline: true },
         { name: 'Discord ID', value: user?.discord_id || 'N/A', inline: true },
+        { name: 'Name', value: fullName, inline: true },
         { name: 'Service', value: serviceName, inline: true },
-        { name: 'Email', value: account_email || email || 'N/A', inline: false },
+        { name: 'Email', value: account_email || email || 'N/A', inline: true },
         { name: 'Submission ID', value: `${subscriptionId}`, inline: true },
-        { name: 'Created At', value: new Date().toLocaleString(), inline: true }
+        { name: 'Created At', value: new Date().toLocaleString(), inline: false }
       ],
       0x00FF00  // Green color for new submission
     );
@@ -502,6 +504,7 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
     const user = db.prepare('SELECT discord_username, discord_id FROM users WHERE id = ?').get(userId);
     const servicePanelInfo = db.prepare('SELECT service_name FROM service_panels WHERE service_id = ?').get(subscription.service_name);
     const serviceName = servicePanelInfo ? servicePanelInfo.service_name : subscription.service_name;
+    const fullName = `${first_name || ''} ${last_name || ''}`.trim() || 'N/A';
 
     await sendUrgentDiscordNotification(
       'SUBMISSION EDITED',
@@ -509,10 +512,11 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       [
         { name: 'User', value: user?.discord_username || 'Unknown', inline: true },
         { name: 'Discord ID', value: user?.discord_id || 'N/A', inline: true },
+        { name: 'Name', value: fullName, inline: true },
         { name: 'Service', value: serviceName, inline: true },
-        { name: 'Email', value: account_email || email || 'N/A', inline: false },
+        { name: 'Email', value: account_email || email || 'N/A', inline: true },
         { name: 'Submission ID', value: `${submissionId}`, inline: true },
-        { name: 'Updated At', value: new Date().toLocaleString(), inline: true }
+        { name: 'Updated At', value: new Date().toLocaleString(), inline: false }
       ],
       0xFFA500  // Orange color for edit
     );
@@ -546,14 +550,26 @@ router.delete('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, asy
     const servicePanelInfo = db.prepare('SELECT service_name FROM service_panels WHERE service_id = ?').get(subscription.service_name);
     const serviceName = servicePanelInfo ? servicePanelInfo.service_name : subscription.service_name;
 
-    // Get encrypted credentials to show email in notification
-    const creds = db.prepare('SELECT encrypted_username FROM encrypted_credentials WHERE subscription_id = ?').get(submissionId);
+    // Get encrypted credentials to show email and name in notification
+    const creds = db.prepare('SELECT encrypted_username, encrypted_password FROM encrypted_credentials WHERE subscription_id = ?').get(submissionId);
     let userEmail = 'N/A';
-    if (creds && creds.encrypted_username) {
-      try {
-        userEmail = decrypt(creds.encrypted_username);
-      } catch (e) {
-        console.error('Error decrypting email for notification:', e);
+    let fullName = 'N/A';
+    if (creds) {
+      if (creds.encrypted_username) {
+        try {
+          userEmail = decrypt(creds.encrypted_username);
+        } catch (e) {
+          console.error('Error decrypting email for notification:', e);
+        }
+      }
+      if (creds.encrypted_password) {
+        try {
+          const decryptedData = decrypt(creds.encrypted_password);
+          const parsedData = JSON.parse(decryptedData);
+          fullName = `${parsedData.first_name || ''} ${parsedData.last_name || ''}`.trim() || 'N/A';
+        } catch (e) {
+          console.error('Error decrypting name for notification:', e);
+        }
       }
     }
 
@@ -567,10 +583,11 @@ router.delete('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, asy
       [
         { name: 'User', value: user?.discord_username || 'Unknown', inline: true },
         { name: 'Discord ID', value: user?.discord_id || 'N/A', inline: true },
+        { name: 'Name', value: fullName, inline: true },
         { name: 'Service', value: serviceName, inline: true },
-        { name: 'Email', value: userEmail, inline: false },
+        { name: 'Email', value: userEmail, inline: true },
         { name: 'Submission ID', value: `${submissionId}`, inline: true },
-        { name: 'Deleted At', value: new Date().toLocaleString(), inline: true }
+        { name: 'Deleted At', value: new Date().toLocaleString(), inline: false }
       ],
       0xFF0000  // Red color for delete
     );
