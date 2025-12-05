@@ -14,6 +14,47 @@ function decrypt(ciphertext) {
   return bytes.toString(CryptoJS.enc.Utf8);
 }
 
+// Discord notification helper
+async function sendUrgentDiscordNotification(title, description, fields = [], color = 0xFF0000) {
+  const DISCORD_CHANNEL_ID = '1446376744411074757';
+  const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+
+  if (!DISCORD_BOT_TOKEN) {
+    console.warn('Discord bot token not configured, skipping notification');
+    return;
+  }
+
+  try {
+    const embed = {
+      title: `🚨 ${title}`,
+      description: description,
+      color: color,
+      fields: fields,
+      timestamp: new Date().toISOString(),
+      footer: {
+        text: 'Phantom ACO Service'
+      }
+    };
+
+    const response = await fetch(`https://discord.com/api/v10/channels/${DISCORD_CHANNEL_ID}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        embeds: [embed]
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Discord notification failed:', await response.text());
+    }
+  } catch (error) {
+    console.error('Error sending Discord notification:', error);
+  }
+}
+
 // GET /api/panels/:service/products - Get products for a service panel (public for authenticated users)
 router.get('/api/panels/:service/products', ensureAuthenticated, ensureHasACORole, (req, res) => {
   try {
@@ -438,6 +479,25 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
     // Update subscription with notes and timestamp
     db.prepare('UPDATE service_subscriptions SET notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(notes || null, subscription.id);
 
+    // Send Discord notification for edit
+    const user = db.prepare('SELECT discord_username, discord_id FROM users WHERE id = ?').get(userId);
+    const servicePanelInfo = db.prepare('SELECT name FROM service_panels WHERE key = ?').get(subscription.service);
+    const serviceName = servicePanelInfo ? servicePanelInfo.name : subscription.service;
+
+    await sendUrgentDiscordNotification(
+      'SUBMISSION EDITED',
+      `A user has edited their submission for **${serviceName}**`,
+      [
+        { name: 'User', value: user?.discord_username || 'Unknown', inline: true },
+        { name: 'Discord ID', value: user?.discord_id || 'N/A', inline: true },
+        { name: 'Service', value: serviceName, inline: true },
+        { name: 'Email', value: account_email || email || 'N/A', inline: false },
+        { name: 'Submission ID', value: `${submissionId}`, inline: true },
+        { name: 'Updated At', value: new Date().toLocaleString(), inline: true }
+      ],
+      0xFFA500  // Orange color for edit
+    );
+
     res.json({
       success: true,
       message: 'Submission updated successfully!'
@@ -462,8 +522,39 @@ router.delete('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, asy
       return res.status(404).json({ error: 'Submission not found or you do not have permission to delete it' });
     }
 
+    // Get user and service info before deletion
+    const user = db.prepare('SELECT discord_username, discord_id FROM users WHERE id = ?').get(userId);
+    const servicePanelInfo = db.prepare('SELECT name FROM service_panels WHERE key = ?').get(subscription.service);
+    const serviceName = servicePanelInfo ? servicePanelInfo.name : subscription.service;
+
+    // Get encrypted credentials to show email in notification
+    const creds = db.prepare('SELECT encrypted_username FROM encrypted_credentials WHERE subscription_id = ?').get(submissionId);
+    let userEmail = 'N/A';
+    if (creds && creds.encrypted_username) {
+      try {
+        userEmail = decrypt(creds.encrypted_username);
+      } catch (e) {
+        console.error('Error decrypting email for notification:', e);
+      }
+    }
+
     // Delete (cascade will handle credentials)
     db.prepare('DELETE FROM service_subscriptions WHERE id = ?').run(submissionId);
+
+    // Send Discord notification for deletion
+    await sendUrgentDiscordNotification(
+      'SUBMISSION DELETED',
+      `A user has deleted their submission for **${serviceName}**`,
+      [
+        { name: 'User', value: user?.discord_username || 'Unknown', inline: true },
+        { name: 'Discord ID', value: user?.discord_id || 'N/A', inline: true },
+        { name: 'Service', value: serviceName, inline: true },
+        { name: 'Email', value: userEmail, inline: false },
+        { name: 'Submission ID', value: `${submissionId}`, inline: true },
+        { name: 'Deleted At', value: new Date().toLocaleString(), inline: true }
+      ],
+      0xFF0000  // Red color for delete
+    );
 
     res.json({
       success: true,
