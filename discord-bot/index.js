@@ -132,6 +132,52 @@ function parseValorCheckout(embed) {
   return null;
 }
 
+// Check if message is a successful checkout (not decline, out of stock, or shapeblock)
+function isSuccessfulCheckout(embed) {
+  const title = (embed.title || '').toLowerCase();
+  const author = (embed.author?.name || '').toLowerCase();
+  const description = (embed.description || '').toLowerCase();
+  const footer = (embed.footer?.text || '').toLowerCase();
+
+  // Filter out failure notifications
+  const failureKeywords = [
+    'out of stock',
+    'oos',
+    'declined',
+    'decline',
+    'shapeblock',
+    'shape block',
+    'blocked',
+    'failed',
+    'failure',
+    'error',
+    'unavailable',
+    'sold out',
+    'payment failed',
+    'card declined'
+  ];
+
+  // Check if any failure keywords are present
+  const fullText = `${title} ${author} ${description} ${footer}`.toLowerCase();
+  for (const keyword of failureKeywords) {
+    if (fullText.includes(keyword)) {
+      console.log(`❌ Filtering out non-success notification: "${keyword}" detected`);
+      return false;
+    }
+  }
+
+  // Only allow messages that explicitly indicate success
+  const successKeywords = ['successful checkout', 'success'];
+  const hasSuccessKeyword = successKeywords.some(keyword => fullText.includes(keyword));
+
+  if (!hasSuccessKeyword) {
+    console.log(`⚠️  Message does not contain success indicators, skipping`);
+    return false;
+  }
+
+  return true;
+}
+
 // Determine which bot sent the message and parse accordingly
 function parseCheckoutMessage(message) {
   if (!message.embeds || message.embeds.length === 0) {
@@ -142,6 +188,11 @@ function parseCheckoutMessage(message) {
   const title = embed.title || '';
   const author = embed.author?.name || '';
   const footer = embed.footer?.text || '';
+
+  // First check if this is a successful checkout (filter out declines, OOS, etc.)
+  if (!isSuccessfulCheckout(embed)) {
+    return null;
+  }
 
   // Detect Refract - check author.name and footer
   if (author.includes('Successful Checkout |') || footer.includes('Prism Technologies')) {
