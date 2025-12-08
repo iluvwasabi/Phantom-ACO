@@ -750,138 +750,9 @@
         <button class="icon-btn close-edit-modal" aria-label="Close">✕</button>
       </div>
       <div class="dialog-body">
-        <form id="edit-submission-form" class="form-grid">
-          <input type="hidden" id="edit-submission-id">
-          <input type="hidden" id="edit-service-type">
-
-          <div class="field wide">
-            <label class="label">Discord Username</label>
-            <input type="text" id="edit-discord-username" class="control" readonly style="background: var(--bg-900); cursor: not-allowed; opacity: 0.7;">
-          </div>
-
-          <div class="field">
-            <label class="label">First Name</label>
-            <input type="text" id="edit-first-name" class="control">
-          </div>
-
-          <div class="field">
-            <label class="label">Last Name</label>
-            <input type="text" id="edit-last-name" class="control">
-          </div>
-
-          <div class="field wide login-required-only">
-            <label class="label">Account Email</label>
-            <input type="email" id="edit-account-email" class="control">
-          </div>
-
-          <div class="field wide login-required-only">
-            <label class="label">Account Password</label>
-            <input type="text" id="edit-account-password" class="control">
-          </div>
-
-          <div class="field wide login-required-only">
-            <label class="label">IMAP</label>
-            <input type="text" id="edit-account-imap" class="control">
-          </div>
-
-          <div class="field wide">
-            <label class="label">Email</label>
-            <input type="email" id="edit-email" class="control">
-          </div>
-
-          <div class="field">
-            <label class="label">Phone</label>
-            <input type="tel" id="edit-phone" class="control">
-          </div>
-
-          <div class="field">
-            <label class="label">Card Type</label>
-            <select id="edit-card-type" class="control">
-              <option value="">Select...</option>
-              <option value="Mastercard">Mastercard</option>
-              <option value="Visa">Visa</option>
-              <option value="American Express">American Express</option>
-              <option value="Discover">Discover</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label class="label">Card Number</label>
-            <input type="text" id="edit-card-number" class="control">
-          </div>
-
-          <div class="field">
-            <label class="label">Exp Month</label>
-            <input type="text" id="edit-exp-month" class="control" placeholder="MM" maxlength="2">
-          </div>
-
-          <div class="field">
-            <label class="label">Exp Year</label>
-            <input type="text" id="edit-exp-year" class="control" placeholder="YY" maxlength="2">
-          </div>
-
-          <div class="field">
-            <label class="label">CVV</label>
-            <input type="text" id="edit-cvv" class="control" maxlength="4">
-          </div>
-
-          <div class="field wide">
-            <label class="label">Billing Address</label>
-            <input type="text" id="edit-billing-address" class="control">
-          </div>
-
-          <div class="field">
-            <label class="label">Billing City</label>
-            <input type="text" id="edit-billing-city" class="control">
-          </div>
-
-          <div class="field">
-            <label class="label">Billing State</label>
-            <input type="text" id="edit-billing-state" class="control" maxlength="2">
-          </div>
-
-          <div class="field">
-            <label class="label">Billing Zipcode</label>
-            <input type="text" id="edit-billing-zipcode" class="control">
-          </div>
-
-          <div class="field wide">
-            <label class="label">Shipping Address</label>
-            <input type="text" id="edit-shipping-address" class="control">
-          </div>
-
-          <div class="field">
-            <label class="label">Shipping City</label>
-            <input type="text" id="edit-shipping-city" class="control">
-          </div>
-
-          <div class="field">
-            <label class="label">Shipping State</label>
-            <input type="text" id="edit-shipping-state" class="control" maxlength="2">
-          </div>
-
-          <div class="field">
-            <label class="label">Shipping Zipcode</label>
-            <input type="text" id="edit-shipping-zipcode" class="control">
-          </div>
-
-          <div class="field">
-            <label class="label">Max Quantity</label>
-            <input type="number" id="edit-max-qty" class="control" min="1" max="99">
-          </div>
-
-          <div class="field">
-            <label class="label">Max Checkouts</label>
-            <input type="number" id="edit-max-checkouts" class="control" min="1" max="99">
-          </div>
-
-          <hr style="grid-column: 1 / -1; border: none; border-top: 2px solid var(--border); margin: var(--space-4) 0;">
-
-          <div class="field wide">
-            <label class="label" style="font-size: 1.1rem; font-weight: 600; color: var(--primary);">📝 Notes / Special Instructions</label>
-            <textarea id="edit-notes" class="control" rows="6" placeholder="Enter any special instructions, preferences, or notes here..." style="font-size: 0.95rem;"></textarea>
-          </div>
-        </form>
+        <input type="hidden" id="edit-submission-id">
+        <input type="hidden" id="edit-service-type">
+        <div id="edit-form-container"></div>
       </div>
       <div class="dialog-footer">
         <button class="btn btn-ghost close-edit-modal">Cancel</button>
@@ -923,6 +794,362 @@
       showToast(`Copied: ${text.length > 30 ? text.substring(0, 30) + '...' : text}`);
     }
 
+    // Form Fields Configuration (matches dashboard-app.js)
+    const FORM_FIELDS = {
+      target: [
+        { type: 'section_header', label: 'User Information' },
+        { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+        { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+        { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+        { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Billing Information' },
+        { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+        { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+        { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+        { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+        { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+        { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Address' },
+        { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+        { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+        { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+        { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+        { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+        { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+        { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Account Information' },
+        { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
+        { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Notes' },
+        { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+      ],
+      walmart: [
+        { type: 'section_header', label: 'User Information' },
+        { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+        { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+        { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+        { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Billing Information' },
+        { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+        { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+        { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+        { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+        { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+        { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Address' },
+        { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+        { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+        { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+        { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+        { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+        { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+        { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Account Information' },
+        { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
+        { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+        { name: 'account_imap', label: 'IMAP *', type: 'textarea', required: true, wide: true },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Notes' },
+        { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+      ],
+      bestbuy: [
+        { type: 'section_header', label: 'User Information' },
+        { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+        { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+        { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+        { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Billing Information' },
+        { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+        { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+        { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+        { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+        { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+        { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Address' },
+        { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+        { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+        { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+        { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+        { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+        { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+        { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Account Information' },
+        { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
+        { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+        { name: 'account_imap', label: 'IMAP *', type: 'textarea', required: true, wide: true },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Notes' },
+        { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+      ],
+      pokemoncenter: [
+        { type: 'section_header', label: 'User Information' },
+        { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+        { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+        { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+        { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Billing Information' },
+        { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+        { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+        { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+        { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+        { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+        { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Address' },
+        { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+        { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+        { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+        { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+        { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+        { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+        { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Account Information' },
+        { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
+        { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+        { name: 'account_imap', label: 'IMAP *', type: 'textarea', required: true, wide: true },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Notes' },
+        { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+      ],
+      shopify: [
+        { type: 'section_header', label: 'User Information' },
+        { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+        { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+        { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+        { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Billing Information' },
+        { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+        { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+        { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+        { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+        { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+        { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Address' },
+        { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+        { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+        { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+        { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+        { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+        { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+        { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Notes' },
+        { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+      ],
+      login_required: [
+        { type: 'section_header', label: 'User Information' },
+        { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+        { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+        { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+        { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Billing Information' },
+        { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+        { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+        { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+        { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+        { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+        { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Address' },
+        { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+        { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+        { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+        { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+        { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+        { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+        { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Account Information' },
+        { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
+        { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+        { name: 'account_imap', label: 'IMAP *', type: 'textarea', required: true, wide: true },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Notes' },
+        { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+      ],
+      no_login: [
+        { type: 'section_header', label: 'User Information' },
+        { name: 'first_name', label: 'First Name *', type: 'text', required: true, wide: false },
+        { name: 'last_name', label: 'Last Name *', type: 'text', required: true, wide: false },
+        { name: 'email', label: 'Email Address *', type: 'email', required: true, wide: false },
+        { name: 'phone', label: 'Phone Number *', type: 'tel', required: true, wide: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Billing Information' },
+        { name: 'name_on_card', label: 'Cardholder Name *', type: 'text', required: true, wide: false },
+        { name: 'card_type', label: 'Card Type *', type: 'select', required: true, wide: false, options: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
+        { name: 'card_number', label: 'Card Number *', type: 'text', required: true, wide: false, maxlength: 16 },
+        { name: 'cvv', label: 'CVV *', type: 'text', required: true, wide: false, maxlength: 4 },
+        { name: 'exp_month', label: 'Expiration Month *', type: 'select', required: true, wide: false, options: ['1  January', '2  February', '3  March', '4  April', '5  May', '6  June', '7  July', '8  August', '9  September', '10  October', '11  November', '12  December'] },
+        { name: 'exp_year', label: 'Expiration Year *', type: 'select', required: true, wide: false, options: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Address' },
+        { name: 'address1', label: 'Street Name *', type: 'text', required: true, wide: false },
+        { name: 'unit_number', label: 'Unit/Apt #', type: 'text', required: false, wide: false },
+        { name: 'city', label: 'City *', type: 'text', required: true, wide: false },
+        { name: 'state', label: 'State *', type: 'select', required: true, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] },
+        { name: 'zip_code', label: 'Zipcode *', type: 'text', required: true, wide: false, maxlength: 10 },
+        { name: 'billing_same_as_shipping', label: 'Billing Address Same as Shipping', type: 'checkbox', required: false, wide: true, default: true },
+        { name: 'billing_address', label: 'Billing Street Name', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_city', label: 'Billing City', type: 'text', required: false, wide: false, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_state', label: 'Billing State', type: 'select', required: false, wide: false, options: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'], conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
+        { name: 'separator', type: 'separator' },
+
+        { type: 'section_header', label: 'Notes' },
+        { name: 'notes', label: 'Additional Notes (Optional)', type: 'textarea', required: false, wide: true, placeholder: 'Example: Only run ETB, avoid booster boxes, etc.' }
+      ]
+    };
+
+    // Generate Form HTML (matches dashboard-app.js)
+    function generateAdminForm(serviceType, existingData = {}) {
+      const fields = FORM_FIELDS[serviceType];
+
+      if (!fields) {
+        return '<div class="empty-state"><p>Invalid service type</p></div>';
+      }
+
+      let html = '<form id="edit-submission-form" novalidate><div class="form-grid">';
+
+      // Add Discord Username field (admin-specific, readonly)
+      html += `<label class="field wide">
+        <span class="label">Discord Username</span>
+        <input class="control" type="text" id="edit-discord-username" readonly style="background: var(--bg-900); cursor: not-allowed; opacity: 0.7;" value="${existingData.discord_username || 'N/A'}">
+      </label>`;
+
+      fields.forEach(field => {
+        if (field.type === 'separator') {
+          html += '</div><hr style="border: none; border-top:1px solid var(--border); margin: var(--space-1) 0;"><div class="form-grid">';
+          return;
+        }
+
+        // Handle section headers
+        if (field.type === 'section_header') {
+          html += `<div class="form-section-header" style="grid-column: 1 / -1; margin-top: var(--space-2); margin-bottom: 2px;">
+            <h3 style="font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">${field.label}</h3>
+          </div>`;
+          return;
+        }
+
+        // Handle conditional fields
+        const conditionalAttr = field.conditional ? `data-conditional="${field.conditional}" data-conditional-value="${field.conditionalValue}"` : '';
+        const conditionalClass = field.conditional ? 'conditional-field' : '';
+        const initialDisplay = field.conditional ? (existingData[field.conditional] === field.conditionalValue ? '' : 'style="display:none;"') : '';
+
+        const wideClass = field.wide ? 'wide' : '';
+        html += `<label class="field ${wideClass} ${conditionalClass}" ${conditionalAttr} ${initialDisplay}>`;
+        html += `<span class="label">${field.label}</span>`;
+
+        if (field.type === 'checkbox') {
+          const checked = existingData[field.name] !== undefined ? (existingData[field.name] ? 'checked' : '') : (field.default ? 'checked' : '');
+          html += `<input class="control" type="checkbox" name="${field.name}" id="edit-${field.name}" ${checked} style="width: 20px; height: 20px;">`;
+        } else if (field.type === 'select') {
+          html += `<select class="control" name="${field.name}" id="edit-${field.name}" ${field.required ? 'required' : ''}>`;
+          html += `<option value="" disabled ${!existingData[field.name] ? 'selected' : ''}>Select ${field.label.replace(' *', '')}</option>`;
+          field.options.forEach(opt => {
+            const value = opt.split('  ')[0];
+            const existingValue = String(existingData[field.name] || '');
+            const selected = existingValue === value ? 'selected' : '';
+            html += `<option value="${value}" ${selected}>${opt}</option>`;
+          });
+          html += '</select>';
+        } else if (field.type === 'textarea') {
+          const placeholder = field.placeholder || `Enter ${field.label.replace(' *', '')}`;
+          html += `<textarea class="control" name="${field.name}" id="edit-${field.name}" placeholder="${placeholder}" rows="4" ${field.required ? 'required' : ''}>${existingData[field.name] || ''}</textarea>`;
+        } else if (field.type === 'password') {
+          // For admin, show actual password value (not placeholder)
+          const value = existingData[field.name] || '';
+          html += `<input class="control" type="text" name="${field.name}" id="edit-${field.name}" value="${value}" ${field.maxlength ? `maxlength="${field.maxlength}"` : ''}>`;
+        } else {
+          const value = existingData[field.name] || '';
+          html += `<input class="control" type="${field.type}" name="${field.name}" id="edit-${field.name}" placeholder="${field.label.replace(' *', '')}" ${field.required ? 'required' : ''} ${field.maxlength ? `maxlength="${field.maxlength}"` : ''} value="${value}">`;
+        }
+
+        html += '</label>';
+      });
+
+      html += '</div></form>';
+      return html;
+    }
+
+    // Setup conditional field toggling
+    function setupConditionalFields() {
+      const billingCheckbox = document.getElementById('edit-billing_same_as_shipping');
+      if (billingCheckbox) {
+        const toggleConditionalFields = () => {
+          const conditionalFields = document.querySelectorAll('[data-conditional="billing_same_as_shipping"]');
+          conditionalFields.forEach(field => {
+            const showWhen = field.dataset.conditionalValue === 'false';
+            if (billingCheckbox.checked === !showWhen) {
+              field.style.display = '';
+            } else {
+              field.style.display = 'none';
+            }
+          });
+        };
+
+        billingCheckbox.addEventListener('change', toggleConditionalFields);
+        toggleConditionalFields(); // Initial state
+      }
+    }
+
     // Edit submission
     async function editSubmission(id) {
       try {
@@ -938,39 +1165,27 @@
 
         const submission = await response.json();
 
-        // Populate form
+        // Store submission ID and service type
         document.getElementById('edit-submission-id').value = submission.id;
         document.getElementById('edit-service-type').value = submission.service_type || '';
-        document.getElementById('edit-discord-username').value = submission.discord_username || 'N/A';
-        document.getElementById('edit-first-name').value = submission.first_name || '';
-        document.getElementById('edit-last-name').value = submission.last_name || '';
 
-        // Show/hide login-required fields based on service type
-        const isLoginRequired = submission.service_type === 'login_required';
-        document.querySelectorAll('.login-required-only').forEach(field => {
-          field.style.display = isLoginRequired ? '' : 'none';
-        });
-        document.getElementById('edit-account-email').value = submission.account_email || '';
-        document.getElementById('edit-account-password').value = submission.account_password || '';
-        document.getElementById('edit-account-imap').value = submission.account_imap || '';
-        document.getElementById('edit-email').value = submission.email || '';
-        document.getElementById('edit-phone').value = submission.phone || '';
-        document.getElementById('edit-card-type').value = submission.card_type || '';
-        document.getElementById('edit-card-number').value = submission.card_number || '';
-        document.getElementById('edit-exp-month').value = submission.exp_month || '';
-        document.getElementById('edit-exp-year').value = submission.exp_year || '';
-        document.getElementById('edit-cvv').value = submission.cvv || '';
-        document.getElementById('edit-billing-address').value = submission.billing_address || '';
-        document.getElementById('edit-billing-city').value = submission.billing_city || '';
-        document.getElementById('edit-billing-state').value = submission.billing_state || '';
-        document.getElementById('edit-billing-zipcode').value = submission.billing_zipcode || '';
-        document.getElementById('edit-shipping-address').value = submission.address1 || '';
-        document.getElementById('edit-shipping-city').value = submission.city || '';
-        document.getElementById('edit-shipping-state').value = submission.state || '';
-        document.getElementById('edit-shipping-zipcode').value = submission.zip_code || '';
-        document.getElementById('edit-max-qty').value = submission.max_qty || 1;
-        document.getElementById('edit-max-checkouts').value = submission.max_checkouts || 1;
-        document.getElementById('edit-notes').value = submission.notes || '';
+        // Map service name to form type
+        let formType = submission.service_type;
+        const serviceName = submission.service_name.toLowerCase();
+        if (serviceName === 'target') formType = 'target';
+        else if (serviceName === 'walmart') formType = 'walmart';
+        else if (serviceName === 'bestbuy') formType = 'bestbuy';
+        else if (serviceName === 'pokemoncenter') formType = 'pokemoncenter';
+        else if (serviceName === 'shopify') formType = 'shopify';
+
+        // Generate and insert form
+        const formContainer = document.getElementById('edit-form-container');
+        formContainer.innerHTML = generateAdminForm(formType, submission);
+
+        // Setup conditional field toggling
+        setTimeout(() => {
+          setupConditionalFields();
+        }, 0);
 
         // Show modal
         document.getElementById('edit-modal').classList.add('show');
@@ -990,37 +1205,30 @@
     // Save submission changes
     document.getElementById('save-submission-btn').addEventListener('click', async () => {
       const submissionId = document.getElementById('edit-submission-id').value;
-      const serviceType = document.getElementById('edit-service-type').value;
-      const isLoginRequired = serviceType === 'login_required';
+      const form = document.getElementById('edit-submission-form');
 
-      const data = {
-        first_name: document.getElementById('edit-first-name').value,
-        last_name: document.getElementById('edit-last-name').value,
-        email: document.getElementById('edit-email').value,
-        phone: document.getElementById('edit-phone').value,
-        card_type: document.getElementById('edit-card-type').value,
-        card_number: document.getElementById('edit-card-number').value,
-        exp_month: document.getElementById('edit-exp-month').value,
-        exp_year: document.getElementById('edit-exp-year').value,
-        cvv: document.getElementById('edit-cvv').value,
-        billing_address: document.getElementById('edit-billing-address').value,
-        billing_city: document.getElementById('edit-billing-city').value,
-        billing_state: document.getElementById('edit-billing-state').value,
-        billing_zipcode: document.getElementById('edit-billing-zipcode').value,
-        address1: document.getElementById('edit-shipping-address').value,
-        city: document.getElementById('edit-shipping-city').value,
-        state: document.getElementById('edit-shipping-state').value,
-        zip_code: document.getElementById('edit-shipping-zipcode').value,
-        max_qty: document.getElementById('edit-max-qty').value,
-        max_checkouts: document.getElementById('edit-max-checkouts').value,
-        notes: document.getElementById('edit-notes').value
-      };
+      if (!form) {
+        showToast('Form not found');
+        return;
+      }
 
-      // Only include login-required fields if service type requires login
-      if (isLoginRequired) {
-        data.account_email = document.getElementById('edit-account-email').value;
-        data.account_password = document.getElementById('edit-account-password').value;
-        data.account_imap = document.getElementById('edit-account-imap').value;
+      // Get form data
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((value, key) => {
+        data[key] = value;
+      });
+
+      // Handle checkbox fields (they don't appear in FormData if unchecked)
+      const billingCheckbox = document.getElementById('edit-billing_same_as_shipping');
+      if (billingCheckbox) {
+        data.billing_same_as_shipping = billingCheckbox.checked;
+      }
+
+      // Special handling for password fields - if using 'password' type in form
+      const accountPasswordField = document.getElementById('edit-account_password');
+      if (accountPasswordField) {
+        data.account_password = accountPasswordField.value;
       }
 
       try {
