@@ -1796,7 +1796,7 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
 // ==================== DROP MANAGEMENT ROUTES ====================
 
 // GET /admin/drops - List all drops
-router.get('/admin/drops', ensureAdminAuth, async (req, res) => {
+router.get('/drops', ensureAdminAuth, async (req, res) => {
   try {
     const drops = db.prepare(`
       SELECT
@@ -1827,7 +1827,7 @@ router.get('/admin/drops', ensureAdminAuth, async (req, res) => {
 });
 
 // POST /admin/drops - Create new drop
-router.post('/admin/drops', ensureAdminAuth, express.json(), async (req, res) => {
+router.post('/drops', ensureAdminAuth, express.json(), async (req, res) => {
   try {
     const { drop_name, description, drop_date, skus } = req.body;
 
@@ -1854,7 +1854,7 @@ router.post('/admin/drops', ensureAdminAuth, express.json(), async (req, res) =>
 });
 
 // GET /admin/drops/:id - Get drop details
-router.get('/admin/drops/:id', ensureAdminAuth, async (req, res) => {
+router.get('/drops/:id', ensureAdminAuth, async (req, res) => {
   try {
     const drop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
 
@@ -1872,7 +1872,7 @@ router.get('/admin/drops/:id', ensureAdminAuth, async (req, res) => {
 });
 
 // PUT /admin/drops/:id - Edit drop
-router.put('/admin/drops/:id', ensureAdminAuth, express.json(), async (req, res) => {
+router.put('/drops/:id', ensureAdminAuth, express.json(), async (req, res) => {
   try {
     const { drop_name, description, drop_date, skus } = req.body;
 
@@ -1896,7 +1896,7 @@ router.put('/admin/drops/:id', ensureAdminAuth, express.json(), async (req, res)
 });
 
 // DELETE /admin/drops/:id - Soft delete drop
-router.delete('/admin/drops/:id', ensureAdminAuth, async (req, res) => {
+router.delete('/drops/:id', ensureAdminAuth, async (req, res) => {
   try {
     db.prepare('UPDATE drops SET is_active = 0 WHERE id = ?').run(req.params.id);
 
@@ -1908,7 +1908,7 @@ router.delete('/admin/drops/:id', ensureAdminAuth, async (req, res) => {
 });
 
 // POST /admin/drops/:id/announce - Post drop announcement to Discord
-router.post('/admin/drops/:id/announce', ensureAdminAuth, express.json(), async (req, res) => {
+router.post('/drops/:id/announce', ensureAdminAuth, express.json(), async (req, res) => {
   try {
     const drop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
 
@@ -1977,7 +1977,7 @@ router.post('/admin/drops/:id/announce', ensureAdminAuth, express.json(), async 
 });
 
 // GET /admin/drops/:id/preferences - View preferences for a drop
-router.get('/admin/drops/:id/preferences', ensureAdminAuth, async (req, res) => {
+router.get('/drops/:id/preferences', ensureAdminAuth, async (req, res) => {
   try {
     const drop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
 
@@ -2047,7 +2047,7 @@ router.get('/admin/drops/:id/preferences', ensureAdminAuth, async (req, res) => 
 });
 
 // GET /admin/api/drops/:id/export - Export preferences to CSV
-router.get('/admin/api/drops/:id/export', ensureAdminAuth, async (req, res) => {
+router.get('/api/drops/:id/export', ensureAdminAuth, async (req, res) => {
   try {
     const drop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
 
