@@ -336,15 +336,22 @@ router.get('/api/discord-bot/drop-preferences/:dropId/:discordId', verifyBotSecr
     // Get user's submissions for this service
     let userSubmissions = [];
     if (drop.service_name) {
-      const user = db.prepare('SELECT id FROM users WHERE discord_id = ?').get(discordId);
+      const user = db.prepare('SELECT id, discord_id, discord_username FROM users WHERE discord_id = ?').get(discordId);
 
       if (user) {
+        console.log(`🔍 Looking for submissions: user_id=${user.id}, service_name="${drop.service_name}"`);
+
+        // Use case-insensitive comparison for service_name
         userSubmissions = db.prepare(`
           SELECT id, service_name, created_at
           FROM service_subscriptions
-          WHERE user_id = ? AND service_name = ? AND status = 'active'
+          WHERE user_id = ? AND LOWER(service_name) = LOWER(?) AND status = 'active'
           ORDER BY created_at ASC
         `).all(user.id, drop.service_name);
+
+        console.log(`📋 Found ${userSubmissions.length} active submissions for ${drop.service_name}`);
+      } else {
+        console.log(`⚠️ No user found with discord_id: ${discordId}`);
       }
     }
 
