@@ -1829,18 +1829,22 @@ router.get('/drops', ensureAdminAuth, async (req, res) => {
 // POST /admin/drops - Create new drop
 router.post('/drops', ensureAdminAuth, express.json(), async (req, res) => {
   try {
-    const { drop_name, description, drop_date, skus } = req.body;
+    const { drop_name, service_name, description, drop_date, skus } = req.body;
 
     // Validate required fields
     if (!drop_name || !skus || skus.length === 0) {
       return res.status(400).json({ error: 'Drop name and SKUs are required' });
     }
 
+    if (!service_name) {
+      return res.status(400).json({ error: 'Service name is required' });
+    }
+
     // Insert drop
     const result = db.prepare(`
-      INSERT INTO drops (drop_name, description, drop_date, skus, created_by)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(drop_name, description, drop_date || null, JSON.stringify(skus), req.user.id);
+      INSERT INTO drops (drop_name, service_name, description, drop_date, skus, created_by)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(drop_name, service_name, description, drop_date || null, JSON.stringify(skus), req.user.id);
 
     res.json({
       success: true,
@@ -1874,19 +1878,23 @@ router.get('/drops/:id', ensureAdminAuth, async (req, res) => {
 // PUT /admin/drops/:id - Edit drop
 router.put('/drops/:id', ensureAdminAuth, express.json(), async (req, res) => {
   try {
-    const { drop_name, description, drop_date, skus } = req.body;
+    const { drop_name, service_name, description, drop_date, skus } = req.body;
 
     // Validate required fields
     if (!drop_name || !skus || skus.length === 0) {
       return res.status(400).json({ error: 'Drop name and SKUs are required' });
     }
 
+    if (!service_name) {
+      return res.status(400).json({ error: 'Service name is required' });
+    }
+
     // Update drop
     db.prepare(`
       UPDATE drops
-      SET drop_name = ?, description = ?, drop_date = ?, skus = ?, updated_at = CURRENT_TIMESTAMP
+      SET drop_name = ?, service_name = ?, description = ?, drop_date = ?, skus = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(drop_name, description, drop_date || null, JSON.stringify(skus), req.params.id);
+    `).run(drop_name, service_name, description, drop_date || null, JSON.stringify(skus), req.params.id);
 
     res.json({ success: true, message: 'Drop updated successfully' });
   } catch (error) {

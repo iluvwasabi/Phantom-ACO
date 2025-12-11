@@ -38,6 +38,7 @@
           <thead>
             <tr>
               <th>Drop Name</th>
+              <th>Service</th>
               <th>Drop Date</th>
               <th># SKUs</th>
               <th># Users Opted In</th>
@@ -49,7 +50,7 @@
           <tbody>
             <% if (drops.length === 0) { %>
               <tr>
-                <td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">
+                <td colspan="8" style="text-align: center; padding: 40px; color: var(--muted);">
                   No drops yet. Click "Create New Drop" to get started.
                 </td>
               </tr>
@@ -57,6 +58,11 @@
               <% drops.forEach(drop => { %>
                 <tr data-drop-id="<%= drop.id %>">
                   <td><strong><%= drop.drop_name %></strong></td>
+                  <td>
+                    <div class="badge" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;">
+                      <%= drop.service_name || 'Not set' %>
+                    </div>
+                  </td>
                   <td>
                     <% if (drop.drop_date) { %>
                       <%= new Date(drop.drop_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
@@ -120,6 +126,16 @@
           </div>
 
           <div class="field wide">
+            <label class="label">Service/Retailer *</label>
+            <select id="drop-service" class="control" required>
+              <option value="">Select a service...</option>
+            </select>
+            <p style="font-size: 0.875rem; color: var(--muted); margin-top: 4px;">
+              This determines which user profiles will be shown in preferences
+            </p>
+          </div>
+
+          <div class="field wide">
             <label class="label">Description</label>
             <textarea id="drop-description" class="control" rows="3" placeholder="Details about this drop..."></textarea>
           </div>
@@ -153,9 +169,31 @@
     const saveDropBtn = document.getElementById('save-drop-btn');
     const addSkuBtn = document.getElementById('add-sku-btn');
     const skuList = document.getElementById('sku-list');
+    const serviceSelect = document.getElementById('drop-service');
 
     let editMode = false;
     let skuCounter = 0;
+
+    // Load available services for dropdown
+    async function loadServices() {
+      try {
+        const response = await fetch('/admin/api/panels');
+        const panels = await response.json();
+
+        serviceSelect.innerHTML = '<option value="">Select a service...</option>';
+        panels.forEach(panel => {
+          const option = document.createElement('option');
+          option.value = panel.service_name;
+          option.textContent = panel.service_name;
+          serviceSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error loading services:', error);
+      }
+    }
+
+    // Load services on page load
+    loadServices();
 
     // Open modal for new drop
     addDropBtn?.addEventListener('click', () => {
@@ -217,11 +255,17 @@
     saveDropBtn?.addEventListener('click', async () => {
       const dropId = document.getElementById('drop-id').value;
       const dropName = document.getElementById('drop-name').value.trim();
+      const serviceName = document.getElementById('drop-service').value;
       const description = document.getElementById('drop-description').value.trim();
       const dropDate = document.getElementById('drop-date').value;
 
       if (!dropName) {
         alert('Drop name is required');
+        return;
+      }
+
+      if (!serviceName) {
+        alert('Service/Retailer is required');
         return;
       }
 
@@ -248,6 +292,7 @@
 
       const payload = {
         drop_name: dropName,
+        service_name: serviceName,
         description: description || null,
         drop_date: dropDate || null,
         skus: skus
@@ -290,6 +335,7 @@
           document.getElementById('modal-title').textContent = 'Edit Drop';
           document.getElementById('drop-id').value = drop.id;
           document.getElementById('drop-name').value = drop.drop_name;
+          document.getElementById('drop-service').value = drop.service_name || '';
           document.getElementById('drop-description').value = drop.description || '';
 
           if (drop.drop_date) {
