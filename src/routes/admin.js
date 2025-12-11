@@ -693,6 +693,23 @@ router.delete('/panels/:id', ensureAdminAuth, (req, res) => {
   }
 });
 
+// Get all panels
+router.get('/api/panels', (req, res) => {
+  try {
+    const panels = db.prepare(`
+      SELECT service_id, service_name, service_type, is_active
+      FROM service_panels
+      WHERE is_active = 1
+      ORDER BY display_order, service_name
+    `).all();
+
+    res.json(panels);
+  } catch (error) {
+    console.error('Get panels error:', error);
+    res.status(500).json({ error: 'Failed to get panels' });
+  }
+});
+
 // Get panel products
 router.get('/api/panels/:service/products', (req, res) => {
   try {
