@@ -104,7 +104,7 @@
   </div>
 
   <!-- Add/Edit Drop Modal -->
-  <div id="drop-modal" class="modal" aria-hidden="true">
+  <div id="drop-modal" class="modal">
     <div class="dialog animate-in" role="dialog" aria-modal="true" style="max-width: 700px;">
       <div class="dialog-header">
         <h2 id="modal-title">Create New Drop</h2>
@@ -166,20 +166,20 @@
       skuList.innerHTML = '';
       skuCounter = 0;
       addSkuRow(); // Start with one SKU
-      dropModal.removeAttribute('aria-hidden');
+      dropModal.classList.add('show');
     });
 
     // Close modal
     closeModalBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        dropModal.setAttribute('aria-hidden', 'true');
+        dropModal.classList.remove('show');
       });
     });
 
     // Close modal on outside click
     dropModal?.addEventListener('click', (e) => {
       if (e.target === dropModal) {
-        dropModal.setAttribute('aria-hidden', 'true');
+        dropModal.classList.remove('show');
       }
     });
 
@@ -309,7 +309,7 @@
             addSkuRow(sku.sku, sku.name);
           });
 
-          dropModal.removeAttribute('aria-hidden');
+          dropModal.classList.add('show');
         } catch (error) {
           console.error('Error loading drop:', error);
           alert('Error loading drop details');
