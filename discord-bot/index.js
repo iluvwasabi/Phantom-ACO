@@ -804,7 +804,7 @@ async function handleDropCreationDM(message, conversation) {
 
         const dropId = response.data.drop_id;
 
-        // Fetch the original message and add button
+        // Fetch the original message and reply with button
         const channel = await client.channels.fetch(conversation.channelId);
         const originalMessage = await channel.messages.fetch(conversation.messageId);
 
@@ -816,13 +816,13 @@ async function handleDropCreationDM(message, conversation) {
               .setStyle(ButtonStyle.Primary)
           );
 
-        await originalMessage.edit({
-          content: originalMessage.content,
-          embeds: originalMessage.embeds,
+        // Reply to the original message with the button
+        await originalMessage.reply({
+          content: `**${conversation.dropName}**\n\nClick below to manage your SKU preferences for this drop:`,
           components: [row]
         });
 
-        await message.reply('✅ Drop created successfully! Button added to your message. Users can now manage their preferences!');
+        await message.reply('✅ Drop created successfully! Button posted as a reply to your message. Users can now manage their preferences!');
 
         // Clean up conversation state
         dmConversations.delete(userId);
