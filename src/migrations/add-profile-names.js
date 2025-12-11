@@ -16,11 +16,11 @@ try {
   }
 
   // Generate profile names for existing submissions
-  const users = db.prepare('SELECT id, first_name, last_name FROM users').all();
+  const users = db.prepare('SELECT id, discord_username FROM users').all();
 
   users.forEach(user => {
-    if (!user.first_name || !user.last_name) {
-      console.log(`⚠️ Skipping user ${user.id} - missing first/last name`);
+    if (!user.discord_username) {
+      console.log(`⚠️ Skipping user ${user.id} - missing discord_username`);
       return;
     }
 
@@ -41,11 +41,11 @@ try {
       serviceGroups[sub.service_name].push(sub.id);
     });
 
-    // Generate profile names
+    // Generate profile names using discord_username
     let updateCount = 0;
     Object.entries(serviceGroups).forEach(([serviceName, ids]) => {
       ids.forEach((id, index) => {
-        const profileName = `${user.first_name} ${user.last_name} ${serviceName} ${index + 1}`;
+        const profileName = `${user.discord_username} ${serviceName} ${index + 1}`;
         db.prepare(`
           UPDATE service_subscriptions
           SET profile_name = ?
@@ -56,7 +56,7 @@ try {
     });
 
     if (updateCount > 0) {
-      console.log(`✅ Generated ${updateCount} profile names for ${user.first_name} ${user.last_name}`);
+      console.log(`✅ Generated ${updateCount} profile names for ${user.discord_username}`);
     }
   });
 
