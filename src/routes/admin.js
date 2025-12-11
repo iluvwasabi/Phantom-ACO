@@ -1937,24 +1937,27 @@ router.post('/drops/:id/announce', ensureAdminAuth, express.json(), async (req, 
       channel_id: channelId
     };
 
-    // Send to Discord bot API to post the message
-    // NOTE: This assumes your Discord bot has an endpoint to handle posting
-    // You'll need to implement the Discord bot side to receive this and post the message
-    const botApiUrl = process.env.DISCORD_BOT_API_URL || 'http://localhost:3001';
-    const botResponse = await fetch(`${botApiUrl}/api/post-drop-announcement`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-bot-secret': process.env.DISCORD_BOT_API_SECRET
-      },
-      body: JSON.stringify(webhookPayload)
+    // Queue the announcement for the Discord bot to pick up
+    // The bot polls /api/discord-bot/get-drop-queue to get announcements
+    global.dropAnnouncementQueue = global.dropAnnouncementQueue || [];
+    global.dropAnnouncementQueue.push({
+      drop_id: drop.id,
+      drop_name: drop.drop_name,
+      description: drop.description,
+      drop_date: drop.drop_date,
+      sku_list: skuList,
+      sku_count: skus.length,
+      channel_id: channelId,
+      timestamp: new Date().toISOString()
     });
 
-    if (!botResponse.ok) {
-      throw new Error('Failed to post to Discord');
-    }
+    console.log(`✅ Drop announcement queued for posting to channel ${channelId}`);
 
-    const botData = await botResponse.json();
+    // Return placeholder message ID (will be updated when bot actually posts)
+    const botData = {
+      message_id: `queued_${drop.id}_${Date.now()}`,
+      success: true
+    };
 
     // Update drop with Discord message ID
     if (botData.message_id) {
