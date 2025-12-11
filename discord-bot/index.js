@@ -434,7 +434,8 @@ async function handleManagePreferences(interaction) {
     let profileInfo = `**${drop_name}** (${service_name})\n\n`;
     profileInfo += `You have **${user_submissions.length}** ${service_name} profile${user_submissions.length === 1 ? '' : 's'}:\n`;
     user_submissions.forEach((sub, idx) => {
-      profileInfo += `${idx + 1}. Profile #${sub.id}\n`;
+      const displayName = sub.profile_name || `Profile #${sub.id}`;
+      profileInfo += `${idx + 1}. ${displayName}\n`;
     });
     profileInfo += `\n**Select SKUs below.** Click a SKU to toggle which profiles run for it.\n`;
     profileInfo += `✅ = Opted in | ⬜ = Not opted in`;
