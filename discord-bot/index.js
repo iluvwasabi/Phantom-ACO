@@ -719,6 +719,24 @@ client.on('messageCreate', async (message) => {
     }
   }
 
+  // Handle admin commands in drop announcement channel
+  if (message.channel.id === DROP_ANNOUNCEMENT_CHANNEL_ID && !message.author.bot) {
+    const content = message.content.toLowerCase().trim();
+
+    // !drops - List all active drops
+    if (content === '!drops') {
+      await handleDropsCommand(message);
+      return;
+    }
+
+    // !drop <id> - View specific drop details
+    if (content.startsWith('!drop ')) {
+      const dropId = content.split(' ')[1];
+      await handleDropInfoCommand(message, dropId);
+      return;
+    }
+  }
+
   // Existing checkout monitoring code
   // Ignore messages from other channels
   if (message.channel.id !== CHECKOUT_CHANNEL_ID) {
@@ -855,6 +873,99 @@ function parseSKULine(line) {
   }
 
   return null;
+}
+
+// Handle !drops command - list all active drops
+async function handleDropsCommand(message) {
+  try {
+    const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/list-drops`, {
+      headers: { 'x-bot-secret': API_SECRET }
+    });
+
+    const drops = response.data.drops;
+
+    if (drops.length === 0) {
+      await message.reply('No active drops found.');
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle('🔥 Active Drops')
+      .setColor(0x5865F2)
+      .setDescription('Use `!drop <id>` to see details and preferences')
+      .setTimestamp();
+
+    drops.forEach(drop => {
+      const skus = JSON.parse(drop.skus || '[]');
+      const dropDate = drop.drop_date ? new Date(drop.drop_date).toLocaleDateString() : 'TBA';
+
+      embed.addFields({
+        name: `${drop.id}. ${drop.drop_name}`,
+        value: `📅 Date: ${dropDate}\n🛍️ SKUs: ${skus.length}\n👥 Users: ${drop.user_count || 0} opted in`,
+        inline: false
+      });
+    });
+
+    await message.reply({ embeds: [embed] });
+
+  } catch (error) {
+    console.error('Error fetching drops:', error);
+    await message.reply('❌ Error fetching drops. Please try again.');
+  }
+}
+
+// Handle !drop <id> command - view specific drop details
+async function handleDropInfoCommand(message, dropId) {
+  try {
+    const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/drop-info/${dropId}`, {
+      headers: { 'x-bot-secret': API_SECRET }
+    });
+
+    const drop = response.data.drop;
+    const skus = JSON.parse(drop.skus || '[]');
+    const preferences = response.data.preferences;
+
+    const dropDate = drop.drop_date ? new Date(drop.drop_date).toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    }) : 'TBA';
+
+    const embed = new EmbedBuilder()
+      .setTitle(`🔥 ${drop.drop_name}`)
+      .setColor(0x5865F2)
+      .setDescription(drop.description || 'No description')
+      .addFields(
+        { name: '📅 Drop Date', value: dropDate, inline: true },
+        { name: '🛍️ Total SKUs', value: skus.length.toString(), inline: true },
+        { name: '👥 Total Users', value: preferences.total_users.toString(), inline: true }
+      )
+      .setTimestamp();
+
+    // Add SKU breakdown
+    let skuBreakdown = '';
+    skus.forEach(sku => {
+      const count = preferences.by_sku[sku.sku] || 0;
+      skuBreakdown += `• **${sku.sku}**: ${sku.name} (${count} users)\n`;
+    });
+
+    if (skuBreakdown) {
+      embed.addFields({ name: '📦 SKU Breakdown', value: skuBreakdown });
+    }
+
+    embed.addFields({
+      name: '🔗 Admin Panel',
+      value: `[View Preferences](${WEBSITE_API_URL}/admin/drops/${dropId}/preferences)`
+    });
+
+    await message.reply({ embeds: [embed] });
+
+  } catch (error) {
+    console.error('Error fetching drop info:', error);
+    if (error.response?.status === 404) {
+      await message.reply(`❌ Drop with ID ${dropId} not found.`);
+    } else {
+      await message.reply('❌ Error fetching drop info. Please try again.');
+    }
+  }
 }
 
 // Handle button interactions

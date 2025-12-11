@@ -412,4 +412,80 @@ router.post('/api/discord-bot/create-drop', express.json(), verifyBotSecret, asy
   }
 });
 
+// GET /api/discord-bot/list-drops - List all active drops for Discord command
+router.get('/api/discord-bot/list-drops', verifyBotSecret, async (req, res) => {
+  try {
+    const drops = db.prepare(`
+      SELECT
+        d.id,
+        d.drop_name,
+        d.drop_date,
+        d.skus,
+        COUNT(DISTINCT dp.discord_id) as user_count
+      FROM drops d
+      LEFT JOIN drop_preferences dp ON d.id = dp.drop_id AND dp.opted_in = 1
+      WHERE d.is_active = 1
+      GROUP BY d.id
+      ORDER BY d.created_at DESC
+      LIMIT 10
+    `).all();
+
+    res.json({ success: true, drops });
+
+  } catch (error) {
+    console.error('Error listing drops:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/discord-bot/drop-info/:id - Get detailed drop info for Discord command
+router.get('/api/discord-bot/drop-info/:id', verifyBotSecret, async (req, res) => {
+  try {
+    const dropId = req.params.id;
+
+    const drop = db.prepare('SELECT * FROM drops WHERE id = ? AND is_active = 1').get(dropId);
+
+    if (!drop) {
+      return res.status(404).json({ error: 'Drop not found' });
+    }
+
+    const skus = JSON.parse(drop.skus || '[]');
+
+    // Get preference counts by SKU
+    const preferenceStats = db.prepare(`
+      SELECT
+        sku,
+        COUNT(*) as count
+      FROM drop_preferences
+      WHERE drop_id = ? AND opted_in = 1
+      GROUP BY sku
+    `).all(dropId);
+
+    const bySku = {};
+    preferenceStats.forEach(stat => {
+      bySku[stat.sku] = stat.count;
+    });
+
+    // Get total unique users
+    const totalUsers = db.prepare(`
+      SELECT COUNT(DISTINCT discord_id) as count
+      FROM drop_preferences
+      WHERE drop_id = ?
+    `).get(dropId);
+
+    res.json({
+      success: true,
+      drop,
+      preferences: {
+        by_sku: bySku,
+        total_users: totalUsers.count
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching drop info:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
