@@ -1073,7 +1073,7 @@ router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
     }
 
     const orderId = req.params.id;
-    const { orderTotal } = req.body;
+    const { orderTotal, feeAmount: customFeeAmount } = req.body;
 
     // Get order details
     const order = db.prepare(`
@@ -1093,9 +1093,14 @@ router.post('/orders/:id/approve', ensureAdminAuth, async (req, res) => {
       return res.status(400).json({ error: 'Order already processed' });
     }
 
-    // Recalculate fee with corrected total (8% or $5 minimum)
-    const calculatedFee = orderTotal * 0.08;
-    const feeDisplay = Math.max(calculatedFee, 5).toFixed(2);
+    // Use custom fee amount if provided, otherwise calculate 8% (with $5 minimum)
+    let feeDisplay;
+    if (customFeeAmount !== undefined && customFeeAmount !== null) {
+      feeDisplay = parseFloat(customFeeAmount).toFixed(2);
+    } else {
+      const calculatedFee = orderTotal * 0.08;
+      feeDisplay = Math.max(calculatedFee, 5).toFixed(2);
+    }
     const feeAmount = Math.round(parseFloat(feeDisplay) * 100); // In cents
 
     // Update order with corrected total

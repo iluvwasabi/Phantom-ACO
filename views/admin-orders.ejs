@@ -83,9 +83,13 @@
                            onchange="updateFee(<%= order.id %>)">
                   </td>
                   <td>
-                    <strong id="fee-<%= order.id %>" style="color: #10b981;">
-                      $<%= order.fee_amount %>
-                    </strong>
+                    <input type="number"
+                           class="control"
+                           id="fee-<%= order.id %>"
+                           value="<%= order.fee_amount %>"
+                           step="0.01"
+                           min="0"
+                           style="width: 100px; padding: 6px 8px; font-size: 0.9rem; color: #10b981; font-weight: bold;">
                   </td>
                   <td>
                     <span style="font-size: 0.85rem; color: var(--muted);">
@@ -178,24 +182,31 @@
 
     function updateFee(orderId) {
       const totalInput = document.getElementById(`total-${orderId}`);
-      const feeDisplay = document.getElementById(`fee-${orderId}`);
+      const feeInput = document.getElementById(`fee-${orderId}`);
 
       const orderTotal = parseFloat(totalInput.value);
-      const fee = (orderTotal * 0.07).toFixed(2);
+      const fee = (orderTotal * 0.08).toFixed(2);
 
-      feeDisplay.textContent = `$${fee}`;
+      feeInput.value = fee;
     }
 
     async function approveOrder(orderId) {
       const totalInput = document.getElementById(`total-${orderId}`);
+      const feeInput = document.getElementById(`fee-${orderId}`);
       const orderTotal = parseFloat(totalInput.value);
+      const feeAmount = parseFloat(feeInput.value);
 
       if (!orderTotal || orderTotal <= 0) {
         alert('Please enter a valid order total');
         return;
       }
 
-      if (!confirm(`Approve order #${orderId} for $${orderTotal} (7% fee = $${(orderTotal * 0.07).toFixed(2)})?`)) {
+      if (!feeAmount || feeAmount < 0) {
+        alert('Please enter a valid fee amount');
+        return;
+      }
+
+      if (!confirm(`Approve order #${orderId} for $${orderTotal} (fee = $${feeAmount.toFixed(2)})?`)) {
         return;
       }
 
@@ -204,7 +215,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify({ orderTotal })
+          body: JSON.stringify({ orderTotal, feeAmount })
         });
 
         const result = await response.json();
