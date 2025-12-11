@@ -13,6 +13,9 @@ const client = new Client({
   ]
 });
 
+// Store selected profiles temporarily (userId+dropId -> [profileIds])
+const selectedProfilesCache = new Map();
+
 // Configuration
 const CHECKOUT_CHANNEL_ID = process.env.DISCORD_CHECKOUT_CHANNEL_ID;
 const PUBLIC_CHECKOUT_CHANNEL_ID = process.env.PUBLIC_CHECKOUT_CHANNEL_ID;
@@ -430,25 +433,97 @@ async function handleManagePreferences(interaction) {
       return;
     }
 
-    // Build profile info message
+    // Build profile selection message
     let profileInfo = `**${drop_name}** (${service_name})\n\n`;
-    profileInfo += `You have **${user_submissions.length}** ${service_name} profile${user_submissions.length === 1 ? '' : 's'}:\n`;
+    profileInfo += `**Step 1:** Select which profile(s) you want to use for this drop.\n`;
+    profileInfo += `**Step 2:** After selecting profiles, you'll choose which SKUs to run.\n\n`;
+    profileInfo += `Available profiles:\n`;
     user_submissions.forEach((sub, idx) => {
       const displayName = sub.profile_name || `Profile #${sub.id}`;
-      profileInfo += `${idx + 1}. ${displayName}\n`;
+      profileInfo += `• ${displayName}\n`;
     });
-    profileInfo += `\n**Select SKUs below.** Click a SKU to toggle which profiles run for it.\n`;
-    profileInfo += `✅ = Opted in | ⬜ = Not opted in`;
 
-    // Build SKU buttons (max 25 buttons, 5 per row)
+    // Build profile select menu options
+    const profileOptions = user_submissions.map(sub => {
+      const label = sub.profile_name || `Profile #${sub.id}`;
+      return new StringSelectMenuOptionBuilder()
+        .setLabel(label.length > 100 ? label.substring(0, 97) + '...' : label)
+        .setDescription(`Created: ${new Date(sub.created_at).toLocaleDateString()}`)
+        .setValue(sub.id.toString());
+    });
+
+    const profileSelectMenu = new StringSelectMenuBuilder()
+      .setCustomId(`select_profiles_${dropId}`)
+      .setPlaceholder('Select profile(s) to use')
+      .setMinValues(1) // Must select at least one
+      .setMaxValues(user_submissions.length) // Can select all
+      .addOptions(profileOptions);
+
+    const row = new ActionRowBuilder().addComponents(profileSelectMenu);
+
+    // Reply with profile selector (ephemeral - only user sees it)
+    await interaction.reply({
+      content: profileInfo,
+      components: [row],
+      ephemeral: true
+    });
+
+  } catch (error) {
+    console.error('Error showing preferences:', error);
+    await interaction.reply({
+      content: '❌ Error loading preferences. Please try again.',
+      ephemeral: true
+    });
+  }
+}
+
+// Handle profile selection - shows SKU buttons
+async function handleInitialProfileSelection(interaction) {
+  try {
+    // Parse custom ID: select_profiles_{dropId}
+    const dropId = interaction.customId.replace('select_profiles_', '');
+    const discordId = interaction.user.id;
+
+    // Get selected profile IDs
+    const selectedProfiles = interaction.values.map(v => parseInt(v));
+
+    // Store selected profiles in cache
+    const cacheKey = `${discordId}_${dropId}`;
+    selectedProfilesCache.set(cacheKey, selectedProfiles);
+
+    console.log(`✅ ${interaction.user.username} selected ${selectedProfiles.length} profiles for drop ${dropId}`);
+
+    // Fetch drop data to show SKU buttons
+    const response = await axios.get(
+      `${WEBSITE_API_URL}/api/discord-bot/drop-preferences/${dropId}/${discordId}`,
+      { headers: { 'x-bot-secret': API_SECRET } }
+    );
+
+    const { drop_name, skus, user_submissions, preferences } = response.data;
+
+    // Get profile names for display
+    const selectedProfileNames = selectedProfiles.map(id => {
+      const sub = user_submissions.find(s => s.id === id);
+      return sub?.profile_name || `Profile #${id}`;
+    });
+
+    // Build message with selected profiles
+    let message = `**${drop_name}**\n\n`;
+    message += `**Selected Profiles:**\n${selectedProfileNames.map(name => `• ${name}`).join('\n')}\n\n`;
+    message += `**Now select SKUs** to run on these profiles:\n`;
+    message += `(Click a SKU to toggle it on/off)`;
+
+    // Build SKU buttons with correct initial state based on existing preferences
     const buttons = [];
     const rows = [];
 
     for (const sku of skus) {
-      const isOptedIn = preferences[sku.sku]?.opted_in === true;
+      // Check if this SKU has preferences for ANY of the selected profiles
+      const skuPrefs = preferences[sku.sku];
+      const isOptedIn = skuPrefs && skuPrefs.opted_in && skuPrefs.submissions.length > 0;
 
       const button = new ButtonBuilder()
-        .setCustomId(`drop_${dropId}_${sku.sku}`)
+        .setCustomId(`sku_toggle_${dropId}_${sku.sku}`)
         .setLabel(sku.name)
         .setStyle(isOptedIn ? ButtonStyle.Success : ButtonStyle.Secondary)
         .setEmoji(isOptedIn ? '✅' : '⬜');
@@ -463,116 +538,56 @@ async function handleManagePreferences(interaction) {
       rows.push(row);
     }
 
-    // If more than 5 rows (>25 buttons), limit to 25
+    // Limit to 25 buttons
     if (rows.length > 5) {
-      await interaction.reply({
-        content: `⚠️ This drop has ${skus.length} SKUs, but Discord limits buttons to 25 per message. Showing first 25 only.`,
-        ephemeral: true
-      });
       rows.splice(5);
     }
 
-    // Reply with profile info and SKU buttons (ephemeral - only user sees it)
-    await interaction.reply({
-      content: profileInfo,
-      components: rows,
-      ephemeral: true
+    await interaction.update({
+      content: message,
+      components: rows
     });
 
   } catch (error) {
-    console.error('Error showing preferences:', error);
+    console.error('Error handling profile selection:', error);
     await interaction.reply({
-      content: '❌ Error loading preferences. Please try again.',
+      content: '❌ Error processing selection. Please try again.',
       ephemeral: true
     });
   }
 }
 
-// Handle SKU toggle button - shows profile selection
+// Handle SKU toggle button - toggles SKU for cached profiles
 async function handleSKUToggle(interaction) {
   try {
-    // Parse custom ID: drop_{dropId}_{sku}
+    // Parse custom ID: sku_toggle_{dropId}_{sku}
     const parts = interaction.customId.split('_');
-    const dropId = parts[1];
-    const sku = parts.slice(2).join('_'); // In case SKU contains underscores
+    const dropId = parts[2];
+    const sku = parts.slice(3).join('_'); // In case SKU contains underscores
 
     const discordId = interaction.user.id;
-    const discordUsername = `${interaction.user.username}#${interaction.user.discriminator}`;
+    const discordUsername = interaction.user.username;
 
-    console.log(`📋 ${discordUsername} selecting profiles for ${sku} in drop ${dropId}`);
+    // Get cached profile selection
+    const cacheKey = `${discordId}_${dropId}`;
+    const selectedProfiles = selectedProfilesCache.get(cacheKey);
 
-    // Fetch drop data and user submissions
-    const response = await axios.get(
-      `${WEBSITE_API_URL}/api/discord-bot/drop-preferences/${dropId}/${discordId}`,
-      {
-        headers: { 'x-bot-secret': API_SECRET }
-      }
-    );
+    if (!selectedProfiles || selectedProfiles.length === 0) {
+      await interaction.reply({
+        content: '❌ Session expired. Please click "Manage Preferences" again to start over.',
+        ephemeral: true
+      });
+      return;
+    }
 
-    const { drop_name, service_name, user_submissions, preferences, skus } = response.data;
+    // Determine if currently opted in based on button appearance
+    const wasOptedIn = interaction.component.style === ButtonStyle.Success;
+    const newOptedIn = !wasOptedIn;
 
-    // Find the SKU name
-    const skuObj = skus.find(s => s.sku === sku);
-    const skuName = skuObj ? skuObj.name : sku;
+    console.log(`🔄 ${discordUsername} toggling ${sku} for ${selectedProfiles.length} profiles: ${wasOptedIn ? 'opting out' : 'opting in'}`);
 
-    // Get currently selected submissions for this SKU
-    const currentSelections = preferences[sku]?.submissions || [];
-
-    // Build select menu options
-    const options = user_submissions.map((sub, idx) => {
-      const label = sub.profile_name || `Profile #${sub.id}`;
-      const description = `Created: ${new Date(sub.created_at).toLocaleDateString()}`;
-
-      return new StringSelectMenuOptionBuilder()
-        .setLabel(label.length > 100 ? label.substring(0, 97) + '...' : label)
-        .setDescription(description)
-        .setValue(sub.id.toString())
-        .setDefault(currentSelections.includes(sub.id));
-    });
-
-    const selectMenu = new StringSelectMenuBuilder()
-      .setCustomId(`profile_select_${dropId}_${sku}`)
-      .setPlaceholder('Select profiles to run for this SKU')
-      .setMinValues(0) // Allow deselecting all
-      .setMaxValues(user_submissions.length) // Allow selecting all
-      .addOptions(options);
-
-    const row = new ActionRowBuilder().addComponents(selectMenu);
-
-    // Reply with profile selector
-    await interaction.reply({
-      content: `**${skuName}**\n\nSelect which ${service_name} profiles to run for this SKU:\n(Select none to opt out)`,
-      components: [row],
-      ephemeral: true
-    });
-
-  } catch (error) {
-    console.error('Error showing profile selector:', error);
-    await interaction.reply({
-      content: '❌ Error loading profiles. Please try again.',
-      ephemeral: true
-    });
-  }
-}
-
-// Handle profile selection from select menu
-async function handleProfileSelection(interaction) {
-  try {
-    // Parse custom ID: profile_select_{dropId}_{sku}
-    const customId = interaction.customId.replace('profile_select_', '');
-    const parts = customId.split('_');
-    const dropId = parts[0];
-    const sku = parts.slice(1).join('_');
-
-    const discordId = interaction.user.id;
-    const discordUsername = `${interaction.user.username}#${interaction.user.discriminator}`;
-
-    // Get selected profile IDs
-    const selectedProfiles = interaction.values.map(v => parseInt(v));
-
-    console.log(`✅ ${discordUsername} selected ${selectedProfiles.length} profiles for ${sku} in drop ${dropId}`);
-
-    // Save preferences to API
+    // Save preferences for all selected profiles
+    // If opting out, send empty array; if opting in, send selected profiles
     const response = await axios.post(
       `${WEBSITE_API_URL}/api/discord-bot/drop-interaction`,
       {
@@ -581,7 +596,7 @@ async function handleProfileSelection(interaction) {
         discord_username: discordUsername,
         sku: sku,
         action: 'set_profiles',
-        submission_ids: selectedProfiles
+        submission_ids: newOptedIn ? selectedProfiles : []
       },
       {
         headers: {
@@ -591,42 +606,46 @@ async function handleProfileSelection(interaction) {
       }
     );
 
-    if (selectedProfiles.length === 0) {
-      await interaction.update({
-        content: `✅ **Opted out** of ${sku}\n\nYou can change this anytime by clicking the SKU button again.`,
-        components: []
-      });
-    } else {
-      // Fetch profile names for confirmation
-      let profileNames = selectedProfiles.map(id => `#${id}`);
-      try {
-        const response2 = await axios.get(
-          `${WEBSITE_API_URL}/api/discord-bot/drop-preferences/${dropId}/${discordId}`,
-          { headers: { 'x-bot-secret': API_SECRET } }
-        );
-        const { user_submissions } = response2.data;
-        profileNames = selectedProfiles.map(id => {
-          const sub = user_submissions.find(s => s.id === id);
-          return sub?.profile_name || `#${id}`;
-        });
-      } catch (err) {
-        console.error('Error fetching profile names for confirmation:', err);
-      }
+    const components = interaction.message.components.map(row => {
+      const actionRow = new ActionRowBuilder();
 
-      await interaction.update({
-        content: `✅ **Opted in** to ${sku}\n\n**Selected Profiles:**\n${profileNames.map(name => `• ${name}`).join('\n')}\n\nYou can change this anytime by clicking the SKU button again.`,
-        components: []
+      row.components.forEach(button => {
+        const btn = new ButtonBuilder()
+          .setCustomId(button.customId)
+          .setLabel(button.label);
+
+        if (button.customId === interaction.customId) {
+          // This is the button that was clicked - toggle its style
+          btn.setStyle(newOptedIn ? ButtonStyle.Success : ButtonStyle.Secondary);
+          btn.setEmoji(newOptedIn ? '✅' : '⬜');
+        } else {
+          // Keep other buttons the same
+          btn.setStyle(button.style);
+          btn.setEmoji(button.emoji?.name || '⬜');
+        }
+
+        actionRow.addComponents(btn);
       });
-    }
+
+      return actionRow;
+    });
+
+    // Update the message with new button states
+    await interaction.update({
+      components: components
+    });
+
+    console.log(`✅ Toggled ${sku}: ${newOptedIn ? 'opted in' : 'opted out'} for ${selectedProfiles.length} profiles`);
 
   } catch (error) {
-    console.error('Error saving profile selection:', error);
+    console.error('Error toggling SKU:', error);
     await interaction.reply({
-      content: '❌ Error saving preferences. Please try again.',
+      content: '❌ Error updating preference. Please try again.',
       ephemeral: true
     });
   }
 }
+
 
 // ==================== END DROP PREFERENCE FUNCTIONS ====================
 
@@ -1062,14 +1081,15 @@ client.on('interactionCreate', async (interaction) => {
       await handleManagePreferences(interaction);
     }
     // Handle SKU toggle buttons
-    else if (interaction.customId.startsWith('drop_')) {
+    else if (interaction.customId.startsWith('sku_toggle_')) {
       await handleSKUToggle(interaction);
     }
   }
   // Handle select menu interactions
   else if (interaction.isStringSelectMenu()) {
-    if (interaction.customId.startsWith('profile_select_')) {
-      await handleProfileSelection(interaction);
+    // Handle profile selection (shows SKU buttons after)
+    if (interaction.customId.startsWith('select_profiles_')) {
+      await handleInitialProfileSelection(interaction);
     }
   }
 });
