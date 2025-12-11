@@ -1329,7 +1329,10 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
         // Create Prism profile
         const firstName = parsed.first_name || '';
         const lastName = parsed.last_name || '';
-        const fullName = `${firstName} ${lastName}`.trim() || sub.discord_username;
+        const baseName = `${firstName} ${lastName}`.trim() || sub.discord_username;
+        // Capitalize service name (e.g., "target" -> "Target", "pokemoncenter" -> "Pokemoncenter")
+        const serviceName = sub.service_name.charAt(0).toUpperCase() + sub.service_name.slice(1);
+        const fullName = `${baseName} ${serviceName}`;
 
         // Check if billing is different (handle boolean, string, and number types)
         const billingIsDifferent = parsed.billing_same_as_shipping === false ||
@@ -1437,7 +1440,10 @@ router.post('/export/stellar-csv', ensureAdminAuth, async (req, res) => {
         // Create profile name
         const firstName = parsed.first_name || '';
         const lastName = parsed.last_name || '';
-        const profileName = `${firstName} ${lastName}`.trim() || sub.discord_username;
+        const baseName = `${firstName} ${lastName}`.trim() || sub.discord_username;
+        // Capitalize service name (e.g., "target" -> "Target", "pokemoncenter" -> "Pokemoncenter")
+        const serviceName = sub.service_name.charAt(0).toUpperCase() + sub.service_name.slice(1);
+        const profileName = `${baseName} ${serviceName}`;
 
         // Check if billing is same as shipping
         const billingSameAsShipping = parsed.billing_same_as_shipping === true ||
