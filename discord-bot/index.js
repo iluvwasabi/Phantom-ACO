@@ -7,7 +7,9 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.DirectMessages
   ]
 });
 
@@ -17,6 +19,9 @@ const PUBLIC_CHECKOUT_CHANNEL_ID = process.env.PUBLIC_CHECKOUT_CHANNEL_ID;
 const DROP_ANNOUNCEMENT_CHANNEL_ID = process.env.DROP_ANNOUNCEMENT_CHANNEL_ID;
 const WEBSITE_API_URL = process.env.WEBSITE_API_URL || 'http://localhost:3000';
 const API_SECRET = process.env.DISCORD_BOT_API_SECRET;
+
+// Store DM conversation states for drop creation
+const dmConversations = new Map(); // userId -> { step, messageId, channelId, dropName, skus }
 
 // Parse Refract checkout message
 function parseRefractCheckout(embed) {
@@ -635,6 +640,221 @@ async function processCheckoutMessage(message) {
     // Optional: React with error emoji
     await message.react('❌');
   }
+}
+
+// Handle message reactions for drop creation
+client.on('messageReactionAdd', async (reaction, user) => {
+  // Ignore bot's own reactions
+  if (user.bot) return;
+
+  // Fetch partial reactions
+  if (reaction.partial) {
+    try {
+      await reaction.fetch();
+    } catch (error) {
+      console.error('Error fetching reaction:', error);
+      return;
+    }
+  }
+
+  // Check if reaction is 🔥 and in the drop announcement channel
+  if (reaction.emoji.name === '🔥' && reaction.message.channelId === DROP_ANNOUNCEMENT_CHANNEL_ID) {
+    console.log(`🔥 Drop creation initiated by ${user.tag} on message ${reaction.message.id}`);
+
+    try {
+      // Remove the reaction to keep channel clean
+      await reaction.users.remove(user.id);
+
+      // Start DM conversation
+      const dmChannel = await user.createDM();
+
+      // Get the original message content for reference
+      const messageContent = reaction.message.content || 'No text content';
+      const messageUrl = `https://discord.com/channels/${reaction.message.guildId}/${reaction.message.channelId}/${reaction.message.id}`;
+
+      await dmChannel.send({
+        embeds: [{
+          title: '🔥 Create Drop from Message',
+          description: `You reacted to a message to create a drop. Let's set it up!\n\n[Jump to message](${messageUrl})`,
+          color: 0x5865F2,
+          fields: [
+            { name: 'Message Preview', value: messageContent.substring(0, 1024) }
+          ]
+        }]
+      });
+
+      await dmChannel.send('**What should we name this drop?**\n_Example: Pokemon 151 Elite Trainer Box Drop_');
+
+      // Store conversation state
+      dmConversations.set(user.id, {
+        step: 'name',
+        messageId: reaction.message.id,
+        channelId: reaction.message.channelId,
+        guildId: reaction.message.guildId,
+        messageContent: messageContent
+      });
+
+    } catch (error) {
+      console.error('Error starting drop creation:', error);
+      try {
+        const dmChannel = await user.createDM();
+        await dmChannel.send('❌ Error starting drop creation. Make sure your DMs are open!');
+      } catch (dmError) {
+        console.error('Could not DM user:', dmError);
+      }
+    }
+  }
+});
+
+// Handle DM messages for drop creation
+client.on('messageCreate', async (message) => {
+  // Handle drop creation DMs
+  if (message.channel.type === 1 && !message.author.bot) { // DM channel
+    const userId = message.author.id;
+    const conversation = dmConversations.get(userId);
+
+    if (conversation) {
+      await handleDropCreationDM(message, conversation);
+      return;
+    }
+  }
+
+  // Existing checkout monitoring code
+  // Ignore messages from other channels
+  if (message.channel.id !== CHECKOUT_CHANNEL_ID) {
+    return;
+  }
+
+  // ... rest of checkout handling code continues below
+});
+
+// Handle drop creation conversation in DMs
+async function handleDropCreationDM(message, conversation) {
+  const userId = message.author.id;
+
+  try {
+    if (conversation.step === 'name') {
+      // Store drop name
+      conversation.dropName = message.content.trim();
+      conversation.step = 'skus';
+
+      await message.reply('**Now send the SKU list** (one per line or comma-separated)\n\n_Example:_\n```\nETB-001: Elite Trainer Box\nBB-001: Booster Box\nCB-001: Collector Box\n```\n_Or:_\n```\nETB-001: Elite Trainer Box, BB-001: Booster Box, CB-001: Collector Box\n```');
+
+      dmConversations.set(userId, conversation);
+
+    } else if (conversation.step === 'skus') {
+      // Parse SKUs
+      const skuText = message.content.trim();
+      const skus = [];
+
+      // Try to parse different formats
+      const lines = skuText.split('\n').filter(line => line.trim());
+
+      for (const line of lines) {
+        // Handle comma-separated in a single line
+        if (line.includes(',')) {
+          const parts = line.split(',');
+          for (const part of parts) {
+            const sku = parseSKULine(part.trim());
+            if (sku) skus.push(sku);
+          }
+        } else {
+          const sku = parseSKULine(line.trim());
+          if (sku) skus.push(sku);
+        }
+      }
+
+      if (skus.length === 0) {
+        await message.reply('❌ Could not parse any SKUs. Please try again with format:\n```\nSKU-CODE: Product Name\n```');
+        return;
+      }
+
+      // Show confirmation
+      const skuList = skus.map((s, i) => `${i + 1}. **${s.sku}**: ${s.name}`).join('\n');
+      await message.reply({
+        embeds: [{
+          title: '✅ Drop Ready to Create',
+          color: 0x57F287,
+          fields: [
+            { name: 'Drop Name', value: conversation.dropName },
+            { name: `SKUs (${skus.length})`, value: skuList }
+          ]
+        }]
+      });
+
+      await message.reply('Creating drop and adding button to your message...');
+
+      // Create drop in database
+      try {
+        const response = await axios.post(
+          `${WEBSITE_API_URL}/admin/drops`,
+          {
+            drop_name: conversation.dropName,
+            description: null,
+            drop_date: null,
+            skus: skus
+          },
+          {
+            headers: {
+              'x-bot-secret': API_SECRET,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        const dropId = response.data.drop_id;
+
+        // Fetch the original message and add button
+        const channel = await client.channels.fetch(conversation.channelId);
+        const originalMessage = await channel.messages.fetch(conversation.messageId);
+
+        const row = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId(`drop_manage_${dropId}`)
+              .setLabel('⚙️ Manage Preferences')
+              .setStyle(ButtonStyle.Primary)
+          );
+
+        await originalMessage.edit({
+          content: originalMessage.content,
+          embeds: originalMessage.embeds,
+          components: [row]
+        });
+
+        await message.reply('✅ Drop created successfully! Button added to your message. Users can now manage their preferences!');
+
+        // Clean up conversation state
+        dmConversations.delete(userId);
+
+      } catch (error) {
+        console.error('Error creating drop:', error);
+        await message.reply(`❌ Error creating drop: ${error.response?.data?.error || error.message}\n\nPlease try again by reacting to your message with 🔥`);
+        dmConversations.delete(userId);
+      }
+    }
+
+  } catch (error) {
+    console.error('Error handling drop creation DM:', error);
+    await message.reply('❌ An error occurred. Please start over by reacting to your message with 🔥');
+    dmConversations.delete(userId);
+  }
+}
+
+// Parse a single SKU line in various formats
+function parseSKULine(line) {
+  // Format: "SKU-CODE: Product Name" or "SKU-CODE - Product Name"
+  const colonMatch = line.match(/^([A-Za-z0-9-_]+)\s*:\s*(.+)$/);
+  if (colonMatch) {
+    return { sku: colonMatch[1], name: colonMatch[2].trim() };
+  }
+
+  const dashMatch = line.match(/^([A-Za-z0-9-_]+)\s*-\s*(.+)$/);
+  if (dashMatch) {
+    return { sku: dashMatch[1], name: dashMatch[2].trim() };
+  }
+
+  return null;
 }
 
 // Handle button interactions
