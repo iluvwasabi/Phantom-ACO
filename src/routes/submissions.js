@@ -264,7 +264,7 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
     }
 
     // Get user's discord_username for profile name
-    const user = db.prepare('SELECT discord_username FROM users WHERE id = ?').get(userId);
+    const userInfo = db.prepare('SELECT discord_username FROM users WHERE id = ?').get(userId);
 
     // Count existing submissions for this user and service to generate profile number
     const existingCount = db.prepare(`
@@ -275,7 +275,7 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
 
     // Generate profile name: "DiscordUsername ServiceName Number"
     const profileNumber = existingCount + 1;
-    const profileName = `${user.discord_username} ${service} ${profileNumber}`;
+    const profileName = `${userInfo.discord_username} ${service} ${profileNumber}`;
 
     // Create service subscription (with keep_running defaulting to 1)
     // Use service name as type for services with custom forms, otherwise use login_required/no_login
