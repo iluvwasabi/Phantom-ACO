@@ -787,7 +787,7 @@ async function handleDropCreationDM(message, conversation) {
       // Create drop in database
       try {
         const response = await axios.post(
-          `${WEBSITE_API_URL}/admin/drops`,
+          `${WEBSITE_API_URL}/api/discord-bot/create-drop`,
           {
             drop_name: conversation.dropName,
             description: null,

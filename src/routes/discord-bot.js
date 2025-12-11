@@ -378,4 +378,38 @@ router.get('/api/discord-bot/get-drop-queue', verifyBotSecret, async (req, res) 
   }
 });
 
+// POST /api/discord-bot/create-drop - Discord bot creates drop from reaction workflow
+router.post('/api/discord-bot/create-drop', express.json(), verifyBotSecret, async (req, res) => {
+  try {
+    const { drop_name, description, drop_date, skus } = req.body;
+
+    // Validate required fields
+    if (!drop_name || !skus || skus.length === 0) {
+      return res.status(400).json({ error: 'Drop name and SKUs are required' });
+    }
+
+    console.log(`📋 Bot creating drop: ${drop_name} with ${skus.length} SKUs`);
+
+    // Insert drop
+    const result = db.prepare(`
+      INSERT INTO drops (drop_name, description, drop_date, skus, created_by)
+      VALUES (?, ?, ?, ?, NULL)
+    `).run(drop_name, description, drop_date || null, JSON.stringify(skus));
+
+    const dropId = result.lastInsertRowid;
+
+    console.log(`✅ Drop created with ID: ${dropId}`);
+
+    res.json({
+      success: true,
+      drop_id: dropId,
+      message: 'Drop created successfully'
+    });
+
+  } catch (error) {
+    console.error('Error creating drop via bot:', error);
+    res.status(500).json({ error: 'Failed to create drop: ' + error.message });
+  }
+});
+
 module.exports = router;
