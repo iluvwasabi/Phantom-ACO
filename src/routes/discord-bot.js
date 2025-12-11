@@ -343,7 +343,7 @@ router.get('/api/discord-bot/drop-preferences/:dropId/:discordId', verifyBotSecr
 
         // Use case-insensitive comparison for service_name
         userSubmissions = db.prepare(`
-          SELECT id, service_name, created_at
+          SELECT id, service_name, profile_name, created_at
           FROM service_subscriptions
           WHERE user_id = ? AND LOWER(service_name) = LOWER(?) AND status = 'active'
           ORDER BY created_at ASC

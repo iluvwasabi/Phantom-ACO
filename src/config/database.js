@@ -297,6 +297,9 @@ const runMigrations = () => {
         } else if (file === 'update-drop-preferences-constraint.js') {
           console.log('Updating drop_preferences unique constraint...');
           require(path.join(migrationsDir, file));
+        } else if (file === 'add-profile-names.js') {
+          console.log('Adding profile names to service_subscriptions...');
+          require(path.join(migrationsDir, file));
         }
       } catch (error) {
         console.error(`Error running migration ${file}:`, error.message);

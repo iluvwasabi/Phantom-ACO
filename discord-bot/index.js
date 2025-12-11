@@ -519,9 +519,12 @@ async function handleSKUToggle(interaction) {
 
     // Build select menu options
     const options = user_submissions.map((sub, idx) => {
+      const label = sub.profile_name || `Profile #${sub.id}`;
+      const description = `Created: ${new Date(sub.created_at).toLocaleDateString()}`;
+
       return new StringSelectMenuOptionBuilder()
-        .setLabel(`Profile #${sub.id}`)
-        .setDescription(`Created: ${new Date(sub.created_at).toLocaleDateString()}`)
+        .setLabel(label.length > 100 ? label.substring(0, 97) + '...' : label)
+        .setDescription(description)
         .setValue(sub.id.toString())
         .setDefault(currentSelections.includes(sub.id));
     });
@@ -593,8 +596,24 @@ async function handleProfileSelection(interaction) {
         components: []
       });
     } else {
+      // Fetch profile names for confirmation
+      let profileNames = selectedProfiles.map(id => `#${id}`);
+      try {
+        const response2 = await axios.get(
+          `${WEBSITE_API_URL}/api/discord-bot/drop-preferences/${dropId}/${discordId}`,
+          { headers: { 'x-bot-secret': API_SECRET } }
+        );
+        const { user_submissions } = response2.data;
+        profileNames = selectedProfiles.map(id => {
+          const sub = user_submissions.find(s => s.id === id);
+          return sub?.profile_name || `#${id}`;
+        });
+      } catch (err) {
+        console.error('Error fetching profile names for confirmation:', err);
+      }
+
       await interaction.update({
-        content: `✅ **Opted in** to ${sku}\n\n**Selected Profiles:** ${selectedProfiles.map(id => `#${id}`).join(', ')}\n\nYou can change this anytime by clicking the SKU button again.`,
+        content: `✅ **Opted in** to ${sku}\n\n**Selected Profiles:**\n${profileNames.map(name => `• ${name}`).join('\n')}\n\nYou can change this anytime by clicking the SKU button again.`,
         components: []
       });
     }

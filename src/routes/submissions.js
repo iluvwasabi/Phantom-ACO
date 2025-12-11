@@ -263,16 +263,29 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       }
     }
 
+    // Count existing submissions for this user and service to generate profile number
+    const existingCount = db.prepare(`
+      SELECT COUNT(*) as count
+      FROM service_subscriptions
+      WHERE user_id = ? AND service_name = ?
+    `).get(userId, service).count;
+
+    // Generate profile name: "FirstName LastName ServiceName Number"
+    const profileNumber = existingCount + 1;
+    const profileName = `${first_name} ${last_name} ${service} ${profileNumber}`;
+
     // Create service subscription (with keep_running defaulting to 1)
     // Use service name as type for services with custom forms, otherwise use login_required/no_login
     const servicesWithCustomForms = ['target', 'walmart', 'bestbuy', 'pokemoncenter', 'shopify'];
     const serviceType = servicesWithCustomForms.includes(service) ? service : (account_email ? 'login_required' : 'no_login');
     const subscriptionResult = db.prepare(`
-      INSERT INTO service_subscriptions (user_id, service_type, service_name, status, notes, keep_running)
-      VALUES (?, ?, ?, 'active', ?, 1)
-    `).run(userId, serviceType, service, notes || null);
+      INSERT INTO service_subscriptions (user_id, service_type, service_name, profile_name, status, notes, keep_running)
+      VALUES (?, ?, ?, ?, 'active', ?, 1)
+    `).run(userId, serviceType, service, profileName, notes || null);
 
     const subscriptionId = subscriptionResult.lastInsertRowid;
+
+    console.log(`✅ Created submission with profile name: "${profileName}"`);
 
     // Prepare data object (NOT encrypted yet)
     const dataToEncrypt = {
