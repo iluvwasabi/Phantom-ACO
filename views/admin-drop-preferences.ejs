@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drop Preferences - <%= drop.drop_name %> - Phantom ACO Admin</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
+          <span style="margin-left: 12px; padding: 4px 12px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">ADMIN</span>
+        </div>
+        <div class="header-actions">
+          <a href="/admin/drops" class="btn btn-ghost">← Back to Drops</a>
+          <a href="/admin" class="btn btn-ghost">Admin Home</a>
+          <a href="/auth/logout" class="btn btn-ghost">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+      <!-- Drop Header -->
+      <div style="margin-bottom: 32px; padding: 24px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+          <div>
+            <h1 class="title" style="margin-bottom: 8px;"><%= drop.drop_name %></h1>
+            <% if (drop.description) { %>
+              <p style="color: var(--muted); margin-bottom: 12px;"><%= drop.description %></p>
+            <% } %>
+            <% if (drop.drop_date) { %>
+              <p style="color: var(--muted); font-size: 0.875rem;">
+                📅 Drop Date: <%= new Date(drop.drop_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+              </p>
+            <% } %>
+          </div>
+          <div>
+            <a href="/admin/api/drops/<%= drop.id %>/export" class="btn btn-success">📊 Export CSV</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- SKU Preferences -->
+      <% skus.forEach(sku => { %>
+        <%
+          const skuData = preferenceBySku[sku.sku];
+          const optedInCount = skuData ? skuData.opted_in.length : 0;
+          const optedOutCount = skuData ? skuData.opted_out.length : 0;
+        %>
+
+        <div style="margin-bottom: 32px;">
+          <!-- SKU Header -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 4px;">
+                <%= sku.sku %>
+              </h2>
+              <p style="color: var(--muted); font-size: 0.875rem;"><%= sku.name %></p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <div class="badge badge-success" style="font-size: 0.875rem; padding: 6px 12px;">
+                ✅ <%= optedInCount %> opted in
+              </div>
+              <div class="badge" style="background: rgba(148, 163, 184, 0.2); color: var(--muted); font-size: 0.875rem; padding: 6px 12px;">
+                ⬜ <%= optedOutCount %> opted out
+              </div>
+            </div>
+          </div>
+
+          <!-- Opted In Users Table -->
+          <% if (skuData && skuData.opted_in.length > 0) { %>
+            <div class="submissions-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Discord Username</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Discord ID</th>
+                    <th>Opted In At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% skuData.opted_in.forEach(user => { %>
+                    <tr>
+                      <td><strong><%= user.discord_username || 'N/A' %></strong></td>
+                      <td>
+                        <% if (user.first_name) { %>
+                          <%= user.first_name %>
+                        <% } else { %>
+                          <span style="color: var(--muted); font-style: italic;">Not registered</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (user.last_name) { %>
+                          <%= user.last_name %>
+                        <% } else { %>
+                          <span style="color: var(--muted); font-style: italic;">Not registered</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (user.email) { %>
+                          <%= user.email %>
+                        <% } else { %>
+                          <span style="color: var(--muted); font-style: italic;">N/A</span>
+                        <% } %>
+                      </td>
+                      <td style="font-family: monospace; font-size: 0.875rem; color: var(--muted);">
+                        <%= user.discord_id %>
+                      </td>
+                      <td style="color: var(--muted); font-size: 0.875rem;">
+                        <%= new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div style="padding: 40px; text-align: center; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px dashed rgba(255, 255, 255, 0.1);">
+              <p style="color: var(--muted);">No users have opted into this SKU yet</p>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+
+      <!-- Summary -->
+      <div style="margin-top: 48px; padding: 24px; background: rgba(99, 102, 241, 0.1); border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.2);">
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 12px;">📋 Summary</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+          <div>
+            <p style="color: var(--muted); font-size: 0.875rem; margin-bottom: 4px;">Total SKUs</p>
+            <p style="font-size: 1.5rem; font-weight: 600;"><%= skus.length %></p>
+          </div>
+          <div>
+            <p style="color: var(--muted); font-size: 0.875rem; margin-bottom: 4px;">Total Unique Users</p>
+            <p style="font-size: 1.5rem; font-weight: 600;">
+              <%
+                const uniqueUsers = new Set();
+                Object.values(preferenceBySku).forEach(sku => {
+                  sku.opted_in.forEach(user => uniqueUsers.add(user.discord_id));
+                  sku.opted_out.forEach(user => uniqueUsers.add(user.discord_id));
+                });
+              %>
+              <%= uniqueUsers.size %>
+            </p>
+          </div>
+          <div>
+            <p style="color: var(--muted); font-size: 0.875rem; margin-bottom: 4px;">Total Preferences</p>
+            <p style="font-size: 1.5rem; font-weight: 600;">
+              <%
+                let totalPrefs = 0;
+                Object.values(preferenceBySku).forEach(sku => {
+                  totalPrefs += sku.opted_in.length + sku.opted_out.length;
+                });
+              %>
+              <%= totalPrefs %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

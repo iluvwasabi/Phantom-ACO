@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const axios = require('axios');
 
 // Discord bot client
@@ -14,6 +14,7 @@ const client = new Client({
 // Configuration
 const CHECKOUT_CHANNEL_ID = process.env.DISCORD_CHECKOUT_CHANNEL_ID;
 const PUBLIC_CHECKOUT_CHANNEL_ID = process.env.PUBLIC_CHECKOUT_CHANNEL_ID;
+const DROP_ANNOUNCEMENT_CHANNEL_ID = process.env.DROP_ANNOUNCEMENT_CHANNEL_ID;
 const WEBSITE_API_URL = process.env.WEBSITE_API_URL || 'http://localhost:3000';
 const API_SECRET = process.env.DISCORD_BOT_API_SECRET;
 
@@ -297,12 +298,259 @@ async function sendToPublicChannel(checkoutData) {
   }
 }
 
+// ==================== DROP PREFERENCE FUNCTIONS ====================
+
+// Poll for drop announcements every 5 seconds
+async function pollDropAnnouncements() {
+  try {
+    const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/get-drop-queue`, {
+      headers: {
+        'x-bot-secret': API_SECRET
+      }
+    });
+
+    const { announcements } = response.data;
+
+    if (announcements && announcements.length > 0) {
+      console.log(`📢 Processing ${announcements.length} drop announcement(s)`);
+
+      for (const announcement of announcements) {
+        await postDropAnnouncement(announcement);
+      }
+    }
+  } catch (error) {
+    console.error('Error polling drop announcements:', error.message);
+  }
+}
+
+// Post drop announcement to Discord
+async function postDropAnnouncement(announcement) {
+  try {
+    const {
+      drop_id,
+      drop_name,
+      description,
+      drop_date,
+      sku_list,
+      sku_count,
+      channel_id
+    } = announcement;
+
+    const channel = await client.channels.fetch(channel_id);
+
+    if (!channel) {
+      console.error(`❌ Channel ${channel_id} not found`);
+      return;
+    }
+
+    // Format drop date
+    let dropDateStr = 'TBA';
+    if (drop_date) {
+      const date = new Date(drop_date);
+      dropDateStr = date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Create embed
+    const embed = new EmbedBuilder()
+      .setTitle(`🔥 ${drop_name}`)
+      .setColor(0x5865F2)
+      .addFields(
+        { name: '📅 Drop Date', value: dropDateStr, inline: false },
+        { name: '🛍️ SKUs Available', value: `${sku_count} SKUs`, inline: true }
+      )
+      .setTimestamp();
+
+    if (description) {
+      embed.setDescription(description);
+    }
+
+    if (sku_list) {
+      embed.addFields({ name: '📦 Products', value: sku_list, inline: false });
+    }
+
+    // Create "Manage Preferences" button
+    const row = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId(`drop_manage_${drop_id}`)
+          .setLabel('⚙️ Manage Preferences')
+          .setStyle(ButtonStyle.Primary)
+      );
+
+    // Send message
+    const message = await channel.send({
+      embeds: [embed],
+      components: [row]
+    });
+
+    console.log(`✅ Posted drop announcement: ${drop_name} (Message ID: ${message.id})`);
+
+  } catch (error) {
+    console.error('Error posting drop announcement:', error);
+  }
+}
+
+// Handle "Manage Preferences" button
+async function handleManagePreferences(interaction) {
+  try {
+    // Extract drop ID from custom ID: drop_manage_{dropId}
+    const dropId = interaction.customId.replace('drop_manage_', '');
+    const discordId = interaction.user.id;
+    const discordUsername = `${interaction.user.username}#${interaction.user.discriminator}`;
+
+    console.log(`👤 ${discordUsername} is managing preferences for drop ${dropId}`);
+
+    // Fetch drop data and user's current preferences
+    const response = await axios.get(
+      `${WEBSITE_API_URL}/api/discord-bot/drop-preferences/${dropId}/${discordId}`,
+      {
+        headers: { 'x-bot-secret': API_SECRET }
+      }
+    );
+
+    const { drop_name, skus, preferences } = response.data;
+
+    // Build SKU buttons (max 25 buttons, 5 per row)
+    const buttons = [];
+    const rows = [];
+
+    for (const sku of skus) {
+      const isOptedIn = preferences[sku.sku] === true;
+
+      const button = new ButtonBuilder()
+        .setCustomId(`drop_${dropId}_${sku.sku}`)
+        .setLabel(sku.name)
+        .setStyle(isOptedIn ? ButtonStyle.Success : ButtonStyle.Secondary)
+        .setEmoji(isOptedIn ? '✅' : '⬜');
+
+      buttons.push(button);
+    }
+
+    // Group buttons into rows of 5
+    for (let i = 0; i < buttons.length; i += 5) {
+      const row = new ActionRowBuilder()
+        .addComponents(buttons.slice(i, i + 5));
+      rows.push(row);
+    }
+
+    // If more than 5 rows (>25 buttons), limit to 25
+    if (rows.length > 5) {
+      await interaction.reply({
+        content: `⚠️ This drop has ${skus.length} SKUs, but Discord limits buttons to 25 per message. Showing first 25 only.`,
+        ephemeral: true
+      });
+      rows.splice(5);
+    }
+
+    // Reply with SKU buttons (ephemeral - only user sees it)
+    await interaction.reply({
+      content: `**${drop_name}**\n\nSelect which SKUs you want to opt into (green ✅ = opted in):`,
+      components: rows,
+      ephemeral: true
+    });
+
+  } catch (error) {
+    console.error('Error showing preferences:', error);
+    await interaction.reply({
+      content: '❌ Error loading preferences. Please try again.',
+      ephemeral: true
+    });
+  }
+}
+
+// Handle SKU toggle button
+async function handleSKUToggle(interaction) {
+  try {
+    // Parse custom ID: drop_{dropId}_{sku}
+    const parts = interaction.customId.split('_');
+    const dropId = parts[1];
+    const sku = parts.slice(2).join('_'); // In case SKU contains underscores
+
+    const discordId = interaction.user.id;
+    const discordUsername = `${interaction.user.username}#${interaction.user.discriminator}`;
+
+    console.log(`🔄 ${discordUsername} toggling ${sku} for drop ${dropId}`);
+
+    // Toggle preference via API
+    const response = await axios.post(
+      `${WEBSITE_API_URL}/api/discord-bot/drop-interaction`,
+      {
+        drop_id: dropId,
+        discord_id: discordId,
+        discord_username: discordUsername,
+        sku: sku,
+        action: 'toggle'
+      },
+      {
+        headers: {
+          'x-bot-secret': API_SECRET,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const { opted_in } = response.data;
+
+    // Update button appearance
+    const components = interaction.message.components.map(row => {
+      const actionRow = new ActionRowBuilder();
+
+      row.components.forEach(button => {
+        const btn = new ButtonBuilder()
+          .setCustomId(button.customId)
+          .setLabel(button.label);
+
+        if (button.customId === interaction.customId) {
+          // This is the button that was clicked - update its style
+          btn.setStyle(opted_in ? ButtonStyle.Success : ButtonStyle.Secondary);
+          btn.setEmoji(opted_in ? '✅' : '⬜');
+        } else {
+          // Keep other buttons the same
+          btn.setStyle(button.style);
+          btn.setEmoji(button.emoji?.name || null);
+        }
+
+        actionRow.addComponents(btn);
+      });
+
+      return actionRow;
+    });
+
+    // Update the message with new button states
+    await interaction.update({
+      components: components
+    });
+
+    console.log(`✅ Updated ${sku}: ${opted_in ? 'opted in' : 'opted out'}`);
+
+  } catch (error) {
+    console.error('Error toggling SKU:', error);
+    await interaction.reply({
+      content: '❌ Error updating preference. Please try again.',
+      ephemeral: true
+    });
+  }
+}
+
+// ==================== END DROP PREFERENCE FUNCTIONS ====================
+
 // Bot ready event
 client.on('ready', () => {
   console.log(`✅ Discord bot logged in as ${client.user.tag}`);
   console.log(`📡 Monitoring channel: ${CHECKOUT_CHANNEL_ID}`);
   console.log(`📢 Public announcements channel: ${PUBLIC_CHECKOUT_CHANNEL_ID || 'Not configured'}`);
+  console.log(`🔥 Drop announcements channel: ${DROP_ANNOUNCEMENT_CHANNEL_ID || 'Not configured'}`);
   console.log(`🌐 Website API: ${WEBSITE_API_URL}`);
+
+  // Poll for drop announcements every 5 seconds
+  setInterval(pollDropAnnouncements, 5000);
+  console.log('✅ Started polling for drop announcements (every 5s)');
 });
 
 // Message create event
@@ -388,6 +636,20 @@ async function processCheckoutMessage(message) {
     await message.react('❌');
   }
 }
+
+// Handle button interactions
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  // Handle "Manage Preferences" button
+  if (interaction.customId.startsWith('drop_manage_')) {
+    await handleManagePreferences(interaction);
+  }
+  // Handle SKU toggle buttons
+  else if (interaction.customId.startsWith('drop_')) {
+    await handleSKUToggle(interaction);
+  }
+});
 
 // Error handling
 client.on('error', (error) => {

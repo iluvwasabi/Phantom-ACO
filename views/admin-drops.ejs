@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Drops - Phantom ACO Admin</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
+          <span style="margin-left: 12px; padding: 4px 12px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">ADMIN</span>
+        </div>
+        <div class="header-actions">
+          <a href="/admin" class="btn btn-ghost">Admin Home</a>
+          <a href="/dashboard" class="btn btn-ghost">User Dashboard</a>
+          <a href="/auth/logout" class="btn btn-ghost">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div class="toolbar">
+        <h1 class="title">Manage Drops</h1>
+        <button class="btn btn-primary" id="add-drop-btn">+ Create New Drop</button>
+      </div>
+
+      <!-- Drops Table -->
+      <div class="submissions-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Drop Name</th>
+              <th>Drop Date</th>
+              <th># SKUs</th>
+              <th># Users Opted In</th>
+              <th>Discord Posted</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (drops.length === 0) { %>
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">
+                  No drops yet. Click "Create New Drop" to get started.
+                </td>
+              </tr>
+            <% } else { %>
+              <% drops.forEach(drop => { %>
+                <tr data-drop-id="<%= drop.id %>">
+                  <td><strong><%= drop.drop_name %></strong></td>
+                  <td>
+                    <% if (drop.drop_date) { %>
+                      <%= new Date(drop.drop_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                    <% } else { %>
+                      <span style="color: var(--muted);">Not set</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <div class="badge" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;">
+                      <%= drop.sku_count %> SKU<%= drop.sku_count === 1 ? '' : 's' %>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="badge badge-success">
+                      <%= drop.total_users_opted_in || 0 %> user<%= drop.total_users_opted_in === 1 ? '' : 's' %>
+                    </div>
+                  </td>
+                  <td>
+                    <% if (drop.discord_message_id) { %>
+                      <div class="badge badge-success">Posted</div>
+                    <% } else { %>
+                      <div class="badge" style="background: rgba(148, 163, 184, 0.2); color: var(--muted);">Not Posted</div>
+                    <% } %>
+                  </td>
+                  <td style="color: var(--muted); font-size: 0.875rem;">
+                    <%= new Date(drop.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                  </td>
+                  <td>
+                    <div class="submission-actions">
+                      <% if (!drop.discord_message_id) { %>
+                        <button class="btn btn-sm btn-success post-to-discord-btn" data-drop-id="<%= drop.id %>">📢 Post to Discord</button>
+                      <% } %>
+                      <button class="btn btn-sm btn-primary view-preferences-btn" data-drop-id="<%= drop.id %>">👥 Preferences</button>
+                      <button class="btn btn-sm edit-drop-btn" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;" data-drop-id="<%= drop.id %>">✏️ Edit</button>
+                      <button class="btn btn-sm btn-danger delete-drop-btn" data-drop-id="<%= drop.id %>">🗑️ Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Drop Modal -->
+  <div id="drop-modal" class="modal" aria-hidden="true">
+    <div class="dialog animate-in" role="dialog" aria-modal="true" style="max-width: 700px;">
+      <div class="dialog-header">
+        <h2 id="modal-title">Create New Drop</h2>
+        <button class="icon-btn close-drop-modal" aria-label="Close">✕</button>
+      </div>
+      <div class="dialog-body">
+        <form id="drop-form" class="form-grid">
+          <input type="hidden" id="drop-id">
+
+          <div class="field wide">
+            <label class="label">Drop Name *</label>
+            <input type="text" id="drop-name" class="control" placeholder="Pokemon 151 ETB Drop" required>
+          </div>
+
+          <div class="field wide">
+            <label class="label">Description</label>
+            <textarea id="drop-description" class="control" rows="3" placeholder="Details about this drop..."></textarea>
+          </div>
+
+          <div class="field wide">
+            <label class="label">Drop Date & Time</label>
+            <input type="datetime-local" id="drop-date" class="control">
+          </div>
+
+          <div class="field wide">
+            <label class="label">SKUs *</label>
+            <div id="sku-list" style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- SKU entries will be added here -->
+            </div>
+            <button type="button" class="btn btn-sm" id="add-sku-btn" style="margin-top: 12px; background: rgba(99, 102, 241, 0.2); color: #6366f1;">+ Add SKU</button>
+          </div>
+        </form>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-ghost close-drop-modal">Cancel</button>
+        <button class="btn btn-primary" id="save-drop-btn">Save Drop</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Modal management
+    const dropModal = document.getElementById('drop-modal');
+    const addDropBtn = document.getElementById('add-drop-btn');
+    const closeModalBtns = document.querySelectorAll('.close-drop-modal');
+    const saveDropBtn = document.getElementById('save-drop-btn');
+    const addSkuBtn = document.getElementById('add-sku-btn');
+    const skuList = document.getElementById('sku-list');
+
+    let editMode = false;
+    let skuCounter = 0;
+
+    // Open modal for new drop
+    addDropBtn?.addEventListener('click', () => {
+      editMode = false;
+      document.getElementById('modal-title').textContent = 'Create New Drop';
+      document.getElementById('drop-form').reset();
+      document.getElementById('drop-id').value = '';
+      skuList.innerHTML = '';
+      skuCounter = 0;
+      addSkuRow(); // Start with one SKU
+      dropModal.removeAttribute('aria-hidden');
+    });
+
+    // Close modal
+    closeModalBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        dropModal.setAttribute('aria-hidden', 'true');
+      });
+    });
+
+    // Close modal on outside click
+    dropModal?.addEventListener('click', (e) => {
+      if (e.target === dropModal) {
+        dropModal.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    // Add SKU row
+    addSkuBtn?.addEventListener('click', addSkuRow);
+
+    function addSkuRow(sku = '', name = '') {
+      const index = skuCounter++;
+      const row = document.createElement('div');
+      row.className = 'sku-row';
+      row.style.cssText = 'display: flex; gap: 12px; align-items: center;';
+      row.innerHTML = `
+        <div style="flex: 1;">
+          <input type="text" class="control sku-code" placeholder="SKU Code (e.g., ETB-001)" value="${sku}" required>
+        </div>
+        <div style="flex: 2;">
+          <input type="text" class="control sku-name" placeholder="Product Name (e.g., Elite Trainer Box)" value="${name}" required>
+        </div>
+        <button type="button" class="btn btn-sm btn-danger remove-sku-btn" data-index="${index}">🗑️</button>
+      `;
+
+      // Add remove handler
+      row.querySelector('.remove-sku-btn').addEventListener('click', () => {
+        if (skuList.children.length > 1) {
+          row.remove();
+        } else {
+          alert('You must have at least one SKU');
+        }
+      });
+
+      skuList.appendChild(row);
+    }
+
+    // Save drop
+    saveDropBtn?.addEventListener('click', async () => {
+      const dropId = document.getElementById('drop-id').value;
+      const dropName = document.getElementById('drop-name').value.trim();
+      const description = document.getElementById('drop-description').value.trim();
+      const dropDate = document.getElementById('drop-date').value;
+
+      if (!dropName) {
+        alert('Drop name is required');
+        return;
+      }
+
+      // Collect SKUs
+      const skuRows = skuList.querySelectorAll('.sku-row');
+      const skus = [];
+
+      for (const row of skuRows) {
+        const sku = row.querySelector('.sku-code').value.trim();
+        const name = row.querySelector('.sku-name').value.trim();
+
+        if (!sku || !name) {
+          alert('All SKU fields are required');
+          return;
+        }
+
+        skus.push({ sku, name });
+      }
+
+      if (skus.length === 0) {
+        alert('At least one SKU is required');
+        return;
+      }
+
+      const payload = {
+        drop_name: dropName,
+        description: description || null,
+        drop_date: dropDate || null,
+        skus: skus
+      };
+
+      try {
+        const url = editMode ? `/admin/drops/${dropId}` : '/admin/drops';
+        const method = editMode ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(editMode ? 'Drop updated successfully!' : 'Drop created successfully!');
+          window.location.reload();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to save drop'));
+        }
+      } catch (error) {
+        console.error('Error saving drop:', error);
+        alert('Error saving drop: ' + error.message);
+      }
+    });
+
+    // Edit drop
+    document.querySelectorAll('.edit-drop-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const dropId = btn.dataset.dropId;
+
+        try {
+          const response = await fetch(`/admin/drops/${dropId}`);
+          const drop = await response.json();
+
+          editMode = true;
+          document.getElementById('modal-title').textContent = 'Edit Drop';
+          document.getElementById('drop-id').value = drop.id;
+          document.getElementById('drop-name').value = drop.drop_name;
+          document.getElementById('drop-description').value = drop.description || '';
+
+          if (drop.drop_date) {
+            // Convert to local datetime format
+            const date = new Date(drop.drop_date);
+            const offset = date.getTimezoneOffset();
+            const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+            document.getElementById('drop-date').value = localDate.toISOString().slice(0, 16);
+          } else {
+            document.getElementById('drop-date').value = '';
+          }
+
+          // Load SKUs
+          skuList.innerHTML = '';
+          skuCounter = 0;
+          drop.skus_parsed.forEach(sku => {
+            addSkuRow(sku.sku, sku.name);
+          });
+
+          dropModal.removeAttribute('aria-hidden');
+        } catch (error) {
+          console.error('Error loading drop:', error);
+          alert('Error loading drop details');
+        }
+      });
+    });
+
+    // Delete drop
+    document.querySelectorAll('.delete-drop-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const dropId = btn.dataset.dropId;
+
+        if (!confirm('Are you sure you want to delete this drop? This will also delete all user preferences.')) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/admin/drops/${dropId}`, {
+            method: 'DELETE'
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            alert('Drop deleted successfully');
+            window.location.reload();
+          } else {
+            alert('Error: ' + (data.error || 'Failed to delete drop'));
+          }
+        } catch (error) {
+          console.error('Error deleting drop:', error);
+          alert('Error deleting drop: ' + error.message);
+        }
+      });
+    });
+
+    // View preferences
+    document.querySelectorAll('.view-preferences-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dropId = btn.dataset.dropId;
+        window.location.href = `/admin/drops/${dropId}/preferences`;
+      });
+    });
+
+    // Post to Discord
+    document.querySelectorAll('.post-to-discord-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const dropId = btn.dataset.dropId;
+
+        if (!confirm('Post this drop announcement to Discord?')) {
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Posting...';
+
+        try {
+          const response = await fetch(`/admin/drops/${dropId}/announce`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            alert('Drop announced to Discord successfully!');
+            window.location.reload();
+          } else {
+            alert('Error: ' + (data.error || 'Failed to post to Discord'));
+            btn.disabled = false;
+            btn.textContent = '📢 Post to Discord';
+          }
+        } catch (error) {
+          console.error('Error posting to Discord:', error);
+          alert('Error posting to Discord: ' + error.message);
+          btn.disabled = false;
+          btn.textContent = '📢 Post to Discord';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

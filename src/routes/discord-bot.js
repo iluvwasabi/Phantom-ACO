@@ -188,4 +188,194 @@ router.get('/api/discord-bot/dm-queue', verifyBotSecret, (req, res) => {
   }
 });
 
+// ==================== DROP PREFERENCE ENDPOINTS ====================
+
+// POST /api/discord-bot/drop-interaction - Handle button clicks to toggle SKU preferences
+router.post('/api/discord-bot/drop-interaction', express.json(), verifyBotSecret, async (req, res) => {
+  try {
+    const {
+      drop_id,
+      discord_id,
+      discord_username,
+      sku,
+      action // 'toggle' or 'get_all'
+    } = req.body;
+
+    console.log(`📋 Drop interaction: User ${discord_username} (${discord_id}) - Drop ${drop_id} - SKU ${sku} - Action: ${action}`);
+
+    // Find or create user record
+    let user = db.prepare('SELECT * FROM users WHERE discord_id = ?').get(discord_id);
+    let userId = user ? user.id : null;
+
+    if (action === 'toggle') {
+      // Toggle preference
+      const existing = db.prepare(`
+        SELECT * FROM drop_preferences
+        WHERE drop_id = ? AND discord_id = ? AND sku = ?
+      `).get(drop_id, discord_id, sku);
+
+      if (existing) {
+        // Toggle the opted_in value
+        db.prepare(`
+          UPDATE drop_preferences
+          SET opted_in = NOT opted_in, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(existing.id);
+
+        console.log(`✅ Toggled preference for ${sku}: ${existing.opted_in ? 'opted out' : 'opted in'}`);
+
+        res.json({
+          success: true,
+          opted_in: !existing.opted_in
+        });
+      } else {
+        // Create new preference (default opted in)
+        db.prepare(`
+          INSERT INTO drop_preferences (drop_id, user_id, discord_id, discord_username, sku, opted_in)
+          VALUES (?, ?, ?, ?, ?, 1)
+        `).run(drop_id, userId, discord_id, discord_username, sku);
+
+        console.log(`✅ Created new preference for ${sku}: opted in`);
+
+        res.json({
+          success: true,
+          opted_in: true
+        });
+      }
+    } else if (action === 'get_all') {
+      // Get all preferences for this user and drop
+      const preferences = db.prepare(`
+        SELECT sku, opted_in
+        FROM drop_preferences
+        WHERE drop_id = ? AND discord_id = ?
+      `).all(drop_id, discord_id);
+
+      const prefMap = {};
+      preferences.forEach(pref => {
+        prefMap[pref.sku] = pref.opted_in === 1;
+      });
+
+      res.json({
+        success: true,
+        preferences: prefMap
+      });
+    } else {
+      res.status(400).json({ error: 'Invalid action' });
+    }
+
+  } catch (error) {
+    console.error('Drop interaction error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/discord-bot/drop-preferences/:dropId/:discordId - Get user's current preferences for a drop
+router.get('/api/discord-bot/drop-preferences/:dropId/:discordId', verifyBotSecret, async (req, res) => {
+  try {
+    const { dropId, discordId } = req.params;
+
+    const drop = db.prepare('SELECT * FROM drops WHERE id = ?').get(dropId);
+
+    if (!drop) {
+      return res.status(404).json({ error: 'Drop not found' });
+    }
+
+    const skus = JSON.parse(drop.skus || '[]');
+
+    // Get user's preferences
+    const preferences = db.prepare(`
+      SELECT sku, opted_in
+      FROM drop_preferences
+      WHERE drop_id = ? AND discord_id = ?
+    `).all(dropId, discordId);
+
+    const prefMap = {};
+    preferences.forEach(pref => {
+      prefMap[pref.sku] = pref.opted_in === 1;
+    });
+
+    res.json({
+      success: true,
+      drop_id: drop.id,
+      drop_name: drop.drop_name,
+      skus: skus,
+      preferences: prefMap
+    });
+
+  } catch (error) {
+    console.error('Get drop preferences error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/post-drop-announcement - Endpoint for Discord bot to receive drop announcements from admin
+// This endpoint will be called by admin.js when posting a drop
+// The Discord bot will listen for requests to this endpoint and post the message
+router.post('/api/post-drop-announcement', express.json(), verifyBotSecret, async (req, res) => {
+  try {
+    const {
+      drop_id,
+      drop_name,
+      description,
+      drop_date,
+      sku_list,
+      sku_count,
+      channel_id
+    } = req.body;
+
+    console.log(`📢 Received drop announcement request: ${drop_name}`);
+
+    // Store this in a global queue for the Discord bot to process
+    // The Discord bot application will need to poll this queue or handle it via webhook
+    global.dropAnnouncementQueue = global.dropAnnouncementQueue || [];
+    global.dropAnnouncementQueue.push({
+      drop_id,
+      drop_name,
+      description,
+      drop_date,
+      sku_list,
+      sku_count,
+      channel_id,
+      timestamp: new Date().toISOString()
+    });
+
+    console.log(`✅ Drop announcement queued for posting to channel ${channel_id}`);
+
+    // NOTE: In a real implementation, you would:
+    // 1. Have your Discord bot application poll this queue
+    // 2. Or use a webhook to notify the bot immediately
+    // 3. Return the actual message_id after the bot posts it
+    // For now, we'll return a placeholder message_id
+    res.json({
+      success: true,
+      message: 'Drop announcement queued for posting',
+      message_id: `placeholder_${drop_id}_${Date.now()}`,
+      note: 'Discord bot needs to poll /api/discord-bot/get-drop-queue to post this announcement'
+    });
+
+  } catch (error) {
+    console.error('Post drop announcement error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/discord-bot/get-drop-queue - Discord bot polls this to get announcements to post
+router.get('/api/discord-bot/get-drop-queue', verifyBotSecret, async (req, res) => {
+  try {
+    const queue = global.dropAnnouncementQueue || [];
+
+    // Clear the queue after sending
+    global.dropAnnouncementQueue = [];
+
+    res.json({
+      success: true,
+      announcements: queue
+    });
+
+  } catch (error) {
+    console.error('Get drop queue error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

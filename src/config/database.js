@@ -288,6 +288,9 @@ const runMigrations = () => {
               console.log('✓ notified_at_5_orders column already exists');
             }
           }
+        } else if (file === 'add-drop-preferences.js') {
+          console.log('Creating drop preference system tables...');
+          require(path.join(migrationsDir, file));
         }
       } catch (error) {
         console.error(`Error running migration ${file}:`, error.message);

@@ -1793,4 +1793,314 @@ router.get('/export/excel', ensureAdminAuth, async (req, res) => {
   }
 });
 
+// ==================== DROP MANAGEMENT ROUTES ====================
+
+// GET /admin/drops - List all drops
+router.get('/admin/drops', ensureAdminAuth, async (req, res) => {
+  try {
+    const drops = db.prepare(`
+      SELECT
+        d.*,
+        COUNT(DISTINCT dp.discord_id) as total_users_opted_in
+      FROM drops d
+      LEFT JOIN drop_preferences dp ON d.id = dp.drop_id AND dp.opted_in = 1
+      WHERE d.is_active = 1
+      GROUP BY d.id
+      ORDER BY d.created_at DESC
+    `).all();
+
+    // Parse SKUs JSON for each drop
+    drops.forEach(drop => {
+      drop.skus_parsed = JSON.parse(drop.skus || '[]');
+      drop.sku_count = drop.skus_parsed.length;
+    });
+
+    res.render('admin-drops', {
+      drops,
+      user: req.user,
+      brandName: req.app.locals.settings.brand_name || 'Phantom ACO'
+    });
+  } catch (error) {
+    console.error('Error loading drops:', error);
+    res.status(500).send('Error loading drops');
+  }
+});
+
+// POST /admin/drops - Create new drop
+router.post('/admin/drops', ensureAdminAuth, express.json(), async (req, res) => {
+  try {
+    const { drop_name, description, drop_date, skus } = req.body;
+
+    // Validate required fields
+    if (!drop_name || !skus || skus.length === 0) {
+      return res.status(400).json({ error: 'Drop name and SKUs are required' });
+    }
+
+    // Insert drop
+    const result = db.prepare(`
+      INSERT INTO drops (drop_name, description, drop_date, skus, created_by)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(drop_name, description, drop_date || null, JSON.stringify(skus), req.user.id);
+
+    res.json({
+      success: true,
+      drop_id: result.lastInsertRowid,
+      message: 'Drop created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating drop:', error);
+    res.status(500).json({ error: 'Failed to create drop' });
+  }
+});
+
+// GET /admin/drops/:id - Get drop details
+router.get('/admin/drops/:id', ensureAdminAuth, async (req, res) => {
+  try {
+    const drop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
+
+    if (!drop) {
+      return res.status(404).json({ error: 'Drop not found' });
+    }
+
+    drop.skus_parsed = JSON.parse(drop.skus || '[]');
+
+    res.json(drop);
+  } catch (error) {
+    console.error('Error fetching drop:', error);
+    res.status(500).json({ error: 'Failed to fetch drop' });
+  }
+});
+
+// PUT /admin/drops/:id - Edit drop
+router.put('/admin/drops/:id', ensureAdminAuth, express.json(), async (req, res) => {
+  try {
+    const { drop_name, description, drop_date, skus } = req.body;
+
+    // Validate required fields
+    if (!drop_name || !skus || skus.length === 0) {
+      return res.status(400).json({ error: 'Drop name and SKUs are required' });
+    }
+
+    // Update drop
+    db.prepare(`
+      UPDATE drops
+      SET drop_name = ?, description = ?, drop_date = ?, skus = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(drop_name, description, drop_date || null, JSON.stringify(skus), req.params.id);
+
+    res.json({ success: true, message: 'Drop updated successfully' });
+  } catch (error) {
+    console.error('Error updating drop:', error);
+    res.status(500).json({ error: 'Failed to update drop' });
+  }
+});
+
+// DELETE /admin/drops/:id - Soft delete drop
+router.delete('/admin/drops/:id', ensureAdminAuth, async (req, res) => {
+  try {
+    db.prepare('UPDATE drops SET is_active = 0 WHERE id = ?').run(req.params.id);
+
+    res.json({ success: true, message: 'Drop deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting drop:', error);
+    res.status(500).json({ error: 'Failed to delete drop' });
+  }
+});
+
+// POST /admin/drops/:id/announce - Post drop announcement to Discord
+router.post('/admin/drops/:id/announce', ensureAdminAuth, express.json(), async (req, res) => {
+  try {
+    const drop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
+
+    if (!drop) {
+      return res.status(404).json({ error: 'Drop not found' });
+    }
+
+    const skus = JSON.parse(drop.skus || '[]');
+    const channelId = process.env.DROP_ANNOUNCEMENT_CHANNEL_ID;
+
+    if (!channelId) {
+      return res.status(400).json({ error: 'DROP_ANNOUNCEMENT_CHANNEL_ID not configured' });
+    }
+
+    // Format SKU list for embed
+    const skuList = skus.map(sku => `• **${sku.sku}**: ${sku.name}`).join('\n');
+
+    // Prepare Discord webhook payload
+    const webhookPayload = {
+      drop_id: drop.id,
+      drop_name: drop.drop_name,
+      description: drop.description,
+      drop_date: drop.drop_date,
+      sku_list: skuList,
+      sku_count: skus.length,
+      channel_id: channelId
+    };
+
+    // Send to Discord bot API to post the message
+    // NOTE: This assumes your Discord bot has an endpoint to handle posting
+    // You'll need to implement the Discord bot side to receive this and post the message
+    const botApiUrl = process.env.DISCORD_BOT_API_URL || 'http://localhost:3001';
+    const botResponse = await fetch(`${botApiUrl}/api/post-drop-announcement`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-bot-secret': process.env.DISCORD_BOT_API_SECRET
+      },
+      body: JSON.stringify(webhookPayload)
+    });
+
+    if (!botResponse.ok) {
+      throw new Error('Failed to post to Discord');
+    }
+
+    const botData = await botResponse.json();
+
+    // Update drop with Discord message ID
+    if (botData.message_id) {
+      db.prepare(`
+        UPDATE drops
+        SET discord_message_id = ?, discord_channel_id = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(botData.message_id, channelId, drop.id);
+    }
+
+    res.json({
+      success: true,
+      message: 'Drop announced to Discord',
+      message_id: botData.message_id
+    });
+  } catch (error) {
+    console.error('Error announcing drop:', error);
+    res.status(500).json({ error: error.message || 'Failed to announce drop' });
+  }
+});
+
+// GET /admin/drops/:id/preferences - View preferences for a drop
+router.get('/admin/drops/:id/preferences', ensureAdminAuth, async (req, res) => {
+  try {
+    const drop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
+
+    if (!drop) {
+      return res.status(404).send('Drop not found');
+    }
+
+    const skus = JSON.parse(drop.skus || '[]');
+
+    // Get preferences grouped by SKU
+    const preferences = db.prepare(`
+      SELECT
+        dp.sku,
+        dp.discord_id,
+        dp.discord_username,
+        dp.opted_in,
+        dp.created_at,
+        u.first_name,
+        u.last_name,
+        u.email
+      FROM drop_preferences dp
+      LEFT JOIN users u ON dp.user_id = u.id
+      WHERE dp.drop_id = ?
+      ORDER BY dp.sku, dp.discord_username
+    `).all(req.params.id);
+
+    // Group preferences by SKU
+    const preferenceBySku = {};
+    skus.forEach(sku => {
+      preferenceBySku[sku.sku] = {
+        name: sku.name,
+        opted_in: [],
+        opted_out: []
+      };
+    });
+
+    preferences.forEach(pref => {
+      if (preferenceBySku[pref.sku]) {
+        const userInfo = {
+          discord_id: pref.discord_id,
+          discord_username: pref.discord_username,
+          first_name: pref.first_name,
+          last_name: pref.last_name,
+          email: pref.email,
+          created_at: pref.created_at
+        };
+
+        if (pref.opted_in) {
+          preferenceBySku[pref.sku].opted_in.push(userInfo);
+        } else {
+          preferenceBySku[pref.sku].opted_out.push(userInfo);
+        }
+      }
+    });
+
+    res.render('admin-drop-preferences', {
+      drop,
+      skus,
+      preferenceBySku,
+      user: req.user,
+      brandName: req.app.locals.settings.brand_name || 'Phantom ACO'
+    });
+  } catch (error) {
+    console.error('Error loading preferences:', error);
+    res.status(500).send('Error loading preferences');
+  }
+});
+
+// GET /admin/api/drops/:id/export - Export preferences to CSV
+router.get('/admin/api/drops/:id/export', ensureAdminAuth, async (req, res) => {
+  try {
+    const drop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
+
+    if (!drop) {
+      return res.status(404).json({ error: 'Drop not found' });
+    }
+
+    // Get all opted-in preferences
+    const preferences = db.prepare(`
+      SELECT
+        dp.discord_id,
+        dp.discord_username,
+        dp.sku,
+        u.first_name,
+        u.last_name,
+        u.email
+      FROM drop_preferences dp
+      LEFT JOIN users u ON dp.user_id = u.id
+      WHERE dp.drop_id = ? AND dp.opted_in = 1
+      ORDER BY dp.discord_username, dp.sku
+    `).all(req.params.id);
+
+    // Group by user
+    const userPrefs = {};
+    preferences.forEach(pref => {
+      if (!userPrefs[pref.discord_id]) {
+        userPrefs[pref.discord_id] = {
+          discord_id: pref.discord_id,
+          discord_username: pref.discord_username,
+          first_name: pref.first_name || 'N/A',
+          last_name: pref.last_name || 'N/A',
+          email: pref.email || 'N/A',
+          skus: []
+        };
+      }
+      userPrefs[pref.discord_id].skus.push(pref.sku);
+    });
+
+    // Generate CSV
+    let csv = 'Discord Username,First Name,Last Name,Email,Discord ID,Opted SKUs\n';
+    Object.values(userPrefs).forEach(user => {
+      csv += `"${user.discord_username}","${user.first_name}","${user.last_name}","${user.email}","${user.discord_id}","${user.skus.join(', ')}"\n`;
+    });
+
+    const filename = `drop_preferences_${drop.drop_name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'text/csv');
+    res.send(csv);
+
+  } catch (error) {
+    console.error('Error exporting preferences:', error);
+    res.status(500).json({ error: 'Failed to export preferences' });
+  }
+});
+
 module.exports = router;
