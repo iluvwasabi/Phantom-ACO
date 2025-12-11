@@ -242,6 +242,40 @@ router.post('/api/discord-bot/drop-interaction', express.json(), verifyBotSecret
           opted_in: true
         });
       }
+    } else if (action === 'set_profiles') {
+      // Set specific profiles for a SKU
+      const { submission_ids } = req.body;
+
+      // Delete existing preferences for this SKU
+      db.prepare(`
+        DELETE FROM drop_preferences
+        WHERE drop_id = ? AND discord_id = ? AND sku = ?
+      `).run(drop_id, discord_id, sku);
+
+      // If submission_ids is empty, user is opting out - we're done
+      if (!submission_ids || submission_ids.length === 0) {
+        console.log(`✅ User opted out of ${sku}`);
+        res.json({ success: true, opted_in: false });
+        return;
+      }
+
+      // Create new preferences for each selected submission
+      const insert = db.prepare(`
+        INSERT INTO drop_preferences (drop_id, user_id, discord_id, discord_username, sku, submission_id, opted_in)
+        VALUES (?, ?, ?, ?, ?, ?, 1)
+      `);
+
+      submission_ids.forEach(submissionId => {
+        insert.run(drop_id, userId, discord_id, discord_username, sku, submissionId);
+      });
+
+      console.log(`✅ Set ${submission_ids.length} profiles for ${sku}`);
+
+      res.json({
+        success: true,
+        opted_in: true,
+        submission_count: submission_ids.length
+      });
     } else if (action === 'get_all') {
       // Get all preferences for this user and drop
       const preferences = db.prepare(`
@@ -282,24 +316,46 @@ router.get('/api/discord-bot/drop-preferences/:dropId/:discordId', verifyBotSecr
 
     const skus = JSON.parse(drop.skus || '[]');
 
-    // Get user's preferences
+    // Get user's preferences with submission IDs
     const preferences = db.prepare(`
-      SELECT sku, opted_in
+      SELECT sku, opted_in, submission_id
       FROM drop_preferences
       WHERE drop_id = ? AND discord_id = ?
     `).all(dropId, discordId);
 
     const prefMap = {};
     preferences.forEach(pref => {
-      prefMap[pref.sku] = pref.opted_in === 1;
+      if (!prefMap[pref.sku]) {
+        prefMap[pref.sku] = { opted_in: pref.opted_in === 1, submissions: [] };
+      }
+      if (pref.submission_id) {
+        prefMap[pref.sku].submissions.push(pref.submission_id);
+      }
     });
+
+    // Get user's submissions for this service
+    let userSubmissions = [];
+    if (drop.service_name) {
+      const user = db.prepare('SELECT id FROM users WHERE discord_id = ?').get(discordId);
+
+      if (user) {
+        userSubmissions = db.prepare(`
+          SELECT id, service_name, created_at
+          FROM service_subscriptions
+          WHERE user_id = ? AND service_name = ? AND status = 'active'
+          ORDER BY created_at ASC
+        `).all(user.id, drop.service_name);
+      }
+    }
 
     res.json({
       success: true,
       drop_id: drop.id,
       drop_name: drop.drop_name,
+      service_name: drop.service_name,
       skus: skus,
-      preferences: prefMap
+      preferences: prefMap,
+      user_submissions: userSubmissions
     });
 
   } catch (error) {

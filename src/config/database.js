@@ -294,6 +294,9 @@ const runMigrations = () => {
         } else if (file === 'add-service-to-drops.js') {
           console.log('Adding service_name to drops and submission_id to drop_preferences...');
           require(path.join(migrationsDir, file));
+        } else if (file === 'update-drop-preferences-constraint.js') {
+          console.log('Updating drop_preferences unique constraint...');
+          require(path.join(migrationsDir, file));
         }
       } catch (error) {
         console.error(`Error running migration ${file}:`, error.message);
