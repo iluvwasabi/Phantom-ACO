@@ -80,6 +80,7 @@
               <table>
                 <thead>
                   <tr>
+                    <th>Profile Name</th>
                     <th>Discord Username</th>
                     <th>First Name</th>
                     <th>Last Name</th>
@@ -91,6 +92,13 @@
                 <tbody>
                   <% skuData.opted_in.forEach(user => { %>
                     <tr>
+                      <td>
+                        <% if (user.profile_name) { %>
+                          <strong style="color: #60a5fa;"><%= user.profile_name %></strong>
+                        <% } else { %>
+                          <span style="color: var(--muted); font-style: italic;">No profile</span>
+                        <% } %>
+                      </td>
                       <td><strong><%= user.discord_username || 'N/A' %></strong></td>
                       <td>
                         <% if (user.first_name) { %>

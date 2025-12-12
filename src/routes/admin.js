@@ -2023,13 +2023,16 @@ router.get('/drops/:id/preferences', ensureAdminAuth, async (req, res) => {
         dp.discord_username,
         dp.opted_in,
         dp.created_at,
+        dp.submission_id,
         u.first_name,
         u.last_name,
-        u.email
+        u.email,
+        ss.profile_name
       FROM drop_preferences dp
       LEFT JOIN users u ON dp.user_id = u.id
+      LEFT JOIN service_subscriptions ss ON dp.submission_id = ss.id
       WHERE dp.drop_id = ?
-      ORDER BY dp.sku, dp.discord_username
+      ORDER BY dp.sku, dp.discord_username, ss.profile_name
     `).all(req.params.id);
 
     // Group preferences by SKU
@@ -2050,6 +2053,8 @@ router.get('/drops/:id/preferences', ensureAdminAuth, async (req, res) => {
           first_name: pref.first_name,
           last_name: pref.last_name,
           email: pref.email,
+          profile_name: pref.profile_name,
+          submission_id: pref.submission_id,
           created_at: pref.created_at
         };
 
@@ -2089,35 +2094,22 @@ router.get('/api/drops/:id/export', ensureAdminAuth, async (req, res) => {
         dp.discord_id,
         dp.discord_username,
         dp.sku,
+        dp.submission_id,
         u.first_name,
         u.last_name,
-        u.email
+        u.email,
+        ss.profile_name
       FROM drop_preferences dp
       LEFT JOIN users u ON dp.user_id = u.id
+      LEFT JOIN service_subscriptions ss ON dp.submission_id = ss.id
       WHERE dp.drop_id = ? AND dp.opted_in = 1
-      ORDER BY dp.discord_username, dp.sku
+      ORDER BY dp.discord_username, ss.profile_name, dp.sku
     `).all(req.params.id);
 
-    // Group by user
-    const userPrefs = {};
+    // Generate CSV with one row per profile per SKU
+    let csv = 'Discord Username,First Name,Last Name,Email,Profile Name,SKU,Discord ID\n';
     preferences.forEach(pref => {
-      if (!userPrefs[pref.discord_id]) {
-        userPrefs[pref.discord_id] = {
-          discord_id: pref.discord_id,
-          discord_username: pref.discord_username,
-          first_name: pref.first_name || 'N/A',
-          last_name: pref.last_name || 'N/A',
-          email: pref.email || 'N/A',
-          skus: []
-        };
-      }
-      userPrefs[pref.discord_id].skus.push(pref.sku);
-    });
-
-    // Generate CSV
-    let csv = 'Discord Username,First Name,Last Name,Email,Discord ID,Opted SKUs\n';
-    Object.values(userPrefs).forEach(user => {
-      csv += `"${user.discord_username}","${user.first_name}","${user.last_name}","${user.email}","${user.discord_id}","${user.skus.join(', ')}"\n`;
+      csv += `"${pref.discord_username || 'N/A'}","${pref.first_name || 'N/A'}","${pref.last_name || 'N/A'}","${pref.email || 'N/A'}","${pref.profile_name || 'N/A'}","${pref.sku}","${pref.discord_id}"\n`;
     });
 
     const filename = `drop_preferences_${drop.drop_name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
