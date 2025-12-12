@@ -1906,12 +1906,31 @@ router.put('/drops/:id', ensureAdminAuth, express.json(), async (req, res) => {
       return res.status(400).json({ error: 'Service name is required' });
     }
 
+    // Get current drop to check if it has a Discord message
+    const currentDrop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
+
     // Update drop
     db.prepare(`
       UPDATE drops
       SET drop_name = ?, service_name = ?, description = ?, drop_date = ?, skus = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `).run(drop_name, service_name, description, drop_date || null, JSON.stringify(skus), req.params.id);
+
+    // Queue Discord message edit if drop was posted
+    if (currentDrop && currentDrop.discord_message_id && currentDrop.discord_channel_id) {
+      global.dropEditQueue = global.dropEditQueue || [];
+      global.dropEditQueue.push({
+        drop_id: req.params.id,
+        message_id: currentDrop.discord_message_id,
+        channel_id: currentDrop.discord_channel_id,
+        drop_name: drop_name,
+        service_name: service_name,
+        description: description,
+        drop_date: drop_date,
+        skus: skus
+      });
+      console.log(`📝 Queued Discord message edit for drop ${req.params.id}`);
+    }
 
     res.json({ success: true, message: 'Drop updated successfully' });
   } catch (error) {

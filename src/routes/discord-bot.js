@@ -441,6 +441,25 @@ router.get('/api/discord-bot/get-drop-queue', verifyBotSecret, async (req, res) 
   }
 });
 
+// GET /api/discord-bot/get-drop-edit-queue - Discord bot polls this to get drop edits
+router.get('/api/discord-bot/get-drop-edit-queue', verifyBotSecret, async (req, res) => {
+  try {
+    const queue = global.dropEditQueue || [];
+
+    // Clear the queue after sending
+    global.dropEditQueue = [];
+
+    res.json({
+      success: true,
+      edits: queue
+    });
+
+  } catch (error) {
+    console.error('Get drop edit queue error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /api/discord-bot/create-drop - Discord bot creates drop from reaction workflow
 router.post('/api/discord-bot/create-drop', express.json(), verifyBotSecret, async (req, res) => {
   try {

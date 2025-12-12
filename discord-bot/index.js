@@ -20,6 +20,8 @@ const selectedProfilesCache = new Map();
 const CHECKOUT_CHANNEL_ID = process.env.DISCORD_CHECKOUT_CHANNEL_ID;
 const PUBLIC_CHECKOUT_CHANNEL_ID = process.env.PUBLIC_CHECKOUT_CHANNEL_ID;
 const DROP_ANNOUNCEMENT_CHANNEL_ID = process.env.DROP_ANNOUNCEMENT_CHANNEL_ID;
+const SUBMISSION_UPDATES_CHANNEL_ID = process.env.SUBMISSION_UPDATES_CHANNEL_ID || '1446376744411074757';
+const ACO_ROLE_ID = process.env.ACO_ROLE_ID;
 const WEBSITE_API_URL = process.env.WEBSITE_API_URL || 'http://localhost:3000';
 const API_SECRET = process.env.DISCORD_BOT_API_SECRET;
 
@@ -391,8 +393,14 @@ async function postDropAnnouncement(announcement) {
           .setStyle(ButtonStyle.Primary)
       );
 
-    // Send message
+    // Send message with role mention if configured
+    let content = '';
+    if (ACO_ROLE_ID) {
+      content = `<@&${ACO_ROLE_ID}>`;
+    }
+
     const message = await channel.send({
+      content: content,
       embeds: [embed],
       components: [row]
     });
@@ -401,6 +409,115 @@ async function postDropAnnouncement(announcement) {
 
   } catch (error) {
     console.error('Error posting drop announcement:', error);
+  }
+}
+
+// Poll for drop edits every 5 seconds
+async function pollDropEdits() {
+  try {
+    const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/get-drop-edit-queue`, {
+      headers: {
+        'x-bot-secret': API_SECRET
+      }
+    });
+
+    const { edits } = response.data;
+
+    if (edits && edits.length > 0) {
+      console.log(`📝 Processing ${edits.length} drop edit(s)`);
+
+      for (const edit of edits) {
+        await editDropAnnouncement(edit);
+      }
+    }
+  } catch (error) {
+    console.error('Error polling drop edits:', error.message);
+  }
+}
+
+// Edit drop announcement in Discord
+async function editDropAnnouncement(edit) {
+  try {
+    const {
+      drop_id,
+      message_id,
+      channel_id,
+      drop_name,
+      service_name,
+      description,
+      drop_date,
+      skus
+    } = edit;
+
+    const channel = await client.channels.fetch(channel_id);
+
+    if (!channel) {
+      console.error(`❌ Channel ${channel_id} not found`);
+      return;
+    }
+
+    // Fetch the message to edit
+    const message = await channel.messages.fetch(message_id);
+
+    if (!message) {
+      console.error(`❌ Message ${message_id} not found`);
+      return;
+    }
+
+    // Format drop date
+    let dropDateStr = 'TBA';
+    if (drop_date) {
+      const date = new Date(drop_date);
+      dropDateStr = date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Format SKU list
+    const sku_list = skus.map(s => `• **${s.sku}**: ${s.name}`).join('\n');
+    const sku_count = skus.length;
+
+    // Create updated embed
+    const embed = new EmbedBuilder()
+      .setTitle(`🔥 ${drop_name}`)
+      .setColor(0x5865F2)
+      .addFields(
+        { name: '📅 Drop Date', value: dropDateStr, inline: false },
+        { name: '🛍️ SKUs Available', value: `${sku_count} SKUs`, inline: true }
+      )
+      .setTimestamp();
+
+    if (description) {
+      embed.setDescription(description);
+    }
+
+    if (sku_list) {
+      embed.addFields({ name: '📦 Products', value: sku_list, inline: false });
+    }
+
+    // Keep the same button
+    const row = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId(`drop_manage_${drop_id}`)
+          .setLabel('⚙️ Manage Preferences')
+          .setStyle(ButtonStyle.Primary)
+      );
+
+    // Edit the message
+    await message.edit({
+      embeds: [embed],
+      components: [row]
+    });
+
+    console.log(`✅ Edited drop announcement: ${drop_name} (Message ID: ${message_id})`);
+
+  } catch (error) {
+    console.error('Error editing drop announcement:', error);
   }
 }
 
@@ -637,6 +754,47 @@ async function handleSKUToggle(interaction) {
 
     console.log(`✅ Toggled ${sku}: ${newOptedIn ? 'opted in' : 'opted out'} for ${selectedProfiles.length} profiles`);
 
+    // Send notification to submission-updates channel if user opted in
+    if (newOptedIn && SUBMISSION_UPDATES_CHANNEL_ID) {
+      try {
+        // Fetch drop and profile info
+        const dropResponse = await axios.get(
+          `${WEBSITE_API_URL}/api/discord-bot/drop-preferences/${dropId}/${discordId}`,
+          { headers: { 'x-bot-secret': API_SECRET } }
+        );
+
+        const { drop_name, service_name, user_submissions } = dropResponse.data;
+
+        // Get profile names for selected profiles
+        const profileNames = selectedProfiles.map(id => {
+          const sub = user_submissions.find(s => s.id === id);
+          return sub?.profile_name || `Profile #${id}`;
+        });
+
+        // Send notification to submission-updates channel
+        const updatesChannel = await client.channels.fetch(SUBMISSION_UPDATES_CHANNEL_ID);
+        if (updatesChannel) {
+          const embed = new EmbedBuilder()
+            .setTitle('✅ User Opted Into Drop')
+            .setColor(0x10b981) // Green
+            .addFields(
+              { name: 'User', value: `${discordUsername} (<@${discordId}>)`, inline: true },
+              { name: 'Drop', value: drop_name, inline: true },
+              { name: 'Service', value: service_name || 'N/A', inline: true },
+              { name: 'SKU', value: sku, inline: false },
+              { name: 'Profiles', value: profileNames.join('\n'), inline: false }
+            )
+            .setTimestamp();
+
+          await updatesChannel.send({ embeds: [embed] });
+          console.log(`📢 Sent opt-in notification to submission-updates channel`);
+        }
+      } catch (notifError) {
+        console.error('Error sending opt-in notification:', notifError);
+        // Don't fail the whole operation if notification fails
+      }
+    }
+
   } catch (error) {
     console.error('Error toggling SKU:', error);
     await interaction.reply({
@@ -655,11 +813,16 @@ client.on('ready', () => {
   console.log(`📡 Monitoring channel: ${CHECKOUT_CHANNEL_ID}`);
   console.log(`📢 Public announcements channel: ${PUBLIC_CHECKOUT_CHANNEL_ID || 'Not configured'}`);
   console.log(`🔥 Drop announcements channel: ${DROP_ANNOUNCEMENT_CHANNEL_ID || 'Not configured'}`);
+  console.log(`📝 Submission updates channel: ${SUBMISSION_UPDATES_CHANNEL_ID || 'Not configured'}`);
   console.log(`🌐 Website API: ${WEBSITE_API_URL}`);
 
   // Poll for drop announcements every 5 seconds
   setInterval(pollDropAnnouncements, 5000);
   console.log('✅ Started polling for drop announcements (every 5s)');
+
+  // Poll for drop edits every 5 seconds
+  setInterval(pollDropEdits, 5000);
+  console.log('✅ Started polling for drop edits (every 5s)');
 });
 
 // Message create event
