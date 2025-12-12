@@ -918,7 +918,22 @@ async function handleDropCreationDM(message, conversation) {
       conversation.serviceName = selectedService.service_name;
       conversation.step = 'skus';
 
-      await message.reply(`✅ Service set to: **${selectedService.service_name}**\n\n**Now send the SKU list** (one per line or comma-separated)\n\n_Example:_\n```\nETB-001: Elite Trainer Box\nBB-001: Booster Box\nCB-001: Collector Box\n```\n_Or:_\n```\nETB-001: Elite Trainer Box, BB-001: Booster Box, CB-001: Collector Box\n```');
+      const skuInstructions = `✅ Service set to: **${selectedService.service_name}**
+
+**Now send the SKU list** (one per line or comma-separated)
+
+_Example:_
+\`\`\`
+ETB-001: Elite Trainer Box
+BB-001: Booster Box
+CB-001: Collector Box
+\`\`\`
+_Or:_
+\`\`\`
+ETB-001: Elite Trainer Box, BB-001: Booster Box, CB-001: Collector Box
+\`\`\``;
+
+      await message.reply(skuInstructions);
 
       dmConversations.set(userId, conversation);
 
