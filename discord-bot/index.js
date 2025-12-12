@@ -858,9 +858,67 @@ async function handleDropCreationDM(message, conversation) {
     if (conversation.step === 'name') {
       // Store drop name
       conversation.dropName = message.content.trim();
+      conversation.step = 'service';
+
+      // Fetch available services
+      try {
+        const response = await axios.get(`${WEBSITE_API_URL}/admin/api/panels`, {
+          headers: { 'x-bot-secret': API_SECRET }
+        });
+
+        const services = response.data.filter(s => s.is_active);
+
+        if (services.length === 0) {
+          await message.reply('❌ No services available. Please add services in the admin panel first.');
+          dmConversations.delete(userId);
+          return;
+        }
+
+        let serviceList = '**Which service is this drop for?**\n\nReply with the service name or number:\n\n';
+        services.forEach((service, idx) => {
+          serviceList += `${idx + 1}. ${service.service_name}\n`;
+        });
+
+        await message.reply(serviceList);
+
+        // Store services for next step
+        conversation.availableServices = services;
+        dmConversations.set(userId, conversation);
+
+      } catch (error) {
+        console.error('Error fetching services:', error);
+        await message.reply('❌ Error fetching services. Please try again.');
+        dmConversations.delete(userId);
+      }
+
+    } else if (conversation.step === 'service') {
+      // Parse service selection
+      const input = message.content.trim();
+      const services = conversation.availableServices;
+
+      let selectedService = null;
+
+      // Check if input is a number
+      const serviceIndex = parseInt(input);
+      if (!isNaN(serviceIndex) && serviceIndex >= 1 && serviceIndex <= services.length) {
+        selectedService = services[serviceIndex - 1];
+      } else {
+        // Try to match by name (case-insensitive)
+        selectedService = services.find(s =>
+          s.service_name.toLowerCase() === input.toLowerCase()
+        );
+      }
+
+      if (!selectedService) {
+        await message.reply('❌ Invalid service. Please reply with a valid service name or number from the list above.');
+        return;
+      }
+
+      // Store selected service
+      conversation.serviceName = selectedService.service_name;
       conversation.step = 'skus';
 
-      await message.reply('**Now send the SKU list** (one per line or comma-separated)\n\n_Example:_\n```\nETB-001: Elite Trainer Box\nBB-001: Booster Box\nCB-001: Collector Box\n```\n_Or:_\n```\nETB-001: Elite Trainer Box, BB-001: Booster Box, CB-001: Collector Box\n```');
+      await message.reply(`✅ Service set to: **${selectedService.service_name}**\n\n**Now send the SKU list** (one per line or comma-separated)\n\n_Example:_\n```\nETB-001: Elite Trainer Box\nBB-001: Booster Box\nCB-001: Collector Box\n```\n_Or:_\n```\nETB-001: Elite Trainer Box, BB-001: Booster Box, CB-001: Collector Box\n```');
 
       dmConversations.set(userId, conversation);
 
@@ -899,6 +957,7 @@ async function handleDropCreationDM(message, conversation) {
           color: 0x57F287,
           fields: [
             { name: 'Drop Name', value: conversation.dropName },
+            { name: 'Service', value: conversation.serviceName },
             { name: `SKUs (${skus.length})`, value: skuList }
           ]
         }]
@@ -912,6 +971,7 @@ async function handleDropCreationDM(message, conversation) {
           `${WEBSITE_API_URL}/api/discord-bot/create-drop`,
           {
             drop_name: conversation.dropName,
+            service_name: conversation.serviceName,
             description: null,
             drop_date: null,
             skus: skus

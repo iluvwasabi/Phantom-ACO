@@ -444,20 +444,20 @@ router.get('/api/discord-bot/get-drop-queue', verifyBotSecret, async (req, res) 
 // POST /api/discord-bot/create-drop - Discord bot creates drop from reaction workflow
 router.post('/api/discord-bot/create-drop', express.json(), verifyBotSecret, async (req, res) => {
   try {
-    const { drop_name, description, drop_date, skus } = req.body;
+    const { drop_name, service_name, description, drop_date, skus } = req.body;
 
     // Validate required fields
     if (!drop_name || !skus || skus.length === 0) {
       return res.status(400).json({ error: 'Drop name and SKUs are required' });
     }
 
-    console.log(`📋 Bot creating drop: ${drop_name} with ${skus.length} SKUs`);
+    console.log(`📋 Bot creating drop: ${drop_name} (${service_name || 'no service'}) with ${skus.length} SKUs`);
 
     // Insert drop
     const result = db.prepare(`
-      INSERT INTO drops (drop_name, description, drop_date, skus, created_by)
-      VALUES (?, ?, ?, ?, NULL)
-    `).run(drop_name, description, drop_date || null, JSON.stringify(skus));
+      INSERT INTO drops (drop_name, service_name, description, drop_date, skus, created_by)
+      VALUES (?, ?, ?, ?, ?, NULL)
+    `).run(drop_name, service_name || null, description, drop_date || null, JSON.stringify(skus));
 
     const dropId = result.lastInsertRowid;
 
