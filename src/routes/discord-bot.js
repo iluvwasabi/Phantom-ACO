@@ -460,6 +460,32 @@ router.get('/api/discord-bot/get-drop-edit-queue', verifyBotSecret, async (req, 
   }
 });
 
+// POST /api/discord-bot/update-drop-message-id - Save Discord message ID after posting
+router.post('/api/discord-bot/update-drop-message-id', express.json(), verifyBotSecret, async (req, res) => {
+  try {
+    const { drop_id, message_id, channel_id } = req.body;
+
+    if (!drop_id || !message_id || !channel_id) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Update the drop with the Discord message ID
+    db.prepare(`
+      UPDATE drops
+      SET discord_message_id = ?, discord_channel_id = ?
+      WHERE id = ?
+    `).run(message_id, channel_id, drop_id);
+
+    console.log(`💾 Updated drop ${drop_id} with message ID ${message_id}`);
+
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error('Error updating drop message ID:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /api/discord-bot/create-drop - Discord bot creates drop from reaction workflow
 router.post('/api/discord-bot/create-drop', express.json(), verifyBotSecret, async (req, res) => {
   try {

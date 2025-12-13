@@ -407,6 +407,27 @@ async function postDropAnnouncement(announcement) {
 
     console.log(`✅ Posted drop announcement: ${drop_name} (Message ID: ${message.id})`);
 
+    // Save the message ID back to the database
+    try {
+      await axios.post(
+        `${WEBSITE_API_URL}/api/discord-bot/update-drop-message-id`,
+        {
+          drop_id: drop_id,
+          message_id: message.id,
+          channel_id: channel_id
+        },
+        {
+          headers: {
+            'x-bot-secret': API_SECRET,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      console.log(`💾 Saved message ID ${message.id} to database for drop ${drop_id}`);
+    } catch (saveError) {
+      console.error('Error saving message ID to database:', saveError.message);
+    }
+
   } catch (error) {
     console.error('Error posting drop announcement:', error);
   }
