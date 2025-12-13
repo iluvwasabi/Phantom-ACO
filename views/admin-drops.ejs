@@ -94,8 +94,8 @@
                     <div class="submission-actions">
                       <% if (!drop.discord_message_id) { %>
                         <button class="btn btn-sm btn-success post-to-discord-btn" data-drop-id="<%= drop.id %>">📢 Post to Discord</button>
-                        <button class="btn btn-sm link-message-btn" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;" data-drop-id="<%= drop.id %>">🔗 Link Message</button>
                       <% } %>
+                      <button class="btn btn-sm link-message-btn" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;" data-drop-id="<%= drop.id %>">🔗 Link</button>
                       <button class="btn btn-sm btn-primary view-preferences-btn" data-drop-id="<%= drop.id %>">👥 Preferences</button>
                       <button class="btn btn-sm edit-drop-btn" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;" data-drop-id="<%= drop.id %>">✏️ Edit</button>
                       <button class="btn btn-sm btn-danger delete-drop-btn" data-drop-id="<%= drop.id %>">🗑️ Delete</button>
