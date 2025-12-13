@@ -470,6 +470,8 @@ async function editDropAnnouncement(edit) {
       skus
     } = edit;
 
+    console.log(`🔄 Attempting to edit drop ${drop_id} - Message: ${message_id}, Channel: ${channel_id}`);
+
     const channel = await client.channels.fetch(channel_id);
 
     if (!channel) {
@@ -477,13 +479,17 @@ async function editDropAnnouncement(edit) {
       return;
     }
 
+    console.log(`✅ Found channel: ${channel.name}`);
+
     // Fetch the message to edit
     const message = await channel.messages.fetch(message_id);
 
     if (!message) {
-      console.error(`❌ Message ${message_id} not found`);
+      console.error(`❌ Message ${message_id} not found in channel ${channel_id}`);
       return;
     }
+
+    console.log(`✅ Found message to edit`);
 
     // Format drop date
     let dropDateStr = 'TBA';

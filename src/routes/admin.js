@@ -1929,7 +1929,9 @@ router.put('/drops/:id', ensureAdminAuth, express.json(), async (req, res) => {
         drop_date: drop_date,
         skus: skus
       });
-      console.log(`📝 Queued Discord message edit for drop ${req.params.id}`);
+      console.log(`📝 Queued Discord message edit for drop ${req.params.id} (Message ID: ${currentDrop.discord_message_id}, Channel: ${currentDrop.discord_channel_id})`);
+    } else {
+      console.log(`⚠️ NOT queuing Discord edit - message_id: ${currentDrop?.discord_message_id}, channel_id: ${currentDrop?.discord_channel_id}`);
     }
 
     res.json({ success: true, message: 'Drop updated successfully' });
