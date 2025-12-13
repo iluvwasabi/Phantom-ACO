@@ -94,6 +94,7 @@
                     <div class="submission-actions">
                       <% if (!drop.discord_message_id) { %>
                         <button class="btn btn-sm btn-success post-to-discord-btn" data-drop-id="<%= drop.id %>">📢 Post to Discord</button>
+                        <button class="btn btn-sm link-message-btn" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;" data-drop-id="<%= drop.id %>">🔗 Link Message</button>
                       <% } %>
                       <button class="btn btn-sm btn-primary view-preferences-btn" data-drop-id="<%= drop.id %>">👥 Preferences</button>
                       <button class="btn btn-sm edit-drop-btn" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;" data-drop-id="<%= drop.id %>">✏️ Edit</button>
@@ -161,9 +162,37 @@
     </div>
   </div>
 
+  <!-- Link Message Modal -->
+  <div id="link-message-modal" class="modal">
+    <div class="dialog animate-in" role="dialog" aria-modal="true" style="max-width: 500px;">
+      <div class="dialog-header">
+        <h2>Link Discord Message</h2>
+        <button class="icon-btn close-link-modal" aria-label="Close">✕</button>
+      </div>
+      <div class="dialog-body">
+        <p style="margin-bottom: 16px; color: var(--muted);">
+          Paste the Discord message URL or message ID to link this drop to an existing Discord post.
+        </p>
+        <div class="field">
+          <label class="label">Discord Message URL or ID</label>
+          <input type="text" id="message-link-input" class="control" placeholder="https://discord.com/channels/.../... or 1234567890">
+          <p style="font-size: 0.875rem; color: var(--muted); margin-top: 4px;">
+            Right-click the message in Discord → Copy Message Link
+          </p>
+        </div>
+        <input type="hidden" id="link-drop-id">
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-ghost close-link-modal">Cancel</button>
+        <button class="btn btn-primary" id="save-link-btn">Link Message</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Modal management
     const dropModal = document.getElementById('drop-modal');
+    const linkMessageModal = document.getElementById('link-message-modal');
     const addDropBtn = document.getElementById('add-drop-btn');
     const closeModalBtns = document.querySelectorAll('.close-drop-modal');
     const saveDropBtn = document.getElementById('save-drop-btn');
@@ -214,10 +243,23 @@
       });
     });
 
+    // Close link message modal
+    document.querySelectorAll('.close-link-modal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        linkMessageModal.classList.remove('show');
+      });
+    });
+
     // Close modal on outside click
     dropModal?.addEventListener('click', (e) => {
       if (e.target === dropModal) {
         dropModal.classList.remove('show');
+      }
+    });
+
+    linkMessageModal?.addEventListener('click', (e) => {
+      if (e.target === linkMessageModal) {
+        linkMessageModal.classList.remove('show');
       }
     });
 
@@ -435,6 +477,67 @@
           btn.textContent = '📢 Post to Discord';
         }
       });
+    });
+
+    // Link Discord message
+    document.querySelectorAll('.link-message-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dropId = btn.dataset.dropId;
+        document.getElementById('link-drop-id').value = dropId;
+        document.getElementById('message-link-input').value = '';
+        linkMessageModal.classList.add('show');
+      });
+    });
+
+    // Save link
+    document.getElementById('save-link-btn')?.addEventListener('click', async () => {
+      const dropId = document.getElementById('link-drop-id').value;
+      const input = document.getElementById('message-link-input').value.trim();
+
+      if (!input) {
+        alert('Please enter a Discord message URL or ID');
+        return;
+      }
+
+      // Extract message ID from URL or use the input as-is if it's already an ID
+      let messageId = input;
+      let channelId = null;
+
+      // Try to parse Discord URL format: https://discord.com/channels/{guild}/{channel}/{message}
+      const urlMatch = input.match(/discord\.com\/channels\/\d+\/(\d+)\/(\d+)/);
+      if (urlMatch) {
+        channelId = urlMatch[1];
+        messageId = urlMatch[2];
+      }
+
+      const saveBtn = document.getElementById('save-link-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Linking...';
+
+      try {
+        const response = await fetch(`/admin/drops/${dropId}/link-message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message_id: messageId, channel_id: channelId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Discord message linked successfully!');
+          linkMessageModal.classList.remove('show');
+          window.location.reload();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to link message'));
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Link Message';
+        }
+      } catch (error) {
+        console.error('Error linking message:', error);
+        alert('Error linking message: ' + error.message);
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Link Message';
+      }
     });
   </script>
 </body>

@@ -2023,6 +2023,43 @@ router.post('/drops/:id/announce', ensureAdminAuth, express.json(), async (req, 
   }
 });
 
+// POST /admin/drops/:id/link-message - Link existing Discord message to drop
+router.post('/drops/:id/link-message', ensureAdminAuth, express.json(), async (req, res) => {
+  try {
+    const { message_id, channel_id } = req.body;
+
+    if (!message_id) {
+      return res.status(400).json({ error: 'Message ID is required' });
+    }
+
+    // Get the drop to check if it exists
+    const drop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
+    if (!drop) {
+      return res.status(404).json({ error: 'Drop not found' });
+    }
+
+    // Use the provided channel_id or fall back to the environment variable
+    const finalChannelId = channel_id || process.env.DROP_ANNOUNCEMENT_CHANNEL_ID;
+
+    // Update drop with Discord message ID
+    db.prepare(`
+      UPDATE drops
+      SET discord_message_id = ?, discord_channel_id = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(message_id, finalChannelId, req.params.id);
+
+    console.log(`🔗 Linked drop ${req.params.id} to Discord message ${message_id}`);
+
+    res.json({
+      success: true,
+      message: 'Discord message linked successfully'
+    });
+  } catch (error) {
+    console.error('Error linking message:', error);
+    res.status(500).json({ error: error.message || 'Failed to link message' });
+  }
+});
+
 // GET /admin/drops/:id/preferences - View preferences for a drop
 router.get('/drops/:id/preferences', ensureAdminAuth, async (req, res) => {
   try {
