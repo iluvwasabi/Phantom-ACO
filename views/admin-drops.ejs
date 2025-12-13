@@ -96,6 +96,9 @@
                         <button class="btn btn-sm btn-success post-to-discord-btn" data-drop-id="<%= drop.id %>">📢 Post to Discord</button>
                       <% } %>
                       <button class="btn btn-sm link-message-btn" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;" data-drop-id="<%= drop.id %>">🔗 Link</button>
+                      <% if (drop.discord_message_id) { %>
+                        <button class="btn btn-sm unlink-message-btn" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;" data-drop-id="<%= drop.id %>">🔓 Unlink</button>
+                      <% } %>
                       <button class="btn btn-sm btn-primary view-preferences-btn" data-drop-id="<%= drop.id %>">👥 Preferences</button>
                       <button class="btn btn-sm edit-drop-btn" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;" data-drop-id="<%= drop.id %>">✏️ Edit</button>
                       <button class="btn btn-sm btn-danger delete-drop-btn" data-drop-id="<%= drop.id %>">🗑️ Delete</button>
@@ -538,6 +541,42 @@
         saveBtn.disabled = false;
         saveBtn.textContent = 'Link Message';
       }
+    });
+
+    // Unlink Discord message
+    document.querySelectorAll('.unlink-message-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to unlink this Discord message? This will not delete the Discord post, but it will remove the connection to this drop.')) {
+          return;
+        }
+
+        const dropId = btn.dataset.dropId;
+        btn.disabled = true;
+        btn.textContent = '🔓 Unlinking...';
+
+        try {
+          const response = await fetch(`/admin/drops/${dropId}/unlink-message`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            alert('Discord message unlinked successfully!');
+            window.location.reload();
+          } else {
+            alert('Error: ' + (data.error || 'Failed to unlink message'));
+            btn.disabled = false;
+            btn.textContent = '🔓 Unlink';
+          }
+        } catch (error) {
+          console.error('Error unlinking message:', error);
+          alert('Error unlinking message: ' + error.message);
+          btn.disabled = false;
+          btn.textContent = '🔓 Unlink';
+        }
+      });
     });
   </script>
 </body>

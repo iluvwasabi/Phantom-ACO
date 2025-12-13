@@ -2040,6 +2040,15 @@ router.post('/drops/:id/link-message', ensureAdminAuth, express.json(), async (r
       return res.status(404).json({ error: 'Drop not found' });
     }
 
+    // Check if this message ID is already linked to a different drop
+    const existingDrop = db.prepare('SELECT id, drop_name FROM drops WHERE discord_message_id = ? AND id != ?').get(message_id, req.params.id);
+    if (existingDrop) {
+      console.log(`⚠️ Message ${message_id} is already linked to drop ${existingDrop.id} (${existingDrop.drop_name})`);
+      return res.status(400).json({
+        error: `This Discord message is already linked to drop #${existingDrop.id} (${existingDrop.drop_name}). Please unlink it from that drop first or use a different message.`
+      });
+    }
+
     // Use the provided channel_id or fall back to the environment variable
     const finalChannelId = channel_id || process.env.DROP_ANNOUNCEMENT_CHANNEL_ID;
 
@@ -2059,6 +2068,37 @@ router.post('/drops/:id/link-message', ensureAdminAuth, express.json(), async (r
   } catch (error) {
     console.error('Error linking message:', error);
     res.status(500).json({ error: error.message || 'Failed to link message' });
+  }
+});
+
+// POST /admin/drops/:id/unlink-message - Unlink Discord message from drop
+router.post('/drops/:id/unlink-message', ensureAdminAuth, express.json(), async (req, res) => {
+  try {
+    const drop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
+    if (!drop) {
+      return res.status(404).json({ error: 'Drop not found' });
+    }
+
+    if (!drop.discord_message_id) {
+      return res.status(400).json({ error: 'No Discord message is linked to this drop' });
+    }
+
+    // Remove the Discord message link
+    db.prepare(`
+      UPDATE drops
+      SET discord_message_id = NULL, discord_channel_id = NULL, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(req.params.id);
+
+    console.log(`🔓 Unlinked Discord message from drop ${req.params.id}`);
+
+    res.json({
+      success: true,
+      message: 'Discord message unlinked successfully'
+    });
+  } catch (error) {
+    console.error('Error unlinking message:', error);
+    res.status(500).json({ error: error.message || 'Failed to unlink message' });
   }
 });
 
