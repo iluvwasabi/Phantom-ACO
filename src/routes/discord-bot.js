@@ -621,20 +621,20 @@ router.get('/api/discord-bot/drop-info/:id', verifyBotSecret, async (req, res) =
   }
 });
 
-// GET /api/discord-bot/latest-drop - Get latest drop for dashboard
-router.get('/api/discord-bot/latest-drop', verifyBotSecret, async (req, res) => {
+// GET /api/discord-bot/latest-drops - Get latest drops for dashboard
+router.get('/api/discord-bot/latest-drops', verifyBotSecret, async (req, res) => {
   try {
-    const drop = db.prepare(`
+    const drops = db.prepare(`
       SELECT * FROM drops
       WHERE is_active = 1
       ORDER BY created_at DESC
-      LIMIT 1
-    `).get();
+      LIMIT 3
+    `).all();
 
-    res.json({ success: true, drop });
+    res.json({ success: true, drops });
 
   } catch (error) {
-    console.error('Error fetching latest drop:', error);
+    console.error('Error fetching latest drops:', error);
     res.status(500).json({ error: error.message });
   }
 });

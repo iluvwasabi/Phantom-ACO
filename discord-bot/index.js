@@ -1399,12 +1399,12 @@ async function handleDropInfoCommand(message, dropId) {
 // Handle /setup-dashboard command
 async function handleSetupDashboard(interaction) {
   try {
-    // Fetch the latest drop
-    const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/latest-drop`, {
+    // Fetch the latest 3 drops
+    const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/latest-drops`, {
       headers: { 'x-bot-secret': API_SECRET }
     });
 
-    const latestDrop = response.data.drop;
+    const drops = response.data.drops || [];
 
     const embed = new EmbedBuilder()
       .setTitle('🎮 ACO Service Dashboard')
@@ -1412,15 +1412,19 @@ async function handleSetupDashboard(interaction) {
       .setDescription('Welcome to the ACO Service! Use the buttons below to navigate.')
       .setTimestamp();
 
-    if (latestDrop) {
-      embed.addFields({
-        name: '🔥 Latest Drop',
-        value: `**${latestDrop.drop_name}**\n${latestDrop.service_name || 'No service'}\n${latestDrop.skus ? JSON.parse(latestDrop.skus).length : 0} SKUs available`,
-        inline: false
+    if (drops.length > 0) {
+      // Add each drop as a field (up to 3)
+      drops.forEach((drop, index) => {
+        const skuCount = drop.skus ? JSON.parse(drop.skus).length : 0;
+        embed.addFields({
+          name: `🔥 ${index === 0 ? 'Latest Drop' : `Drop ${index + 1}`}`,
+          value: `**${drop.drop_name}**\n${drop.service_name || 'No service'} • ${skuCount} SKUs available`,
+          inline: false
+        });
       });
     } else {
       embed.addFields({
-        name: '🔥 Latest Drop',
+        name: '🔥 Latest Drops',
         value: 'No drops available yet',
         inline: false
       });
@@ -1451,7 +1455,7 @@ async function handleSetupDashboard(interaction) {
 }
 
 // Handle "View All Services" button
-async function handleDashboardViewServices(interaction) {
+async function handleDashboardViewServices(interaction, isUpdate = false) {
   try {
     // Fetch all services
     const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/services`, {
@@ -1460,12 +1464,14 @@ async function handleDashboardViewServices(interaction) {
 
     const services = response.data.services || [];
 
-    // Store current view in history
-    const userId = interaction.user.id;
-    if (!dashboardHistory.has(userId)) {
-      dashboardHistory.set(userId, []);
+    // Store current view in history (only if not updating from return)
+    if (!isUpdate) {
+      const userId = interaction.user.id;
+      if (!dashboardHistory.has(userId)) {
+        dashboardHistory.set(userId, []);
+      }
+      dashboardHistory.get(userId).push('main');
     }
-    dashboardHistory.get(userId).push('main');
 
     const embed = new EmbedBuilder()
       .setTitle('📋 All Services')
@@ -1499,18 +1505,32 @@ async function handleDashboardViewServices(interaction) {
       );
     rows.push(returnRow);
 
-    await interaction.reply({
+    const payload = {
       embeds: [embed],
       components: rows,
       ephemeral: true
-    });
+    };
+
+    if (isUpdate) {
+      await interaction.update(payload);
+    } else {
+      await interaction.reply(payload);
+    }
 
   } catch (error) {
     console.error('Error showing services:', error);
-    await interaction.reply({
+    const errorPayload = {
       content: '❌ Error loading services. Please try again.',
+      embeds: [],
+      components: [],
       ephemeral: true
-    });
+    };
+
+    if (isUpdate) {
+      await interaction.update(errorPayload);
+    } else {
+      await interaction.reply(errorPayload);
+    }
   }
 }
 
@@ -1725,8 +1745,10 @@ async function handleDashboardReturn(interaction) {
   const history = dashboardHistory.get(userId) || [];
 
   if (history.length === 0) {
-    await interaction.reply({
+    await interaction.update({
       content: '❌ No previous view to return to.',
+      embeds: [],
+      components: [],
       ephemeral: true
     });
     return;
@@ -1736,16 +1758,16 @@ async function handleDashboardReturn(interaction) {
   const previousView = history.pop();
   dashboardHistory.set(userId, history);
 
-  // Navigate based on previous view
+  // Navigate based on previous view - always update existing message
   if (previousView === 'main') {
     // Return to services view
-    await handleDashboardViewServices(interaction);
+    await handleDashboardViewServices(interaction, true);
   } else if (previousView === 'services') {
     // Return to services list
-    await handleDashboardViewServices(interaction);
+    await handleDashboardViewServices(interaction, true);
   } else if (previousView === 'service') {
     // Return to services list
-    await handleDashboardViewServices(interaction);
+    await handleDashboardViewServices(interaction, true);
   }
 }
 
