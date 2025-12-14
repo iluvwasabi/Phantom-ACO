@@ -881,13 +881,21 @@ client.on('ready', async () => {
   try {
     console.log('🔄 Registering slash commands...');
 
-    // Register globally (works in all servers)
+    // Register globally (works in all servers, takes ~1 hour to propagate)
     await rest.put(
       Routes.applicationCommands(client.user.id),
       { body: commands }
     );
-
     console.log('✅ Slash commands registered globally');
+
+    // Also register for specific guild if DISCORD_SERVER_ID is set (appears instantly)
+    if (process.env.DISCORD_SERVER_ID) {
+      await rest.put(
+        Routes.applicationGuildCommands(client.user.id, process.env.DISCORD_SERVER_ID),
+        { body: commands }
+      );
+      console.log(`✅ Slash commands registered for guild ${process.env.DISCORD_SERVER_ID}`);
+    }
   } catch (error) {
     console.error('❌ Error registering slash commands:', error);
   }
