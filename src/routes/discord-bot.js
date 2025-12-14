@@ -342,11 +342,11 @@ router.get('/api/discord-bot/drop-preferences/:dropId/:discordId', verifyBotSecr
       if (user) {
         console.log(`🔍 Looking for submissions: user_id=${user.id}, service_name="${drop.service_name}"`);
 
-        // Use case-insensitive comparison for service_name and join with form_data
+        // Use case-insensitive comparison for service_name and join with encrypted_credentials
         const submissions = db.prepare(`
-          SELECT ss.id, ss.service_name, ss.profile_name, ss.created_at, fd.encrypted_data
+          SELECT ss.id, ss.service_name, ss.profile_name, ss.created_at, ec.encrypted_password
           FROM service_subscriptions ss
-          LEFT JOIN form_data fd ON ss.form_submission_id = fd.id
+          LEFT JOIN encrypted_credentials ec ON ec.subscription_id = ss.id
           WHERE ss.user_id = ? AND LOWER(ss.service_name) = LOWER(?) AND ss.status = 'active'
           ORDER BY ss.created_at ASC
         `).all(user.id, drop.service_name);
@@ -354,9 +354,9 @@ router.get('/api/discord-bot/drop-preferences/:dropId/:discordId', verifyBotSecr
         // Decrypt and format submission data
         userSubmissions = submissions.map(sub => {
           let decryptedData = {};
-          if (sub.encrypted_data) {
+          if (sub.encrypted_password) {
             try {
-              decryptedData = JSON.parse(decrypt(sub.encrypted_data));
+              decryptedData = JSON.parse(decrypt(sub.encrypted_password));
             } catch (err) {
               console.error('Error decrypting submission data:', err);
             }
