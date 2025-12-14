@@ -587,12 +587,35 @@ async function handleManagePreferences(interaction) {
       profileInfo += `• ${displayName}\n`;
     });
 
-    // Build profile select menu options
+    // Build profile select menu options with detailed information
     const profileOptions = user_submissions.map(sub => {
       const label = sub.profile_name || `Profile #${sub.id}`;
+
+      // Build description with submission details
+      let description = '';
+      if (sub.first_name && sub.last_name) {
+        description += `${sub.first_name} ${sub.last_name}`;
+      }
+      if (sub.email) {
+        description += description ? ` • ${sub.email}` : sub.email;
+      }
+      if (sub.card_last_4) {
+        description += description ? ` • Card: ****${sub.card_last_4}` : `Card: ****${sub.card_last_4}`;
+      }
+
+      // Fallback if no details available
+      if (!description) {
+        description = `Created: ${new Date(sub.created_at).toLocaleDateString()}`;
+      }
+
+      // Discord has a 100 char limit on description
+      if (description.length > 100) {
+        description = description.substring(0, 97) + '...';
+      }
+
       return new StringSelectMenuOptionBuilder()
         .setLabel(label.length > 100 ? label.substring(0, 97) + '...' : label)
-        .setDescription(`Created: ${new Date(sub.created_at).toLocaleDateString()}`)
+        .setDescription(description)
         .setValue(sub.id.toString());
     });
 

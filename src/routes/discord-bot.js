@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
+const { decrypt } = require('../utils/encryption');
 
 // Middleware to verify Discord bot requests
 function verifyBotSecret(req, res, next) {
@@ -341,13 +342,37 @@ router.get('/api/discord-bot/drop-preferences/:dropId/:discordId', verifyBotSecr
       if (user) {
         console.log(`🔍 Looking for submissions: user_id=${user.id}, service_name="${drop.service_name}"`);
 
-        // Use case-insensitive comparison for service_name
-        userSubmissions = db.prepare(`
-          SELECT id, service_name, profile_name, created_at
-          FROM service_subscriptions
-          WHERE user_id = ? AND LOWER(service_name) = LOWER(?) AND status = 'active'
-          ORDER BY created_at ASC
+        // Use case-insensitive comparison for service_name and join with form_data
+        const submissions = db.prepare(`
+          SELECT ss.id, ss.service_name, ss.profile_name, ss.created_at, fd.encrypted_data
+          FROM service_subscriptions ss
+          LEFT JOIN form_data fd ON ss.form_submission_id = fd.id
+          WHERE ss.user_id = ? AND LOWER(ss.service_name) = LOWER(?) AND ss.status = 'active'
+          ORDER BY ss.created_at ASC
         `).all(user.id, drop.service_name);
+
+        // Decrypt and format submission data
+        userSubmissions = submissions.map(sub => {
+          let decryptedData = {};
+          if (sub.encrypted_data) {
+            try {
+              decryptedData = JSON.parse(decrypt(sub.encrypted_data));
+            } catch (err) {
+              console.error('Error decrypting submission data:', err);
+            }
+          }
+
+          return {
+            id: sub.id,
+            service_name: sub.service_name,
+            profile_name: sub.profile_name,
+            created_at: sub.created_at,
+            first_name: decryptedData.first_name || '',
+            last_name: decryptedData.last_name || '',
+            email: decryptedData.email || '',
+            card_last_4: decryptedData.card_number ? decryptedData.card_number.slice(-4) : ''
+          };
+        });
 
         console.log(`📋 Found ${userSubmissions.length} active submissions for ${drop.service_name}`);
       } else {

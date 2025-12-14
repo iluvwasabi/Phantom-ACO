@@ -273,9 +273,9 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       WHERE user_id = ? AND service_name = ?
     `).get(userId, service).count;
 
-    // Generate profile name: "DiscordUsername ServiceName Number"
+    // Generate profile name: "DiscordUsername Number"
     const profileNumber = existingCount + 1;
-    const profileName = `${userInfo.discord_username} ${service} ${profileNumber}`;
+    const profileName = `${userInfo.discord_username} ${profileNumber}`;
 
     // Create service subscription (with keep_running defaulting to 1)
     // Use service name as type for services with custom forms, otherwise use login_required/no_login

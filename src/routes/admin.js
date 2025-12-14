@@ -1343,13 +1343,9 @@ router.post('/export/prism', ensureAdminAuth, async (req, res) => {
 
         const parsed = JSON.parse(decryptedPassword);
 
-        // Create Prism profile
-        const firstName = parsed.first_name || '';
-        const lastName = parsed.last_name || '';
-        const baseName = `${firstName} ${lastName}`.trim() || sub.discord_username;
-        // Capitalize service name (e.g., "target" -> "Target", "pokemoncenter" -> "Pokemoncenter")
-        const serviceName = sub.service_name.charAt(0).toUpperCase() + sub.service_name.slice(1);
-        const fullName = `${baseName} ${serviceName}`;
+        // Create Prism profile using database profile_name
+        // Profile name format is now "DiscordUsername Number" (e.g., "JohnDoe 1", "JohnDoe 2")
+        const fullName = sub.profile_name || `${sub.discord_username} 1`;
 
         // Check if billing is different (handle boolean, string, and number types)
         const billingIsDifferent = parsed.billing_same_as_shipping === false ||
@@ -1454,13 +1450,9 @@ router.post('/export/stellar-csv', ensureAdminAuth, async (req, res) => {
 
         const parsed = JSON.parse(decryptedPassword);
 
-        // Create profile name
-        const firstName = parsed.first_name || '';
-        const lastName = parsed.last_name || '';
-        const baseName = `${firstName} ${lastName}`.trim() || sub.discord_username;
-        // Capitalize service name (e.g., "target" -> "Target", "pokemoncenter" -> "Pokemoncenter")
-        const serviceName = sub.service_name.charAt(0).toUpperCase() + sub.service_name.slice(1);
-        const profileName = `${baseName} ${serviceName}`;
+        // Use database profile_name
+        // Profile name format is now "DiscordUsername Number" (e.g., "JohnDoe 1", "JohnDoe 2")
+        const profileName = sub.profile_name || `${sub.discord_username} 1`;
 
         // Check if billing is same as shipping
         const billingSameAsShipping = parsed.billing_same_as_shipping === true ||
