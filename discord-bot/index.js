@@ -1615,6 +1615,105 @@ async function handleDashboardService(interaction) {
 // Handle drop selection from dropdown
 async function handleDashboardDropSelect(interaction) {
   const dropId = interaction.values[0];
+
+  // Store current view in history
+  const userId = interaction.user.id;
+  if (!dashboardHistory.has(userId)) {
+    dashboardHistory.set(userId, []);
+  }
+  dashboardHistory.get(userId).push(`service`);
+
+  // Fetch drop details
+  try {
+    const response = await axios.get(
+      `${WEBSITE_API_URL}/api/discord-bot/drop-info/${dropId}`,
+      {
+        headers: { 'x-bot-secret': API_SECRET }
+      }
+    );
+
+    const { drop } = response.data;
+    const skus = JSON.parse(drop.skus || '[]');
+
+    // Format drop date
+    let dropDateStr = 'TBA';
+    if (drop.drop_date) {
+      const date = new Date(drop.drop_date);
+      dropDateStr = date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Format SKU list
+    const skuList = skus.map(s => `• **${s.sku}**: ${s.name}`).join('\n');
+
+    const embed = new EmbedBuilder()
+      .setTitle(`🔥 ${drop.drop_name}`)
+      .setColor(0x5865F2)
+      .addFields(
+        { name: '📅 Drop Date', value: dropDateStr, inline: false },
+        { name: '🛍️ Service', value: drop.service_name || 'No service', inline: true },
+        { name: '📦 SKUs Available', value: `${skus.length} SKUs`, inline: true }
+      )
+      .setTimestamp();
+
+    if (drop.description) {
+      embed.setDescription(drop.description);
+    }
+
+    if (skuList) {
+      embed.addFields({ name: '📦 Products', value: skuList.length > 1024 ? skuList.substring(0, 1021) + '...' : skuList, inline: false });
+    }
+
+    const row1 = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId(`dashboard_drop_${dropId}`)
+          .setLabel('✅ Opt In to SKUs')
+          .setStyle(ButtonStyle.Success)
+      );
+
+    const row2 = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('dashboard_return')
+          .setLabel('⬅️ Return')
+          .setStyle(ButtonStyle.Danger)
+      );
+
+    await interaction.update({
+      content: '',
+      embeds: [embed],
+      components: [row1, row2],
+      ephemeral: true
+    });
+
+  } catch (error) {
+    console.error('Error loading drop details:', error);
+    await interaction.update({
+      content: '❌ Error loading drop details. Please try again.',
+      embeds: [],
+      components: [
+        new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('dashboard_return')
+              .setLabel('⬅️ Return')
+              .setStyle(ButtonStyle.Danger)
+          )
+      ],
+      ephemeral: true
+    });
+  }
+}
+
+// Handle "Opt In to SKUs" button from drop details
+async function handleDashboardDrop(interaction) {
+  const dropId = interaction.customId.replace('dashboard_drop_', '');
   const discordId = interaction.user.id;
   const discordUsername = `${interaction.user.username}#${interaction.user.discriminator}`;
 
@@ -1623,7 +1722,7 @@ async function handleDashboardDropSelect(interaction) {
   if (!dashboardHistory.has(userId)) {
     dashboardHistory.set(userId, []);
   }
-  dashboardHistory.get(userId).push(`service`);
+  dashboardHistory.get(userId).push(`drop`);
 
   // Use the existing manage preferences flow
   try {
@@ -1708,8 +1807,8 @@ async function handleDashboardDropSelect(interaction) {
     const row2 = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
-          .setCustomId('dashboard_return')
-          .setLabel('⬅️ Return')
+          .setCustomId(`dashboard_return_drop_${dropId}`)
+          .setLabel('⬅️ Return to Drop Details')
           .setStyle(ButtonStyle.Danger)
       );
 
@@ -1724,6 +1823,98 @@ async function handleDashboardDropSelect(interaction) {
     console.error('Error loading drop preferences:', error);
     await interaction.update({
       content: '❌ Error loading drop. Please try again.',
+      embeds: [],
+      components: [
+        new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('dashboard_return')
+              .setLabel('⬅️ Return')
+              .setStyle(ButtonStyle.Danger)
+          )
+      ],
+      ephemeral: true
+    });
+  }
+}
+
+// Handle return to drop details from profile selection
+async function handleDashboardReturnToDrop(interaction) {
+  const dropId = interaction.customId.replace('dashboard_return_drop_', '');
+
+  // Fetch drop details
+  try {
+    const response = await axios.get(
+      `${WEBSITE_API_URL}/api/discord-bot/drop-info/${dropId}`,
+      {
+        headers: { 'x-bot-secret': API_SECRET }
+      }
+    );
+
+    const { drop } = response.data;
+    const skus = JSON.parse(drop.skus || '[]');
+
+    // Format drop date
+    let dropDateStr = 'TBA';
+    if (drop.drop_date) {
+      const date = new Date(drop.drop_date);
+      dropDateStr = date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Format SKU list
+    const skuList = skus.map(s => `• **${s.sku}**: ${s.name}`).join('\n');
+
+    const embed = new EmbedBuilder()
+      .setTitle(`🔥 ${drop.drop_name}`)
+      .setColor(0x5865F2)
+      .addFields(
+        { name: '📅 Drop Date', value: dropDateStr, inline: false },
+        { name: '🛍️ Service', value: drop.service_name || 'No service', inline: true },
+        { name: '📦 SKUs Available', value: `${skus.length} SKUs`, inline: true }
+      )
+      .setTimestamp();
+
+    if (drop.description) {
+      embed.setDescription(drop.description);
+    }
+
+    if (skuList) {
+      embed.addFields({ name: '📦 Products', value: skuList.length > 1024 ? skuList.substring(0, 1021) + '...' : skuList, inline: false });
+    }
+
+    const row1 = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId(`dashboard_drop_${dropId}`)
+          .setLabel('✅ Opt In to SKUs')
+          .setStyle(ButtonStyle.Success)
+      );
+
+    const row2 = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('dashboard_return')
+          .setLabel('⬅️ Return')
+          .setStyle(ButtonStyle.Danger)
+      );
+
+    await interaction.update({
+      content: '',
+      embeds: [embed],
+      components: [row1, row2],
+      ephemeral: true
+    });
+
+  } catch (error) {
+    console.error('Error loading drop details:', error);
+    await interaction.update({
+      content: '❌ Error loading drop details. Please try again.',
       embeds: [],
       components: [
         new ActionRowBuilder()
@@ -1768,6 +1959,9 @@ async function handleDashboardReturn(interaction) {
   } else if (previousView === 'service') {
     // Return to services list
     await handleDashboardViewServices(interaction, true);
+  } else if (previousView === 'drop') {
+    // Return to services list (since we don't have the service name stored)
+    await handleDashboardViewServices(interaction, true);
   }
 }
 
@@ -1786,6 +1980,9 @@ client.on('interactionCreate', async (interaction) => {
     // Dashboard buttons
     if (interaction.customId === 'dashboard_view_services') {
       await handleDashboardViewServices(interaction);
+    }
+    else if (interaction.customId.startsWith('dashboard_return_drop_')) {
+      await handleDashboardReturnToDrop(interaction);
     }
     else if (interaction.customId === 'dashboard_return') {
       await handleDashboardReturn(interaction);
