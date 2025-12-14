@@ -880,11 +880,14 @@ client.on('ready', async () => {
 
   try {
     console.log('🔄 Registering slash commands...');
+
+    // Register globally (works in all servers)
     await rest.put(
-      Routes.applicationGuildCommands(client.user.id, process.env.DISCORD_SERVER_ID),
+      Routes.applicationCommands(client.user.id),
       { body: commands }
     );
-    console.log('✅ Slash commands registered successfully');
+
+    console.log('✅ Slash commands registered globally');
   } catch (error) {
     console.error('❌ Error registering slash commands:', error);
   }
