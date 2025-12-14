@@ -621,4 +621,62 @@ router.get('/api/discord-bot/drop-info/:id', verifyBotSecret, async (req, res) =
   }
 });
 
+// GET /api/discord-bot/latest-drop - Get latest drop for dashboard
+router.get('/api/discord-bot/latest-drop', verifyBotSecret, async (req, res) => {
+  try {
+    const drop = db.prepare(`
+      SELECT * FROM drops
+      WHERE is_active = 1
+      ORDER BY created_at DESC
+      LIMIT 1
+    `).get();
+
+    res.json({ success: true, drop });
+
+  } catch (error) {
+    console.error('Error fetching latest drop:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/discord-bot/services - Get all services for dashboard
+router.get('/api/discord-bot/services', verifyBotSecret, async (req, res) => {
+  try {
+    // Get unique service names from active drops
+    const services = db.prepare(`
+      SELECT DISTINCT service_name
+      FROM drops
+      WHERE is_active = 1 AND service_name IS NOT NULL
+      ORDER BY service_name ASC
+    `).all();
+
+    const serviceNames = services.map(s => s.service_name);
+
+    res.json({ success: true, services: serviceNames });
+
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/discord-bot/service-drops/:serviceName - Get drops for a specific service
+router.get('/api/discord-bot/service-drops/:serviceName', verifyBotSecret, async (req, res) => {
+  try {
+    const { serviceName } = req.params;
+
+    const drops = db.prepare(`
+      SELECT * FROM drops
+      WHERE is_active = 1 AND LOWER(service_name) = LOWER(?)
+      ORDER BY created_at DESC
+    `).all(serviceName);
+
+    res.json({ success: true, drops });
+
+  } catch (error) {
+    console.error('Error fetching service drops:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

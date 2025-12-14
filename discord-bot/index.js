@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, SlashCommandBuilder, REST, Routes } = require('discord.js');
 const axios = require('axios');
 
 // Discord bot client
@@ -15,6 +15,9 @@ const client = new Client({
 
 // Store selected profiles temporarily (userId+dropId -> [profileIds])
 const selectedProfilesCache = new Map();
+
+// Store navigation history for dashboard (userId -> [views])
+const dashboardHistory = new Map();
 
 // Configuration
 const CHECKOUT_CHANNEL_ID = process.env.DISCORD_CHECKOUT_CHANNEL_ID;
@@ -858,13 +861,33 @@ async function handleSKUToggle(interaction) {
 // ==================== END DROP PREFERENCE FUNCTIONS ====================
 
 // Bot ready event
-client.on('ready', () => {
+client.on('ready', async () => {
   console.log(`✅ Discord bot logged in as ${client.user.tag}`);
   console.log(`📡 Monitoring channel: ${CHECKOUT_CHANNEL_ID}`);
   console.log(`📢 Public announcements channel: ${PUBLIC_CHECKOUT_CHANNEL_ID || 'Not configured'}`);
   console.log(`🔥 Drop announcements channel: ${DROP_ANNOUNCEMENT_CHANNEL_ID || 'Not configured'}`);
   console.log(`📝 Submission updates channel: ${SUBMISSION_UPDATES_CHANNEL_ID || 'Not configured'}`);
   console.log(`🌐 Website API: ${WEBSITE_API_URL}`);
+
+  // Register slash commands
+  const commands = [
+    new SlashCommandBuilder()
+      .setName('setup-dashboard')
+      .setDescription('Set up the ACO Service dashboard in this channel')
+  ].map(command => command.toJSON());
+
+  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
+
+  try {
+    console.log('🔄 Registering slash commands...');
+    await rest.put(
+      Routes.applicationGuildCommands(client.user.id, process.env.DISCORD_SERVER_ID),
+      { body: commands }
+    );
+    console.log('✅ Slash commands registered successfully');
+  } catch (error) {
+    console.error('❌ Error registering slash commands:', error);
+  }
 
   // Poll for drop announcements every 5 seconds
   setInterval(pollDropAnnouncements, 5000);
@@ -1360,12 +1383,388 @@ async function handleDropInfoCommand(message, dropId) {
   }
 }
 
+// ==================== DASHBOARD FUNCTIONS ====================
+
+// Handle /setup-dashboard command
+async function handleSetupDashboard(interaction) {
+  try {
+    // Fetch the latest drop
+    const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/latest-drop`, {
+      headers: { 'x-bot-secret': API_SECRET }
+    });
+
+    const latestDrop = response.data.drop;
+
+    const embed = new EmbedBuilder()
+      .setTitle('🎮 ACO Service Dashboard')
+      .setColor(0x5865F2)
+      .setDescription('Welcome to the ACO Service! Use the buttons below to navigate.')
+      .setTimestamp();
+
+    if (latestDrop) {
+      embed.addFields({
+        name: '🔥 Latest Drop',
+        value: `**${latestDrop.drop_name}**\n${latestDrop.service_name || 'No service'}\n${latestDrop.skus ? JSON.parse(latestDrop.skus).length : 0} SKUs available`,
+        inline: false
+      });
+    } else {
+      embed.addFields({
+        name: '🔥 Latest Drop',
+        value: 'No drops available yet',
+        inline: false
+      });
+    }
+
+    const row = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('dashboard_view_services')
+          .setLabel('📋 View All Services')
+          .setStyle(ButtonStyle.Primary)
+      );
+
+    await interaction.reply({
+      embeds: [embed],
+      components: [row]
+    });
+
+    console.log(`📊 Dashboard set up in channel ${interaction.channel.name} by ${interaction.user.username}`);
+
+  } catch (error) {
+    console.error('Error setting up dashboard:', error);
+    await interaction.reply({
+      content: '❌ Error setting up dashboard. Please try again.',
+      ephemeral: true
+    });
+  }
+}
+
+// Handle "View All Services" button
+async function handleDashboardViewServices(interaction) {
+  try {
+    // Fetch all services
+    const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/services`, {
+      headers: { 'x-bot-secret': API_SECRET }
+    });
+
+    const services = response.data.services || [];
+
+    // Store current view in history
+    const userId = interaction.user.id;
+    if (!dashboardHistory.has(userId)) {
+      dashboardHistory.set(userId, []);
+    }
+    dashboardHistory.get(userId).push('main');
+
+    const embed = new EmbedBuilder()
+      .setTitle('📋 All Services')
+      .setColor(0x5865F2)
+      .setDescription('Select a service to view available drops')
+      .setTimestamp();
+
+    // Create buttons for each service (max 25 buttons, 5 rows of 5)
+    const rows = [];
+    const serviceButtons = services.slice(0, 25).map(service =>
+      new ButtonBuilder()
+        .setCustomId(`dashboard_service_${service}`)
+        .setLabel(service.charAt(0).toUpperCase() + service.slice(1))
+        .setStyle(ButtonStyle.Secondary)
+    );
+
+    // Split into rows of 5
+    for (let i = 0; i < serviceButtons.length; i += 5) {
+      const row = new ActionRowBuilder()
+        .addComponents(serviceButtons.slice(i, i + 5));
+      rows.push(row);
+    }
+
+    // Add return button in last row
+    const returnRow = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('dashboard_return')
+          .setLabel('⬅️ Return')
+          .setStyle(ButtonStyle.Danger)
+      );
+    rows.push(returnRow);
+
+    await interaction.reply({
+      embeds: [embed],
+      components: rows,
+      ephemeral: true
+    });
+
+  } catch (error) {
+    console.error('Error showing services:', error);
+    await interaction.reply({
+      content: '❌ Error loading services. Please try again.',
+      ephemeral: true
+    });
+  }
+}
+
+// Handle service selection
+async function handleDashboardService(interaction) {
+  try {
+    const serviceName = interaction.customId.replace('dashboard_service_', '');
+
+    // Fetch drops for this service
+    const response = await axios.get(`${WEBSITE_API_URL}/api/discord-bot/service-drops/${serviceName}`, {
+      headers: { 'x-bot-secret': API_SECRET }
+    });
+
+    const drops = response.data.drops || [];
+
+    // Store current view in history
+    const userId = interaction.user.id;
+    if (!dashboardHistory.has(userId)) {
+      dashboardHistory.set(userId, []);
+    }
+    dashboardHistory.get(userId).push('services');
+
+    const embed = new EmbedBuilder()
+      .setTitle(`${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)} Drops`)
+      .setColor(0x5865F2)
+      .setDescription(drops.length > 0 ? 'Select a drop to view details and opt in to SKUs' : 'No drops available for this service')
+      .setTimestamp();
+
+    if (drops.length === 0) {
+      const row = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('dashboard_return')
+            .setLabel('⬅️ Return')
+            .setStyle(ButtonStyle.Danger)
+        );
+
+      await interaction.update({
+        embeds: [embed],
+        components: [row],
+        ephemeral: true
+      });
+      return;
+    }
+
+    // Use dropdown for drop selection
+    const dropOptions = drops.slice(0, 25).map(drop => ({
+      label: drop.drop_name.substring(0, 100),
+      description: `${JSON.parse(drop.skus || '[]').length} SKUs`,
+      value: drop.id.toString()
+    }));
+
+    const selectMenu = new StringSelectMenuBuilder()
+      .setCustomId('dashboard_drop_select')
+      .setPlaceholder('Select a drop')
+      .addOptions(dropOptions);
+
+    const row1 = new ActionRowBuilder().addComponents(selectMenu);
+    const row2 = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('dashboard_return')
+          .setLabel('⬅️ Return')
+          .setStyle(ButtonStyle.Danger)
+      );
+
+    await interaction.update({
+      embeds: [embed],
+      components: [row1, row2],
+      ephemeral: true
+    });
+
+  } catch (error) {
+    console.error('Error showing service drops:', error);
+    await interaction.reply({
+      content: '❌ Error loading drops. Please try again.',
+      ephemeral: true
+    });
+  }
+}
+
+// Handle drop selection from dropdown
+async function handleDashboardDropSelect(interaction) {
+  const dropId = interaction.values[0];
+  const discordId = interaction.user.id;
+  const discordUsername = `${interaction.user.username}#${interaction.user.discriminator}`;
+
+  // Store current view in history
+  const userId = interaction.user.id;
+  if (!dashboardHistory.has(userId)) {
+    dashboardHistory.set(userId, []);
+  }
+  dashboardHistory.get(userId).push(`service`);
+
+  // Use the existing manage preferences flow
+  try {
+    const response = await axios.get(
+      `${WEBSITE_API_URL}/api/discord-bot/drop-preferences/${dropId}/${discordId}`,
+      {
+        headers: { 'x-bot-secret': API_SECRET }
+      }
+    );
+
+    const { drop_name, service_name, skus, preferences, user_submissions } = response.data;
+
+    // Check if user has submissions for this service
+    if (!user_submissions || user_submissions.length === 0) {
+      await interaction.update({
+        content: `❌ You don't have any **${service_name}** profiles registered.\n\nPlease register a ${service_name} profile on the website first to participate in this drop.`,
+        embeds: [],
+        components: [
+          new ActionRowBuilder()
+            .addComponents(
+              new ButtonBuilder()
+                .setCustomId('dashboard_return')
+                .setLabel('⬅️ Return')
+                .setStyle(ButtonStyle.Danger)
+            )
+        ],
+        ephemeral: true
+      });
+      return;
+    }
+
+    // Build profile selection message
+    let profileInfo = `**${drop_name}** (${service_name})\n\n`;
+    profileInfo += `**Step 1:** Select which profile(s) you want to use for this drop.\n`;
+    profileInfo += `**Step 2:** After selecting profiles, you'll choose which SKUs to run.\n\n`;
+    profileInfo += `Available profiles:\n`;
+    user_submissions.forEach((sub, idx) => {
+      const displayName = sub.profile_name || `Profile #${sub.id}`;
+      profileInfo += `• ${displayName}\n`;
+    });
+
+    // Build profile select menu options with detailed information
+    const profileOptions = user_submissions.map(sub => {
+      const label = sub.profile_name || `Profile #${sub.id}`;
+
+      // Build description with submission details
+      let description = '';
+      if (sub.first_name && sub.last_name) {
+        description += `${sub.first_name} ${sub.last_name}`;
+      }
+      if (sub.email) {
+        description += description ? ` • ${sub.email}` : sub.email;
+      }
+      if (sub.card_last_4) {
+        description += description ? ` • Card: ****${sub.card_last_4}` : `Card: ****${sub.card_last_4}`;
+      }
+
+      // Fallback if no details available
+      if (!description) {
+        description = `Created: ${new Date(sub.created_at).toLocaleDateString()}`;
+      }
+
+      // Discord has a 100 char limit on description
+      if (description.length > 100) {
+        description = description.substring(0, 97) + '...';
+      }
+
+      return new StringSelectMenuOptionBuilder()
+        .setLabel(label.length > 100 ? label.substring(0, 97) + '...' : label)
+        .setDescription(description)
+        .setValue(sub.id.toString());
+    });
+
+    const profileSelectMenu = new StringSelectMenuBuilder()
+      .setCustomId(`select_profiles_${dropId}`)
+      .setPlaceholder('Select profile(s) to use')
+      .setMinValues(1)
+      .setMaxValues(user_submissions.length)
+      .addOptions(profileOptions);
+
+    const row1 = new ActionRowBuilder().addComponents(profileSelectMenu);
+    const row2 = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('dashboard_return')
+          .setLabel('⬅️ Return')
+          .setStyle(ButtonStyle.Danger)
+      );
+
+    await interaction.update({
+      content: profileInfo,
+      embeds: [],
+      components: [row1, row2],
+      ephemeral: true
+    });
+
+  } catch (error) {
+    console.error('Error loading drop preferences:', error);
+    await interaction.update({
+      content: '❌ Error loading drop. Please try again.',
+      embeds: [],
+      components: [
+        new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('dashboard_return')
+              .setLabel('⬅️ Return')
+              .setStyle(ButtonStyle.Danger)
+          )
+      ],
+      ephemeral: true
+    });
+  }
+}
+
+// Handle return button
+async function handleDashboardReturn(interaction) {
+  const userId = interaction.user.id;
+  const history = dashboardHistory.get(userId) || [];
+
+  if (history.length === 0) {
+    await interaction.reply({
+      content: '❌ No previous view to return to.',
+      ephemeral: true
+    });
+    return;
+  }
+
+  // Pop the last view
+  const previousView = history.pop();
+  dashboardHistory.set(userId, history);
+
+  // Navigate based on previous view
+  if (previousView === 'main') {
+    // Return to services view
+    await handleDashboardViewServices(interaction);
+  } else if (previousView === 'services') {
+    // Return to services list
+    await handleDashboardViewServices(interaction);
+  } else if (previousView === 'service') {
+    // Return to services list
+    await handleDashboardViewServices(interaction);
+  }
+}
+
+// ==================== END DASHBOARD FUNCTIONS ====================
+
 // Handle interactions (buttons and select menus)
 client.on('interactionCreate', async (interaction) => {
+  // Handle slash commands
+  if (interaction.isChatInputCommand()) {
+    if (interaction.commandName === 'setup-dashboard') {
+      await handleSetupDashboard(interaction);
+    }
+  }
   // Handle button interactions
-  if (interaction.isButton()) {
+  else if (interaction.isButton()) {
+    // Dashboard buttons
+    if (interaction.customId === 'dashboard_view_services') {
+      await handleDashboardViewServices(interaction);
+    }
+    else if (interaction.customId === 'dashboard_return') {
+      await handleDashboardReturn(interaction);
+    }
+    else if (interaction.customId.startsWith('dashboard_service_')) {
+      await handleDashboardService(interaction);
+    }
+    else if (interaction.customId.startsWith('dashboard_drop_')) {
+      await handleDashboardDrop(interaction);
+    }
     // Handle "Manage Preferences" button
-    if (interaction.customId.startsWith('drop_manage_')) {
+    else if (interaction.customId.startsWith('drop_manage_')) {
       await handleManagePreferences(interaction);
     }
     // Handle SKU toggle buttons
@@ -1375,8 +1774,12 @@ client.on('interactionCreate', async (interaction) => {
   }
   // Handle select menu interactions
   else if (interaction.isStringSelectMenu()) {
+    // Dashboard drop selection
+    if (interaction.customId === 'dashboard_drop_select') {
+      await handleDashboardDropSelect(interaction);
+    }
     // Handle profile selection (shows SKU buttons after)
-    if (interaction.customId.startsWith('select_profiles_')) {
+    else if (interaction.customId.startsWith('select_profiles_')) {
       await handleInitialProfileSelection(interaction);
     }
   }
