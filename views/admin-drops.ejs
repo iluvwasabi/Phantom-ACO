@@ -150,6 +150,14 @@
           </div>
 
           <div class="field wide">
+            <label class="label">Discord Channel (Optional)</label>
+            <input type="text" id="drop-channel" class="control" placeholder="Channel ID or Discord link">
+            <p style="font-size: 0.875rem; color: var(--muted); margin-top: 4px;">
+              Leave empty to use default channel. Paste channel link or ID where drop will be posted.
+            </p>
+          </div>
+
+          <div class="field wide">
             <label class="label">SKUs *</label>
             <div id="sku-list" style="display: flex; flex-direction: column; gap: 12px;">
               <!-- SKU entries will be added here -->
@@ -303,6 +311,7 @@
       const serviceName = document.getElementById('drop-service').value;
       const description = document.getElementById('drop-description').value.trim();
       const dropDate = document.getElementById('drop-date').value;
+      const channelInput = document.getElementById('drop-channel').value.trim();
 
       if (!dropName) {
         alert('Drop name is required');
@@ -335,11 +344,28 @@
         return;
       }
 
+      // Parse channel ID from link or use as-is
+      let channelId = null;
+      if (channelInput) {
+        // Try to parse Discord channel URL: https://discord.com/channels/{guild}/{channel}
+        const urlMatch = channelInput.match(/discord\.com\/channels\/\d+\/(\d+)/);
+        if (urlMatch) {
+          channelId = urlMatch[1];
+        } else if (/^\d+$/.test(channelInput)) {
+          // It's just a channel ID
+          channelId = channelInput;
+        } else {
+          alert('Invalid channel ID or link format');
+          return;
+        }
+      }
+
       const payload = {
         drop_name: dropName,
         service_name: serviceName,
         description: description || null,
         drop_date: dropDate || null,
+        discord_channel_id: channelId,
         skus: skus
       };
 
@@ -382,6 +408,7 @@
           document.getElementById('drop-name').value = drop.drop_name;
           document.getElementById('drop-service').value = drop.service_name || '';
           document.getElementById('drop-description').value = drop.description || '';
+          document.getElementById('drop-channel').value = drop.discord_channel_id || '';
 
           if (drop.drop_date) {
             // Convert to local datetime format

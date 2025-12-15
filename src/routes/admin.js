@@ -1838,7 +1838,7 @@ router.get('/drops', ensureAdminAuth, async (req, res) => {
 // POST /admin/drops - Create new drop
 router.post('/drops', ensureAdminAuth, express.json(), async (req, res) => {
   try {
-    const { drop_name, service_name, description, drop_date, skus } = req.body;
+    const { drop_name, service_name, description, drop_date, discord_channel_id, skus } = req.body;
 
     // Validate required fields
     if (!drop_name || !skus || skus.length === 0) {
@@ -1851,9 +1851,9 @@ router.post('/drops', ensureAdminAuth, express.json(), async (req, res) => {
 
     // Insert drop
     const result = db.prepare(`
-      INSERT INTO drops (drop_name, service_name, description, drop_date, skus, created_by)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(drop_name, service_name, description, drop_date || null, JSON.stringify(skus), req.user.id);
+      INSERT INTO drops (drop_name, service_name, description, drop_date, discord_channel_id, skus, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(drop_name, service_name, description, drop_date || null, discord_channel_id || null, JSON.stringify(skus), req.user.id);
 
     res.json({
       success: true,
@@ -1887,7 +1887,7 @@ router.get('/drops/:id', ensureAdminAuth, async (req, res) => {
 // PUT /admin/drops/:id - Edit drop
 router.put('/drops/:id', ensureAdminAuth, express.json(), async (req, res) => {
   try {
-    const { drop_name, service_name, description, drop_date, skus } = req.body;
+    const { drop_name, service_name, description, drop_date, discord_channel_id, skus } = req.body;
 
     // Validate required fields
     if (!drop_name || !skus || skus.length === 0) {
@@ -1901,12 +1901,12 @@ router.put('/drops/:id', ensureAdminAuth, express.json(), async (req, res) => {
     // Get current drop to check if it has a Discord message
     const currentDrop = db.prepare('SELECT * FROM drops WHERE id = ?').get(req.params.id);
 
-    // Update drop
+    // Update drop (including channel if provided, otherwise keep existing)
     db.prepare(`
       UPDATE drops
-      SET drop_name = ?, service_name = ?, description = ?, drop_date = ?, skus = ?, updated_at = CURRENT_TIMESTAMP
+      SET drop_name = ?, service_name = ?, description = ?, drop_date = ?, discord_channel_id = ?, skus = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(drop_name, service_name, description, drop_date || null, JSON.stringify(skus), req.params.id);
+    `).run(drop_name, service_name, description, drop_date || null, discord_channel_id || currentDrop?.discord_channel_id || null, JSON.stringify(skus), req.params.id);
 
     // Queue Discord message edit if drop was posted
     if (currentDrop && currentDrop.discord_message_id && currentDrop.discord_channel_id) {
@@ -1955,10 +1955,11 @@ router.post('/drops/:id/announce', ensureAdminAuth, express.json(), async (req, 
     }
 
     const skus = JSON.parse(drop.skus || '[]');
-    const channelId = process.env.DROP_ANNOUNCEMENT_CHANNEL_ID;
+    // Use drop's channel if set, otherwise fall back to env var
+    const channelId = drop.discord_channel_id || process.env.DROP_ANNOUNCEMENT_CHANNEL_ID;
 
     if (!channelId) {
-      return res.status(400).json({ error: 'DROP_ANNOUNCEMENT_CHANNEL_ID not configured' });
+      return res.status(400).json({ error: 'No Discord channel configured. Set a channel in the drop or configure DROP_ANNOUNCEMENT_CHANNEL_ID.' });
     }
 
     // Format SKU list for embed
