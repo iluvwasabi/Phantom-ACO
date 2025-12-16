@@ -400,26 +400,53 @@ function extractPotentialSKUs(content, embed) {
 
 // Extract description from message content or embed
 function extractDescription(content, embed) {
-  // Priority 1: Embed description
+  // Extract URLs from content
+  const urls = extractURLs(content);
+
+  // Extract URLs from embed if present
   if (embed?.description) {
-    return embed.description;
+    const embedUrls = extractURLs(embed.description);
+    urls.push(...embedUrls);
   }
 
-  // Priority 2: Take first few lines after title
-  const lines = content.split('\n');
+  // Deduplicate URLs
+  const uniqueUrls = [...new Set(urls)];
 
-  // Skip first line (likely the title)
-  // Take next 2-5 lines as description
-  const descLines = lines.slice(1, 6).filter(line => {
-    const trimmed = line.trim();
-    // Skip lines that look like SKUs or bullet points
-    return trimmed.length > 0 &&
-           !trimmed.match(/^[•\-*\d]/) &&
-           !trimmed.toLowerCase().startsWith('sku:');
+  if (uniqueUrls.length === 0) {
+    return null;
+  }
+
+  // Try to detect store names from URLs
+  const storeNames = [];
+  const commonStores = {
+    'target.com': 'Target',
+    'walmart.com': 'Walmart',
+    'bestbuy.com': 'Best Buy',
+    'pokemoncenter.com': 'Pokemon Center',
+    'gamestop.com': 'GameStop',
+    'amazon.com': 'Amazon',
+    'tcgplayer.com': 'TCGPlayer',
+    'ebay.com': 'eBay'
+  };
+
+  uniqueUrls.forEach(url => {
+    for (const [domain, storeName] of Object.entries(commonStores)) {
+      if (url.toLowerCase().includes(domain)) {
+        if (!storeNames.includes(storeName)) {
+          storeNames.push(storeName);
+        }
+      }
+    }
   });
 
-  const desc = descLines.join('\n').trim();
-  return desc.length > 0 ? desc : null;
+  // Format description
+  if (storeNames.length > 0) {
+    // Include store names with first URL
+    return `${storeNames.join(', ')} - ${uniqueUrls[0]}`;
+  } else {
+    // Just return the URLs
+    return uniqueUrls.join('\n');
+  }
 }
 
 // Extract images from message attachments and embeds
