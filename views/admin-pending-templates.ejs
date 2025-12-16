@@ -303,62 +303,88 @@
       });
     });
 
-    // Add SKU checkbox
+    // Add SKU checkbox with editable fields
     function addSkuCheckbox(sku, name, confidence, source, checked = true, isManual = false) {
       const id = `sku-${Date.now()}-${Math.random()}`;
       const div = document.createElement('div');
-      div.style.cssText = 'padding: 12px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; display: flex; align-items: center; gap: 12px;';
+      div.className = 'sku-item';
+      div.style.cssText = 'padding: 12px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; display: flex; flex-direction: column; gap: 8px;';
       div.dataset.isManual = isManual;
+
+      // Header row with checkbox and confidence/source info
+      const headerRow = document.createElement('div');
+      headerRow.style.cssText = 'display: flex; align-items: center; gap: 8px;';
 
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.id = id;
       checkbox.checked = checked;
-      checkbox.dataset.sku = sku;
-      checkbox.dataset.name = name;
+      checkbox.className = 'sku-checkbox';
 
-      const label = document.createElement('label');
-      label.htmlFor = id;
-      label.style.cssText = 'flex: 1; cursor: pointer;';
+      const headerInfo = document.createElement('div');
+      headerInfo.style.cssText = 'flex: 1; display: flex; align-items: center; gap: 8px;';
 
       let confidenceBadge = '';
       if (!isManual && confidence !== undefined) {
         const confidencePercent = Math.round(confidence * 100);
         let badgeColor = confidence >= 0.8 ? '#10b981' : confidence >= 0.6 ? '#fbbf24' : '#ef4444';
-        confidenceBadge = `<span style="background: ${badgeColor}22; color: ${badgeColor}; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; margin-left: 8px;">${confidencePercent}% confidence</span>`;
+        confidenceBadge = `<span style="background: ${badgeColor}22; color: ${badgeColor}; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem;">${confidencePercent}% confidence</span>`;
       }
 
-      label.innerHTML = `
-        <strong>${sku}</strong> - ${name}
+      headerInfo.innerHTML = `
+        ${!isManual ? `<span style="font-size: 0.75rem; color: var(--muted);">Source: ${source}</span>` : '<span style="font-size: 0.75rem; color: var(--muted);">Manual</span>'}
         ${confidenceBadge}
-        ${!isManual ? `<div style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">Source: ${source}</div>` : '<div style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">Manually added</div>'}
       `;
 
-      div.appendChild(checkbox);
-      div.appendChild(label);
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'btn btn-sm btn-danger';
+      removeBtn.textContent = '🗑️';
+      removeBtn.style.marginLeft = 'auto';
+      removeBtn.addEventListener('click', () => div.remove());
 
-      if (isManual) {
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'btn btn-sm btn-danger';
-        removeBtn.textContent = '🗑️';
-        removeBtn.style.marginLeft = 'auto';
-        removeBtn.addEventListener('click', () => div.remove());
-        div.appendChild(removeBtn);
-      }
+      headerRow.appendChild(checkbox);
+      headerRow.appendChild(headerInfo);
+      headerRow.appendChild(removeBtn);
+
+      // Editable fields row
+      const fieldsRow = document.createElement('div');
+      fieldsRow.style.cssText = 'display: flex; gap: 12px; margin-left: 28px;';
+
+      const skuInputWrapper = document.createElement('div');
+      skuInputWrapper.style.cssText = 'flex: 1;';
+      skuInputWrapper.innerHTML = `
+        <label style="font-size: 0.75rem; color: var(--muted); display: block; margin-bottom: 4px;">SKU Code</label>
+        <input type="text" class="control sku-code-input" value="${sku}" placeholder="SKU-001" style="font-size: 0.875rem;">
+      `;
+
+      const nameInputWrapper = document.createElement('div');
+      nameInputWrapper.style.cssText = 'flex: 2;';
+      nameInputWrapper.innerHTML = `
+        <label style="font-size: 0.75rem; color: var(--muted); display: block; margin-bottom: 4px;">Product Name</label>
+        <input type="text" class="control sku-name-input" value="${name}" placeholder="Elite Trainer Box" style="font-size: 0.875rem;">
+      `;
+
+      fieldsRow.appendChild(skuInputWrapper);
+      fieldsRow.appendChild(nameInputWrapper);
+
+      div.appendChild(headerRow);
+      div.appendChild(fieldsRow);
 
       skuCheckboxes.appendChild(div);
     }
 
-    // Add manual SKU
+    // Add manual SKU with inline form
     document.getElementById('add-manual-sku-btn').addEventListener('click', () => {
-      const sku = prompt('Enter SKU code:');
-      if (!sku) return;
-
-      const name = prompt('Enter product name:');
-      if (!name) return;
-
-      addSkuCheckbox(sku.trim(), name.trim(), undefined, 'manual', true, true);
+      addSkuCheckbox('', '', undefined, 'manual', true, true);
+      // Focus on the first input of the newly added SKU
+      const lastSku = skuCheckboxes.lastElementChild;
+      if (lastSku) {
+        const firstInput = lastSku.querySelector('.sku-code-input');
+        if (firstInput) {
+          setTimeout(() => firstInput.focus(), 100);
+        }
+      }
     });
 
     // Approve template and create drop
@@ -380,13 +406,21 @@
         return;
       }
 
-      // Collect selected SKUs
+      // Collect selected SKUs from editable inputs
       const selectedSkus = [];
-      skuCheckboxes.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-        selectedSkus.push({
-          sku: checkbox.dataset.sku,
-          name: checkbox.dataset.name
-        });
+      skuCheckboxes.querySelectorAll('.sku-item').forEach(skuItem => {
+        const checkbox = skuItem.querySelector('.sku-checkbox');
+        if (checkbox && checkbox.checked) {
+          const skuCode = skuItem.querySelector('.sku-code-input')?.value.trim();
+          const skuName = skuItem.querySelector('.sku-name-input')?.value.trim();
+
+          if (skuCode && skuName) {
+            selectedSkus.push({
+              sku: skuCode,
+              name: skuName
+            });
+          }
+        }
       });
 
       if (selectedSkus.length === 0) {
