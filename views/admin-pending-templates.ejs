@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pending Drop Templates - Phantom ACO Admin</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <span class="brand-name"><%= brandName || 'Phantom ACO' %></span>
+          <span style="margin-left: 12px; padding: 4px 12px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">ADMIN</span>
+        </div>
+        <div class="header-actions">
+          <a href="/admin" class="btn btn-ghost">Admin Home</a>
+          <a href="/admin/drops" class="btn btn-ghost">Manage Drops</a>
+          <a href="/auth/logout" class="btn btn-ghost">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div class="toolbar">
+        <h1 class="title">Pending Drop Templates</h1>
+        <div style="font-size: 0.875rem; color: var(--muted);">
+          Templates created from 🔥 reactions in Discord
+        </div>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div style="margin-bottom: 24px; display: flex; gap: 12px;">
+        <button class="btn btn-sm filter-btn active" data-status="all">All Templates</button>
+        <button class="btn btn-sm filter-btn" data-status="pending">Pending</button>
+        <button class="btn btn-sm filter-btn" data-status="approved">Approved</button>
+        <button class="btn btn-sm filter-btn" data-status="rejected">Rejected</button>
+      </div>
+
+      <!-- Templates Table -->
+      <div class="submissions-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Drop Name</th>
+              <th>Created By</th>
+              <th># SKUs Detected</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="templates-tbody">
+            <% if (templates.length === 0) { %>
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 40px; color: var(--muted);">
+                  No pending templates yet. React with 🔥 to messages in the configured channel to create templates.
+                </td>
+              </tr>
+            <% } else { %>
+              <% templates.forEach(template => { %>
+                <tr data-template-id="<%= template.id %>" data-status="<%= template.status %>">
+                  <td>
+                    <strong><%= template.drop_name || 'Not detected' %></strong>
+                    <% if (!template.drop_name) { %>
+                      <div style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">Auto-detection failed</div>
+                    <% } %>
+                  </td>
+                  <td style="color: var(--muted);">
+                    <%= template.created_by_discord_username || 'Unknown' %>
+                  </td>
+                  <td>
+                    <div class="badge" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;">
+                      <%= template.extracted_skus_parsed.length %> SKU<%= template.extracted_skus_parsed.length === 1 ? '' : 's' %>
+                    </div>
+                  </td>
+                  <td>
+                    <% if (template.status === 'pending') { %>
+                      <div class="badge" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;">Pending</div>
+                    <% } else if (template.status === 'approved') { %>
+                      <div class="badge badge-success">Approved</div>
+                    <% } else if (template.status === 'rejected') { %>
+                      <div class="badge" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">Rejected</div>
+                    <% } %>
+                  </td>
+                  <td style="color: var(--muted); font-size: 0.875rem;">
+                    <%= new Date(template.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                  </td>
+                  <td>
+                    <div class="submission-actions">
+                      <% if (template.message_url) { %>
+                        <a href="<%= template.message_url %>" target="_blank" class="btn btn-sm" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;">🔗 View Message</a>
+                      <% } %>
+                      <button class="btn btn-sm btn-primary review-template-btn" data-template-id="<%= template.id %>">👁️ Review</button>
+                      <% if (template.status === 'pending') { %>
+                        <button class="btn btn-sm btn-danger reject-template-btn" data-template-id="<%= template.id %>">❌ Reject</button>
+                      <% } %>
+                      <button class="btn btn-sm btn-danger delete-template-btn" data-template-id="<%= template.id %>">🗑️ Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review Template Modal -->
+  <div id="review-modal" class="modal">
+    <div class="dialog animate-in" role="dialog" aria-modal="true" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+      <div class="dialog-header">
+        <h2>Review Drop Template</h2>
+        <button class="icon-btn close-review-modal" aria-label="Close">✕</button>
+      </div>
+      <div class="dialog-body">
+        <form id="review-form" class="form-grid">
+          <input type="hidden" id="template-id">
+
+          <!-- Original Message Preview -->
+          <div class="field wide" style="background: rgba(99, 102, 241, 0.1); padding: 16px; border-radius: 8px; border-left: 3px solid #6366f1;">
+            <label class="label" style="margin-bottom: 8px;">Original Discord Message</label>
+            <div id="message-preview" style="font-size: 0.875rem; color: var(--muted); max-height: 200px; overflow-y: auto; white-space: pre-wrap;"></div>
+            <div id="message-images" style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
+          </div>
+
+          <!-- Editable Fields -->
+          <div class="field wide">
+            <label class="label">Drop Name *</label>
+            <input type="text" id="template-drop-name" class="control" placeholder="Pokemon 151 ETB Drop" required>
+            <p style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;" id="name-confidence"></p>
+          </div>
+
+          <div class="field wide">
+            <label class="label">Service/Retailer *</label>
+            <select id="template-service" class="control" required>
+              <option value="">Select a service...</option>
+            </select>
+          </div>
+
+          <div class="field wide">
+            <label class="label">Description</label>
+            <textarea id="template-description" class="control" rows="3" placeholder="Details about this drop..."></textarea>
+          </div>
+
+          <div class="field wide">
+            <label class="label">Drop Date & Time</label>
+            <input type="datetime-local" id="template-drop-date" class="control">
+          </div>
+
+          <div class="field wide">
+            <label class="label">Discord Channel (Optional)</label>
+            <input type="text" id="template-channel" class="control" placeholder="Channel ID">
+            <p style="font-size: 0.875rem; color: var(--muted); margin-top: 4px;">
+              Leave empty to use the channel where the template was created
+            </p>
+          </div>
+
+          <!-- SKU Selection -->
+          <div class="field wide">
+            <label class="label">Select SKUs to Include *</label>
+            <div id="sku-checkboxes" style="display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto;"></div>
+            <button type="button" class="btn btn-sm" id="add-manual-sku-btn" style="margin-top: 12px; background: rgba(99, 102, 241, 0.2); color: #6366f1;">+ Add Manual SKU</button>
+          </div>
+        </form>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-ghost close-review-modal">Cancel</button>
+        <button class="btn btn-success" id="approve-template-btn">✅ Approve & Create Drop</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Modal management
+    const reviewModal = document.getElementById('review-modal');
+    const closeReviewBtns = document.querySelectorAll('.close-review-modal');
+    const approveBtn = document.getElementById('approve-template-btn');
+    const serviceSelect = document.getElementById('template-service');
+    const skuCheckboxes = document.getElementById('sku-checkboxes');
+    let manualSkuCounter = 0;
+
+    // Load available services for dropdown
+    async function loadServices() {
+      try {
+        const response = await fetch('/admin/api/panels');
+        const panels = await response.json();
+
+        serviceSelect.innerHTML = '<option value="">Select a service...</option>';
+        panels.forEach(panel => {
+          const option = document.createElement('option');
+          option.value = panel.service_name;
+          option.textContent = panel.service_name;
+          serviceSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error loading services:', error);
+      }
+    }
+
+    loadServices();
+
+    // Filter templates by status
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Update active state
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const status = btn.dataset.status;
+        const rows = document.querySelectorAll('#templates-tbody tr[data-template-id]');
+
+        rows.forEach(row => {
+          if (status === 'all' || row.dataset.status === status) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Close modal
+    closeReviewBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        reviewModal.classList.remove('show');
+      });
+    });
+
+    reviewModal?.addEventListener('click', (e) => {
+      if (e.target === reviewModal) {
+        reviewModal.classList.remove('show');
+      }
+    });
+
+    // Review template
+    document.querySelectorAll('.review-template-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const templateId = btn.dataset.templateId;
+
+        try {
+          const response = await fetch(`/admin/api/pending-templates/${templateId}`);
+          const data = await response.json();
+          const template = data.template;
+
+          document.getElementById('template-id').value = template.id;
+          document.getElementById('template-drop-name').value = template.drop_name || '';
+          document.getElementById('template-description').value = template.description || '';
+          document.getElementById('template-drop-date').value = '';
+          document.getElementById('template-channel').value = template.channel_id || '';
+
+          // Show confidence if available
+          const nameConfidence = document.getElementById('name-confidence');
+          if (!template.drop_name) {
+            nameConfidence.textContent = '⚠️ Auto-detection failed - please enter manually';
+            nameConfidence.style.color = '#fbbf24';
+          } else {
+            nameConfidence.textContent = '✓ Auto-detected from message';
+            nameConfidence.style.color = '#10b981';
+          }
+
+          // Display original message
+          document.getElementById('message-preview').textContent = template.raw_message_content || 'No message content available';
+
+          // Display images
+          const imagesContainer = document.getElementById('message-images');
+          imagesContainer.innerHTML = '';
+          if (template.images_parsed && template.images_parsed.length > 0) {
+            template.images_parsed.forEach(imageUrl => {
+              const img = document.createElement('img');
+              img.src = imageUrl;
+              img.style.cssText = 'max-width: 150px; max-height: 150px; border-radius: 8px; object-fit: cover;';
+              imagesContainer.appendChild(img);
+            });
+          }
+
+          // Display SKUs with checkboxes
+          skuCheckboxes.innerHTML = '';
+          manualSkuCounter = 0;
+
+          if (template.extracted_skus_parsed && template.extracted_skus_parsed.length > 0) {
+            template.extracted_skus_parsed.forEach((skuData, index) => {
+              addSkuCheckbox(skuData.sku, skuData.name, skuData.confidence, skuData.source, true);
+            });
+          } else {
+            const notice = document.createElement('div');
+            notice.style.cssText = 'padding: 12px; background: rgba(251, 191, 36, 0.1); color: #fbbf24; border-radius: 8px; font-size: 0.875rem;';
+            notice.textContent = '⚠️ No SKUs detected automatically. Please add them manually below.';
+            skuCheckboxes.appendChild(notice);
+          }
+
+          reviewModal.classList.add('show');
+        } catch (error) {
+          console.error('Error loading template:', error);
+          alert('Error loading template details');
+        }
+      });
+    });
+
+    // Add SKU checkbox
+    function addSkuCheckbox(sku, name, confidence, source, checked = true, isManual = false) {
+      const id = `sku-${Date.now()}-${Math.random()}`;
+      const div = document.createElement('div');
+      div.style.cssText = 'padding: 12px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; display: flex; align-items: center; gap: 12px;';
+      div.dataset.isManual = isManual;
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = id;
+      checkbox.checked = checked;
+      checkbox.dataset.sku = sku;
+      checkbox.dataset.name = name;
+
+      const label = document.createElement('label');
+      label.htmlFor = id;
+      label.style.cssText = 'flex: 1; cursor: pointer;';
+
+      let confidenceBadge = '';
+      if (!isManual && confidence !== undefined) {
+        const confidencePercent = Math.round(confidence * 100);
+        let badgeColor = confidence >= 0.8 ? '#10b981' : confidence >= 0.6 ? '#fbbf24' : '#ef4444';
+        confidenceBadge = `<span style="background: ${badgeColor}22; color: ${badgeColor}; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; margin-left: 8px;">${confidencePercent}% confidence</span>`;
+      }
+
+      label.innerHTML = `
+        <strong>${sku}</strong> - ${name}
+        ${confidenceBadge}
+        ${!isManual ? `<div style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">Source: ${source}</div>` : '<div style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">Manually added</div>'}
+      `;
+
+      div.appendChild(checkbox);
+      div.appendChild(label);
+
+      if (isManual) {
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-sm btn-danger';
+        removeBtn.textContent = '🗑️';
+        removeBtn.style.marginLeft = 'auto';
+        removeBtn.addEventListener('click', () => div.remove());
+        div.appendChild(removeBtn);
+      }
+
+      skuCheckboxes.appendChild(div);
+    }
+
+    // Add manual SKU
+    document.getElementById('add-manual-sku-btn').addEventListener('click', () => {
+      const sku = prompt('Enter SKU code:');
+      if (!sku) return;
+
+      const name = prompt('Enter product name:');
+      if (!name) return;
+
+      addSkuCheckbox(sku.trim(), name.trim(), undefined, 'manual', true, true);
+    });
+
+    // Approve template and create drop
+    approveBtn?.addEventListener('click', async () => {
+      const templateId = document.getElementById('template-id').value;
+      const dropName = document.getElementById('template-drop-name').value.trim();
+      const serviceName = document.getElementById('template-service').value;
+      const description = document.getElementById('template-description').value.trim();
+      const dropDate = document.getElementById('template-drop-date').value;
+      const channelId = document.getElementById('template-channel').value.trim();
+
+      if (!dropName) {
+        alert('Drop name is required');
+        return;
+      }
+
+      if (!serviceName) {
+        alert('Service/Retailer is required');
+        return;
+      }
+
+      // Collect selected SKUs
+      const selectedSkus = [];
+      skuCheckboxes.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+        selectedSkus.push({
+          sku: checkbox.dataset.sku,
+          name: checkbox.dataset.name
+        });
+      });
+
+      if (selectedSkus.length === 0) {
+        alert('Please select at least one SKU');
+        return;
+      }
+
+      if (!confirm(`Create drop "${dropName}" with ${selectedSkus.length} SKU(s)?`)) {
+        return;
+      }
+
+      approveBtn.disabled = true;
+      approveBtn.textContent = 'Creating Drop...';
+
+      try {
+        const response = await fetch(`/admin/api/pending-templates/${templateId}/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            drop_name: dropName,
+            service_name: serviceName,
+            description: description || null,
+            drop_date: dropDate || null,
+            discord_channel_id: channelId || null,
+            selected_skus: selectedSkus
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`Drop created successfully! Drop ID: ${data.drop_id}`);
+          window.location.reload();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to approve template'));
+          approveBtn.disabled = false;
+          approveBtn.textContent = '✅ Approve & Create Drop';
+        }
+      } catch (error) {
+        console.error('Error approving template:', error);
+        alert('Error approving template: ' + error.message);
+        approveBtn.disabled = false;
+        approveBtn.textContent = '✅ Approve & Create Drop';
+      }
+    });
+
+    // Reject template
+    document.querySelectorAll('.reject-template-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const templateId = btn.dataset.templateId;
+        const reason = prompt('Rejection reason (optional):');
+
+        if (!confirm('Are you sure you want to reject this template?')) {
+          return;
+        }
+
+        btn.disabled = true;
+
+        try {
+          const response = await fetch(`/admin/api/pending-templates/${templateId}/reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: reason || null })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            alert('Template rejected successfully');
+            window.location.reload();
+          } else {
+            alert('Error: ' + (data.error || 'Failed to reject template'));
+            btn.disabled = false;
+          }
+        } catch (error) {
+          console.error('Error rejecting template:', error);
+          alert('Error rejecting template: ' + error.message);
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // Delete template
+    document.querySelectorAll('.delete-template-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const templateId = btn.dataset.templateId;
+
+        if (!confirm('Are you sure you want to permanently delete this template?')) {
+          return;
+        }
+
+        btn.disabled = true;
+
+        try {
+          const response = await fetch(`/admin/api/pending-templates/${templateId}`, {
+            method: 'DELETE'
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            alert('Template deleted successfully');
+            window.location.reload();
+          } else {
+            alert('Error: ' + (data.error || 'Failed to delete template'));
+            btn.disabled = false;
+          }
+        } catch (error) {
+          console.error('Error deleting template:', error);
+          alert('Error deleting template: ' + error.message);
+          btn.disabled = false;
+        }
+      });
+    });
+  </script>
+</body>
+</html>

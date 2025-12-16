@@ -300,6 +300,9 @@ const runMigrations = () => {
         } else if (file === 'add-profile-names.js') {
           console.log('Adding profile names to service_subscriptions...');
           require(path.join(migrationsDir, file));
+        } else if (file === 'add-pending-drop-templates.js') {
+          console.log('Creating pending drop templates table...');
+          require(path.join(migrationsDir, file));
         }
       } catch (error) {
         console.error(`Error running migration ${file}:`, error.message);

@@ -1945,6 +1945,179 @@ router.delete('/drops/:id', ensureAdminAuth, async (req, res) => {
   }
 });
 
+// ==================== PENDING DROP TEMPLATES ROUTES ====================
+
+// GET /admin/pending-templates - View pending templates page
+router.get('/pending-templates', ensureAdminAuth, async (req, res) => {
+  try {
+    const templates = db.prepare(`
+      SELECT
+        pt.*,
+        u.discord_username as reviewed_by_username
+      FROM pending_drop_templates pt
+      LEFT JOIN users u ON pt.reviewed_by = u.id
+      ORDER BY
+        CASE pt.status
+          WHEN 'pending' THEN 0
+          WHEN 'approved' THEN 1
+          WHEN 'rejected' THEN 2
+        END,
+        pt.created_at DESC
+    `).all();
+
+    // Parse JSON fields
+    templates.forEach(t => {
+      t.extracted_skus_parsed = JSON.parse(t.extracted_skus || '[]');
+      t.images_parsed = JSON.parse(t.images || '[]');
+      t.urls_parsed = JSON.parse(t.urls || '[]');
+      t.embed_data_parsed = t.embed_data ? JSON.parse(t.embed_data) : null;
+    });
+
+    res.render('admin-pending-templates', {
+      templates,
+      user: req.user,
+      brandName: req.app.locals.settings.brand_name || 'Phantom ACO'
+    });
+  } catch (error) {
+    console.error('Error loading pending templates:', error);
+    res.status(500).send('Error loading pending templates');
+  }
+});
+
+// GET /admin/api/pending-templates/:id - Get template details
+router.get('/api/pending-templates/:id', ensureAdminAuth, async (req, res) => {
+  try {
+    const template = db.prepare('SELECT * FROM pending_drop_templates WHERE id = ?').get(req.params.id);
+
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    // Parse JSON fields
+    template.extracted_skus_parsed = JSON.parse(template.extracted_skus || '[]');
+    template.images_parsed = JSON.parse(template.images || '[]');
+    template.urls_parsed = JSON.parse(template.urls || '[]');
+    template.embed_data_parsed = template.embed_data ? JSON.parse(template.embed_data) : null;
+
+    res.json({ template });
+  } catch (error) {
+    console.error('Error fetching template:', error);
+    res.status(500).json({ error: 'Failed to fetch template' });
+  }
+});
+
+// POST /admin/api/pending-templates/:id/approve - Approve template and create drop
+router.post('/api/pending-templates/:id/approve', ensureAdminAuth, express.json(), async (req, res) => {
+  try {
+    const { drop_name, service_name, description, drop_date, selected_skus, discord_channel_id } = req.body;
+
+    // Validate required fields
+    if (!drop_name || !selected_skus || selected_skus.length === 0) {
+      return res.status(400).json({ error: 'Drop name and SKUs are required' });
+    }
+
+    if (!service_name) {
+      return res.status(400).json({ error: 'Service name is required' });
+    }
+
+    // Get template
+    const template = db.prepare('SELECT * FROM pending_drop_templates WHERE id = ?').get(req.params.id);
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    if (template.status !== 'pending') {
+      return res.status(400).json({ error: 'Template has already been processed' });
+    }
+
+    // Create drop from template
+    const dropResult = db.prepare(`
+      INSERT INTO drops (drop_name, service_name, description, drop_date, discord_channel_id, skus, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      drop_name,
+      service_name,
+      description,
+      drop_date || null,
+      discord_channel_id || template.channel_id,
+      JSON.stringify(selected_skus),
+      req.user.id
+    );
+
+    const dropId = dropResult.lastInsertRowid;
+
+    // Update template status
+    db.prepare(`
+      UPDATE pending_drop_templates
+      SET status = 'approved', reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, converted_drop_id = ?
+      WHERE id = ?
+    `).run(req.user.id, dropId, req.params.id);
+
+    console.log(`✅ Template ${req.params.id} approved and converted to drop ${dropId}`);
+
+    res.json({
+      success: true,
+      drop_id: dropId,
+      message: 'Template approved and drop created successfully'
+    });
+
+  } catch (error) {
+    console.error('Error approving template:', error);
+    res.status(500).json({ error: 'Failed to approve template: ' + error.message });
+  }
+});
+
+// POST /admin/api/pending-templates/:id/reject - Reject template
+router.post('/api/pending-templates/:id/reject', ensureAdminAuth, express.json(), async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    const template = db.prepare('SELECT * FROM pending_drop_templates WHERE id = ?').get(req.params.id);
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    if (template.status !== 'pending') {
+      return res.status(400).json({ error: 'Template has already been processed' });
+    }
+
+    db.prepare(`
+      UPDATE pending_drop_templates
+      SET status = 'rejected', reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, rejection_reason = ?
+      WHERE id = ?
+    `).run(req.user.id, reason || null, req.params.id);
+
+    console.log(`❌ Template ${req.params.id} rejected by ${req.user.discord_username}`);
+
+    res.json({
+      success: true,
+      message: 'Template rejected successfully'
+    });
+
+  } catch (error) {
+    console.error('Error rejecting template:', error);
+    res.status(500).json({ error: 'Failed to reject template' });
+  }
+});
+
+// DELETE /admin/api/pending-templates/:id - Delete template permanently
+router.delete('/api/pending-templates/:id', ensureAdminAuth, async (req, res) => {
+  try {
+    db.prepare('DELETE FROM pending_drop_templates WHERE id = ?').run(req.params.id);
+
+    console.log(`🗑️ Template ${req.params.id} permanently deleted`);
+
+    res.json({
+      success: true,
+      message: 'Template deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting template:', error);
+    res.status(500).json({ error: 'Failed to delete template' });
+  }
+});
+
 // POST /admin/drops/:id/announce - Post drop announcement to Discord
 router.post('/drops/:id/announce', ensureAdminAuth, express.json(), async (req, res) => {
   try {

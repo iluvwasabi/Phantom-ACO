@@ -545,6 +545,133 @@ router.post('/api/discord-bot/create-drop', express.json(), verifyBotSecret, asy
   }
 });
 
+// POST /api/discord-bot/create-pending-template - Create pending drop template from message reaction
+router.post('/api/discord-bot/create-pending-template', express.json(), verifyBotSecret, async (req, res) => {
+  try {
+    const {
+      message_id,
+      channel_id,
+      guild_id,
+      message_url,
+      message_content,
+      embeds,
+      attachments,
+      reacted_by,
+      drop_name,
+      description,
+      extracted_skus,
+      images,
+      urls,
+      embed_data
+    } = req.body;
+
+    console.log(`📋 Creating pending template from message ${message_id} by ${reacted_by?.username}`);
+
+    // Check for duplicate templates
+    const existing = db.prepare('SELECT id FROM pending_drop_templates WHERE message_id = ?').get(message_id);
+    if (existing) {
+      console.log(`⚠️ Template already exists for message ${message_id}`);
+      return res.status(200).json({
+        success: true,
+        template_id: existing.id,
+        message: 'Template already exists',
+        duplicate: true
+      });
+    }
+
+    // Insert pending template
+    const result = db.prepare(`
+      INSERT INTO pending_drop_templates (
+        message_id,
+        channel_id,
+        guild_id,
+        message_url,
+        drop_name,
+        description,
+        raw_message_content,
+        embed_data,
+        images,
+        urls,
+        extracted_skus,
+        created_by_discord_id,
+        created_by_discord_username,
+        status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+    `).run(
+      message_id,
+      channel_id,
+      guild_id || null,
+      message_url || null,
+      drop_name || null,
+      description || null,
+      message_content || null,
+      embed_data ? JSON.stringify(embed_data) : null,
+      images ? JSON.stringify(images) : '[]',
+      urls ? JSON.stringify(urls) : '[]',
+      extracted_skus ? JSON.stringify(extracted_skus) : '[]',
+      reacted_by?.discord_id || null,
+      reacted_by?.username || null
+    );
+
+    const templateId = result.lastInsertRowid;
+
+    console.log(`✅ Pending template created with ID: ${templateId}`);
+    console.log(`   Drop name: ${drop_name || 'Not detected'}`);
+    console.log(`   SKUs detected: ${extracted_skus?.length || 0}`);
+
+    res.json({
+      success: true,
+      template_id: templateId,
+      message: 'Pending template created successfully',
+      extracted: {
+        drop_name: drop_name,
+        skus_count: extracted_skus?.length || 0,
+        images_count: images?.length || 0
+      }
+    });
+
+  } catch (error) {
+    console.error('Error creating pending template:', error);
+    res.status(500).json({ error: 'Failed to create pending template: ' + error.message });
+  }
+});
+
+// GET /api/discord-bot/pending-templates - List pending templates for admin
+router.get('/api/discord-bot/pending-templates', verifyBotSecret, async (req, res) => {
+  try {
+    const templates = db.prepare(`
+      SELECT
+        id,
+        message_id,
+        drop_name,
+        status,
+        created_by_discord_username,
+        created_at,
+        extracted_skus
+      FROM pending_drop_templates
+      ORDER BY
+        CASE status
+          WHEN 'pending' THEN 0
+          WHEN 'approved' THEN 1
+          WHEN 'rejected' THEN 2
+        END,
+        created_at DESC
+    `).all();
+
+    // Parse JSON fields and add SKU count
+    templates.forEach(t => {
+      const skus = JSON.parse(t.extracted_skus || '[]');
+      t.skus_count = skus.length;
+    });
+
+    res.json({ templates });
+
+  } catch (error) {
+    console.error('Error fetching pending templates:', error);
+    res.status(500).json({ error: 'Failed to fetch templates: ' + error.message });
+  }
+});
+
 // GET /api/discord-bot/list-drops - List all active drops for Discord command
 router.get('/api/discord-bot/list-drops', verifyBotSecret, async (req, res) => {
   try {

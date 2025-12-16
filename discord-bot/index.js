@@ -23,6 +23,7 @@ const dashboardHistory = new Map();
 const CHECKOUT_CHANNEL_ID = process.env.DISCORD_CHECKOUT_CHANNEL_ID;
 const PUBLIC_CHECKOUT_CHANNEL_ID = process.env.PUBLIC_CHECKOUT_CHANNEL_ID;
 const DROP_ANNOUNCEMENT_CHANNEL_ID = process.env.DROP_ANNOUNCEMENT_CHANNEL_ID;
+const TEMPLATE_CHANNEL_ID = '1450237892222910575'; // Channel for drop template creation via 🔥 reactions
 const SUBMISSION_UPDATES_CHANNEL_ID = process.env.SUBMISSION_UPDATES_CHANNEL_ID || '1446376744411074757';
 const ACO_ROLE_ID = process.env.ACO_ROLE_ID;
 const WEBSITE_API_URL = process.env.WEBSITE_API_URL || 'http://localhost:3000';
@@ -231,6 +232,224 @@ function parseCheckoutMessage(message) {
   console.log('  Fields:', embed.fields?.map(f => f.name).join(', '));
 
   return null;
+}
+
+// ========== DROP TEMPLATE PARSING FUNCTIONS ==========
+
+// Main parser for drop announcement messages
+function parseDropAnnouncement(message) {
+  const content = message.content || '';
+  const embeds = message.embeds || [];
+  const embed = embeds[0];
+
+  return {
+    drop_name: extractDropName(content, embed),
+    description: extractDescription(content, embed),
+    extracted_skus: extractPotentialSKUs(content, embed),
+    images: extractImages(message),
+    urls: extractURLs(content),
+    embed_data: embed ? {
+      title: embed.title,
+      description: embed.description,
+      fields: embed.fields?.map(f => ({ name: f.name, value: f.value })),
+      footer: embed.footer?.text,
+      author: embed.author?.name,
+      image: embed.image?.url,
+      thumbnail: embed.thumbnail?.url,
+      color: embed.color
+    } : null
+  };
+}
+
+// Extract drop name from message content or embed
+function extractDropName(content, embed) {
+  // Priority 1: Embed title
+  if (embed?.title) {
+    return embed.title;
+  }
+
+  // Priority 2: First bold text: **Drop Name**
+  const boldMatch = content.match(/\*\*([^*]+)\*\*/);
+  if (boldMatch) {
+    const name = boldMatch[1].trim();
+    if (name.length < 150) { // Reasonable length for a drop name
+      return name;
+    }
+  }
+
+  // Priority 3: First line if it's short and title-case
+  const firstLine = content.split('\n')[0].trim();
+  if (firstLine.length > 3 && firstLine.length < 100 && /^[A-Z]/.test(firstLine)) {
+    return firstLine;
+  }
+
+  // Priority 4: Use embed author name if available
+  if (embed?.author?.name && embed.author.name.length < 100) {
+    return embed.author.name;
+  }
+
+  return null;
+}
+
+// Extract potential SKUs and products from message
+function extractPotentialSKUs(content, embed) {
+  const skus = [];
+  const lines = content.split('\n');
+
+  // Pattern 1: Bullet lists (• or - or *)
+  lines.forEach(line => {
+    const bulletMatch = line.match(/^[•\-*]\s*(.+?)(?:\s*[:\-]\s*(.+))?$/);
+    if (bulletMatch) {
+      const sku = bulletMatch[1].trim();
+      const name = bulletMatch[2]?.trim() || bulletMatch[1].trim();
+
+      // Skip lines that look like headers or descriptions
+      if (sku.length > 2 && sku.length < 100) {
+        skus.push({
+          sku: sku,
+          name: name,
+          confidence: 0.75,
+          source: 'bullet_list'
+        });
+      }
+    }
+  });
+
+  // Pattern 2: SKU codes (SKU: ABC-123 - Product Name)
+  lines.forEach(line => {
+    const skuMatch = line.match(/SKU:\s*([A-Z0-9-]+)\s*(?:-|:)?\s*(.+)/i);
+    if (skuMatch) {
+      skus.push({
+        sku: skuMatch[1].trim(),
+        name: skuMatch[2].trim(),
+        confidence: 0.95,
+        source: 'sku_code'
+      });
+    }
+  });
+
+  // Pattern 3: Numbered lists (1. Product Name or 1) Product Name)
+  lines.forEach(line => {
+    const numberedMatch = line.match(/^\d+[\.)]\s*(.+?)(?:\s*[:\-]\s*(.+))?$/);
+    if (numberedMatch) {
+      const sku = numberedMatch[1].trim();
+      const name = numberedMatch[2]?.trim() || numberedMatch[1].trim();
+
+      if (sku.length > 2 && sku.length < 100) {
+        skus.push({
+          sku: sku,
+          name: name,
+          confidence: 0.7,
+          source: 'numbered_list'
+        });
+      }
+    }
+  });
+
+  // Pattern 4: Price indicators ($XX.XX - Product Name)
+  lines.forEach(line => {
+    const priceMatch = line.match(/\$\s*(\d+(?:\.\d{2})?)\s*[:\-]\s*(.+)/);
+    if (priceMatch) {
+      const product = priceMatch[2].trim();
+      if (product.length > 2 && product.length < 100) {
+        skus.push({
+          sku: product,
+          name: product,
+          confidence: 0.65,
+          source: 'price_match'
+        });
+      }
+    }
+  });
+
+  // Pattern 5: Embed fields (if present)
+  if (embed?.fields) {
+    embed.fields.forEach(field => {
+      const fieldNameLower = field.name.toLowerCase();
+      const isProductField = fieldNameLower.includes('sku') ||
+                            fieldNameLower.includes('product') ||
+                            fieldNameLower.includes('item');
+
+      if (isProductField && field.value.length < 100) {
+        skus.push({
+          sku: field.name,
+          name: field.value,
+          confidence: 0.8,
+          source: 'embed_field'
+        });
+      }
+    });
+  }
+
+  // Deduplicate by SKU code (case insensitive)
+  const seen = new Map();
+  const deduplicated = [];
+
+  skus.forEach(item => {
+    const key = item.sku.toLowerCase();
+    if (!seen.has(key) || seen.get(key).confidence < item.confidence) {
+      seen.set(key, item);
+    }
+  });
+
+  // Convert Map back to array
+  seen.forEach(item => deduplicated.push(item));
+
+  return deduplicated;
+}
+
+// Extract description from message content or embed
+function extractDescription(content, embed) {
+  // Priority 1: Embed description
+  if (embed?.description) {
+    return embed.description;
+  }
+
+  // Priority 2: Take first few lines after title
+  const lines = content.split('\n');
+
+  // Skip first line (likely the title)
+  // Take next 2-5 lines as description
+  const descLines = lines.slice(1, 6).filter(line => {
+    const trimmed = line.trim();
+    // Skip lines that look like SKUs or bullet points
+    return trimmed.length > 0 &&
+           !trimmed.match(/^[•\-*\d]/) &&
+           !trimmed.toLowerCase().startsWith('sku:');
+  });
+
+  const desc = descLines.join('\n').trim();
+  return desc.length > 0 ? desc : null;
+}
+
+// Extract images from message attachments and embeds
+function extractImages(message) {
+  const images = [];
+
+  // Attachments
+  message.attachments.forEach(att => {
+    if (att.contentType?.startsWith('image/')) {
+      images.push(att.url);
+    }
+  });
+
+  // Embed images
+  message.embeds.forEach(embed => {
+    if (embed.image?.url) images.push(embed.image.url);
+    if (embed.thumbnail?.url) images.push(embed.thumbnail.url);
+  });
+
+  // Deduplicate
+  return [...new Set(images)];
+}
+
+// Extract URLs from message content
+function extractURLs(content) {
+  const urlRegex = /https?:\/\/[^\s]+/g;
+  const urls = content.match(urlRegex) || [];
+
+  // Clean up URLs (remove trailing punctuation)
+  return urls.map(url => url.replace(/[,.)]+$/, ''));
 }
 
 // Send checkout data to website API
@@ -688,9 +907,16 @@ async function handleInitialProfileSelection(interaction) {
     const rows = [];
 
     for (const sku of skus) {
-      // Check if this SKU has preferences for ANY of the selected profiles
+      // Check if this SKU has preferences for the CURRENTLY SELECTED profiles
       const skuPrefs = preferences[sku.sku];
-      const isOptedIn = skuPrefs && skuPrefs.opted_in && skuPrefs.submissions.length > 0;
+      let isOptedIn = false;
+
+      if (skuPrefs && skuPrefs.opted_in && skuPrefs.submissions.length > 0) {
+        // Check if ANY of the currently selected profiles are in the submissions for this SKU
+        isOptedIn = selectedProfiles.some(profileId =>
+          skuPrefs.submissions.includes(profileId)
+        );
+      }
 
       const button = new ButtonBuilder()
         .setCustomId(`sku_toggle_${dropId}_${sku.sku}`)
@@ -1006,6 +1232,66 @@ client.on('messageReactionAdd', async (reaction, user) => {
       console.error('Error fetching reaction:', error);
       return;
     }
+  }
+
+  // Handle template channel reactions - create pending drop template
+  if (reaction.emoji.name === '🔥' && reaction.message.channelId === TEMPLATE_CHANNEL_ID) {
+    console.log(`🔥 Template capture initiated by ${user.tag} on message ${reaction.message.id}`);
+
+    try {
+      await reaction.users.remove(user.id); // Clean reaction
+
+      // Parse message content
+      const parsed = parseDropAnnouncement(reaction.message);
+
+      // Send to API
+      const response = await axios.post(
+        `${WEBSITE_API_URL}/api/discord-bot/create-pending-template`,
+        {
+          message_id: reaction.message.id,
+          channel_id: reaction.message.channelId,
+          guild_id: reaction.message.guildId,
+          message_url: `https://discord.com/channels/${reaction.message.guildId}/${reaction.message.channelId}/${reaction.message.id}`,
+          message_content: reaction.message.content,
+          embeds: reaction.message.embeds.map(e => ({
+            title: e.title,
+            description: e.description,
+            fields: e.fields?.map(f => ({ name: f.name, value: f.value })),
+            footer: e.footer?.text,
+            author: e.author?.name,
+            image: e.image?.url,
+            thumbnail: e.thumbnail?.url,
+            color: e.color
+          })),
+          attachments: reaction.message.attachments.map(a => ({
+            url: a.url,
+            name: a.name,
+            contentType: a.contentType
+          })),
+          reacted_by: {
+            discord_id: user.id,
+            username: user.username
+          },
+          ...parsed
+        },
+        {
+          headers: {
+            'x-bot-secret': API_SECRET,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Confirm with checkmark
+      await reaction.message.react('✅');
+
+      console.log(`✅ Template created: ${response.data.template_id}`);
+    } catch (error) {
+      console.error('Error creating template:', error.response?.data || error.message);
+      await reaction.message.react('❌');
+    }
+
+    return; // Don't proceed to other handlers
   }
 
   // Check if reaction is 🔥 and in the drop announcement channel
