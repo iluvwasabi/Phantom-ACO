@@ -224,8 +224,8 @@
         serviceSelect.innerHTML = '<option value="">Select a service...</option>';
         panels.forEach(panel => {
           const option = document.createElement('option');
-          option.value = panel.service_name;
-          option.textContent = panel.service_name;
+          option.value = panel.service_id;  // Use service_id (lowercase) to match stored submissions
+          option.textContent = panel.service_name;  // Display the capitalized name
           serviceSelect.appendChild(option);
         });
       } catch (error) {
@@ -383,7 +383,13 @@
         const data = await response.json();
 
         if (data.success) {
-          alert(editMode ? 'Drop updated successfully!' : 'Drop created successfully!');
+          let message = editMode ? 'Drop updated successfully!' : 'Drop created successfully!';
+          if (data.warning) {
+            message += '\n\n' + data.warning;
+          } else if (data.profileCount) {
+            message += `\n\n${data.profileCount} user profile(s) available for this service.`;
+          }
+          alert(message);
           window.location.reload();
         } else {
           alert('Error: ' + (data.error || 'Failed to save drop'));

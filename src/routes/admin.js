@@ -1849,17 +1849,35 @@ router.post('/drops', ensureAdminAuth, express.json(), async (req, res) => {
       return res.status(400).json({ error: 'Service name is required' });
     }
 
+    // Check if any users have active profiles for this service
+    const profileCount = db.prepare(`
+      SELECT COUNT(*) as count
+      FROM service_subscriptions
+      WHERE LOWER(service_name) = LOWER(?) AND status = 'active'
+    `).get(service_name);
+
     // Insert drop
     const result = db.prepare(`
       INSERT INTO drops (drop_name, service_name, description, drop_date, discord_channel_id, skus, created_by)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(drop_name, service_name, description, drop_date || null, discord_channel_id || null, JSON.stringify(skus), req.user.id);
 
-    res.json({
+    // Prepare response with warning if no profiles exist
+    const response = {
       success: true,
       drop_id: result.lastInsertRowid,
       message: 'Drop created successfully'
-    });
+    };
+
+    if (profileCount.count === 0) {
+      response.warning = `⚠️ No users have active ${service_name} profiles yet. Users will need to register profiles before they can participate in this drop.`;
+      console.log(`⚠️ Warning: Created drop "${drop_name}" for ${service_name}, but no active profiles exist yet`);
+    } else {
+      response.profileCount = profileCount.count;
+      console.log(`✅ Created drop "${drop_name}" for ${service_name} with ${profileCount.count} available profile(s)`);
+    }
+
+    res.json(response);
   } catch (error) {
     console.error('Error creating drop:', error);
     res.status(500).json({ error: 'Failed to create drop' });

@@ -342,6 +342,15 @@ router.get('/api/discord-bot/drop-preferences/:dropId/:discordId', verifyBotSecr
       if (user) {
         console.log(`🔍 Looking for submissions: user_id=${user.id}, service_name="${drop.service_name}"`);
 
+        // Debug: Show all service names for this user
+        const allUserServices = db.prepare(`
+          SELECT DISTINCT service_name, status, COUNT(*) as count
+          FROM service_subscriptions
+          WHERE user_id = ?
+          GROUP BY service_name, status
+        `).all(user.id);
+        console.log(`📊 User's all services:`, JSON.stringify(allUserServices));
+
         // Use case-insensitive comparison for service_name and join with encrypted_credentials
         const submissions = db.prepare(`
           SELECT ss.id, ss.service_name, ss.profile_name, ss.created_at, ec.encrypted_password
@@ -350,6 +359,8 @@ router.get('/api/discord-bot/drop-preferences/:dropId/:discordId', verifyBotSecr
           WHERE ss.user_id = ? AND LOWER(ss.service_name) = LOWER(?) AND ss.status = 'active'
           ORDER BY ss.created_at ASC
         `).all(user.id, drop.service_name);
+
+        console.log(`🎯 Query: LOWER(service_name) = LOWER("${drop.service_name}") with status='active'`);
 
         // Decrypt and format submission data
         userSubmissions = submissions.map(sub => {
