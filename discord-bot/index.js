@@ -917,6 +917,15 @@ async function handleInitialProfileSelection(interaction) {
 
     const { drop_name, skus, user_submissions, preferences } = response.data;
 
+    // Validate response data
+    if (!skus || !Array.isArray(skus) || skus.length === 0) {
+      throw new Error(`No SKUs found for this drop. Please contact an admin.`);
+    }
+
+    if (!user_submissions || user_submissions.length === 0) {
+      throw new Error(`No profiles found. Please contact an admin.`);
+    }
+
     // Get profile names for display
     const selectedProfileNames = selectedProfiles.map(id => {
       const sub = user_submissions.find(s => s.id === id);
@@ -973,10 +982,25 @@ async function handleInitialProfileSelection(interaction) {
 
   } catch (error) {
     console.error('Error handling profile selection:', error);
-    await interaction.reply({
-      content: '❌ Error processing selection. Please try again.',
-      ephemeral: true
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data
     });
+
+    // Try to respond with more specific error
+    try {
+      await interaction.update({
+        content: `❌ Error processing selection: ${error.message}`,
+        components: []
+      });
+    } catch (updateError) {
+      // If update fails, try reply instead
+      await interaction.reply({
+        content: `❌ Error processing selection: ${error.message}`,
+        ephemeral: true
+      });
+    }
   }
 }
 
