@@ -941,8 +941,21 @@ async function handleInitialProfileSelection(interaction) {
     // Build SKU buttons with correct initial state based on existing preferences
     const buttons = [];
     const rows = [];
+    const seenCustomIds = new Set(); // Track custom IDs to prevent duplicates
 
-    for (const sku of skus) {
+    for (let i = 0; i < skus.length; i++) {
+      const sku = skus[i];
+
+      // Create unique custom_id even if SKU codes are duplicated
+      const customId = `sku_toggle_${dropId}_${sku.sku}_${i}`;
+
+      // Skip if we've already seen this custom_id (shouldn't happen, but safety check)
+      if (seenCustomIds.has(customId)) {
+        console.warn(`⚠️ Duplicate custom_id detected: ${customId}, skipping`);
+        continue;
+      }
+      seenCustomIds.add(customId);
+
       // Check if this SKU has preferences for the CURRENTLY SELECTED profiles
       const skuPrefs = preferences[sku.sku];
       let isOptedIn = false;
@@ -955,7 +968,7 @@ async function handleInitialProfileSelection(interaction) {
       }
 
       const button = new ButtonBuilder()
-        .setCustomId(`sku_toggle_${dropId}_${sku.sku}`)
+        .setCustomId(customId)
         .setLabel(sku.name)
         .setStyle(isOptedIn ? ButtonStyle.Success : ButtonStyle.Secondary)
         .setEmoji(isOptedIn ? '✅' : '⬜');
@@ -1007,10 +1020,12 @@ async function handleInitialProfileSelection(interaction) {
 // Handle SKU toggle button - toggles SKU for cached profiles
 async function handleSKUToggle(interaction) {
   try {
-    // Parse custom ID: sku_toggle_{dropId}_{sku}
+    // Parse custom ID: sku_toggle_{dropId}_{sku}_{index}
     const parts = interaction.customId.split('_');
     const dropId = parts[2];
-    const sku = parts.slice(3).join('_'); // In case SKU contains underscores
+    // Remove the last part (index) and join the rest as SKU (in case SKU contains underscores)
+    const skuParts = parts.slice(3, -1);
+    const sku = skuParts.length > 0 ? skuParts.join('_') : parts[3];
 
     const discordId = interaction.user.id;
     const discordUsername = interaction.user.username;
