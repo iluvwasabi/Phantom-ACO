@@ -47,10 +47,11 @@
       { name: 'billing_zipcode', label: 'Billing Zipcode', type: 'text', required: false, wide: false, maxlength: 10, conditional: 'billing_same_as_shipping', conditionalValue: false },
       { name: 'separator', type: 'separator' },
 
-      // Account Information Section (NO IMAP for Target)
+      // Account Information Section (includes IMAP for Target)
       { type: 'section_header', label: 'Account Information' },
       { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
       { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+      { name: 'account_imap', label: 'IMAP *', type: 'textarea', required: true, wide: true },
       { name: 'separator', type: 'separator' },
 
       // Notes Section
