@@ -159,6 +159,136 @@
       outline: none;
       box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
     }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 1024px) {
+      .submissions-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .submissions-table table {
+        min-width: 1400px;
+        font-size: 0.85rem;
+      }
+
+      .submissions-table th,
+      .submissions-table td {
+        padding: 10px 6px;
+      }
+
+      .copy-cell {
+        font-size: 0.8rem;
+        padding: 6px 8px;
+      }
+
+      .submission-actions {
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .submission-actions .btn {
+        width: 100%;
+        padding: 6px 8px;
+      }
+
+      .tabs {
+        padding-bottom: 8px;
+      }
+
+      .tab {
+        padding: var(--space-2) var(--space-3);
+        font-size: 0.85rem;
+      }
+
+      /* Make button groups stack on mobile */
+      .submissions-table + div {
+        flex-direction: column;
+        align-items: stretch !important;
+      }
+
+      /* Reduce padding for mobile */
+      .container {
+        padding: var(--space-4);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .header-actions .btn {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+      }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: var(--space-3);
+      }
+
+      /* Make export buttons stack vertically on small screens */
+      div[style*="justify-content: space-between"] {
+        flex-direction: column !important;
+        gap: 12px;
+      }
+
+      div[style*="justify-content: space-between"] > div {
+        width: 100%;
+      }
+
+      div[style*="justify-content: space-between"] button,
+      div[style*="justify-content: space-between"] a {
+        width: 100%;
+      }
+
+      .submissions-table table {
+        font-size: 0.75rem;
+      }
+
+      .submissions-table th,
+      .submissions-table td {
+        padding: 8px 4px;
+      }
+
+      .copy-cell {
+        font-size: 0.75rem;
+        padding: 4px 6px;
+      }
+
+      /* Make dialog full width on mobile */
+      .dialog {
+        max-width: 95vw !important;
+        margin: var(--space-2);
+      }
+
+      .dialog-body {
+        max-height: 60vh;
+        padding: var(--space-4);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .brand-name {
+        font-size: 1rem;
+      }
+
+      .title {
+        font-size: 1.25rem;
+      }
+
+      .submissions-table {
+        font-size: 0.7rem;
+      }
+
+      .tab {
+        padding: var(--space-1) var(--space-2);
+        font-size: 0.75rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -829,6 +959,7 @@
         { type: 'section_header', label: 'Account Information' },
         { name: 'account_email', label: 'Account Email *', type: 'email', required: true, wide: false },
         { name: 'account_password', label: 'Account Password *', type: 'password', required: true, wide: false },
+        { name: 'account_imap', label: 'IMAP *', type: 'textarea', required: true, wide: true },
         { name: 'separator', type: 'separator' },
 
         { type: 'section_header', label: 'Notes' },
