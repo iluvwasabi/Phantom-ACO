@@ -23,8 +23,16 @@ const encrypt = (text) => {
  */
 const decrypt = (encryptedText) => {
   if (!encryptedText) return null;
-  const bytes = CryptoJS.AES.decrypt(encryptedText, ENCRYPTION_KEY);
-  return bytes.toString(CryptoJS.enc.Utf8);
+  try {
+    const bytes = CryptoJS.AES.decrypt(encryptedText, ENCRYPTION_KEY);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    // If decryption produces empty string, the key doesn't match
+    if (!decrypted) return '[Re-entry Required]';
+    return decrypted;
+  } catch (error) {
+    console.warn('Decryption failed (key mismatch?):', error.message);
+    return '[Re-entry Required]';
+  }
 };
 
 /**
