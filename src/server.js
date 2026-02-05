@@ -159,6 +159,7 @@ const changelogRoutes = require('./routes/changelog');
 const botWebhooksRoutes = require('./routes/bot-webhooks');
 const stripeWebhooksRoutes = require('./routes/stripe-webhooks');
 const discordBotRoutes = require('./routes/discord-bot');
+const apiRoutes = require('./routes/api');
 
 // Webhooks must come BEFORE body parsing middleware
 app.use(botWebhooksRoutes);
@@ -176,6 +177,7 @@ app.use('/dashboard', dashboardRoutes);
 app.use('/admin', adminAuthRoutes); // Admin auth routes (login/logout)
 app.use('/admin', adminRoutes); // Admin panel routes (protected)
 app.use('/', submissionsRoutes);
+app.use('/api', apiRoutes); // Public API for checkout tagger bot
 
 // Home page
 app.get('/', (req, res) => {
