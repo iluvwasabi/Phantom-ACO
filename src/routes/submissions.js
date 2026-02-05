@@ -151,13 +151,13 @@ router.get('/api/submissions', ensureAuthenticated, ensureHasACORole, async (req
             };
           }
         } catch (e) {
-          console.error('Decryption error for submission:', sub.id, e.message, e.stack);
-          // Return placeholder data if decryption fails
+          console.error('Decryption error for submission:', sub.id, e.message);
+          // Return placeholder data if decryption fails — allow re-entry via edit
           decryptedData = {
-            email: '[Decryption Error]',
+            email: '[Re-entry Required]',
             card_number: '****',
-            account_email: '[Decryption Error]',
-            error: true
+            account_email: '[Re-entry Required]',
+            needs_reentry: true
           };
         }
       }

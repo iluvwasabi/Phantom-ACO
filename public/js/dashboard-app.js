@@ -773,23 +773,23 @@
       const status = sub.status === 'active' ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">Inactive</span>';
       const created = new Date(sub.created_at).toLocaleDateString();
 
-      // Handle decryption errors
-      const hasError = sub.error === true || email === '[Decryption Error]';
-      const errorClass = hasError ? 'style="background: rgba(239, 68, 68, 0.1);"' : '';
-      const errorWarning = hasError ? '<span style="color: #ef4444; font-size: 0.85rem;"> ⚠ Error</span>' : '';
+      // Handle decryption errors — allow users to re-enter data
+      const needsReentry = sub.needs_reentry === true || email === '[Re-entry Required]' || email === '[Decryption Error]';
+      const reentryClass = needsReentry ? 'style="background: rgba(251, 191, 36, 0.08);"' : '';
+      const reentryWarning = needsReentry ? '<span style="color: #fbbf24; font-size: 0.85rem;"> ⚠ Update Needed</span>' : '';
 
       html += `
-        <tr ${errorClass} data-service="${serviceId}">
-          <td>${serviceType}${errorWarning}</td>
-          <td>${hasError ? '<span style="color: #ef4444;">[Decryption Error]</span>' : email}</td>
+        <tr ${reentryClass} data-service="${serviceId}">
+          <td>${serviceType}${reentryWarning}</td>
+          <td>${needsReentry ? '<span style="color: #fbbf24;">[Re-entry Required]</span>' : email}</td>
           <td>****${last4}</td>
           <td title="${notesTitle}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${notes}</td>
           <td>${status}</td>
           <td>${created}</td>
           <td>
             <div class="submission-actions">
-              <button class="btn btn-primary btn-sm" data-action="edit-submission" data-id="${sub.id}" ${hasError ? 'disabled title="Cannot edit - decryption error"' : ''}>
-                ✏️ Edit
+              <button class="btn ${needsReentry ? 'btn-warning' : 'btn-primary'} btn-sm" data-action="edit-submission" data-id="${sub.id}">
+                ${needsReentry ? '🔄 Update' : '✏️ Edit'}
               </button>
               <button class="btn btn-danger btn-sm" data-action="delete-submission" data-id="${sub.id}">
                 🗑️ Delete
@@ -860,10 +860,11 @@
         return;
       }
 
-      // Check if submission has decryption error
-      if (submission.error === true || submission.email === '[Decryption Error]' || submission.account_email === '[Decryption Error]') {
-        showToast('Cannot edit submission with decryption error. Please delete and recreate it.');
-        return;
+      // If submission needs re-entry, clear the placeholder values so form shows empty fields
+      if (submission.needs_reentry || submission.email === '[Re-entry Required]' || submission.account_email === '[Re-entry Required]') {
+        if (submission.email === '[Re-entry Required]') submission.email = '';
+        if (submission.account_email === '[Re-entry Required]') submission.account_email = '';
+        if (submission.card_number === '****') submission.card_number = '';
       }
 
       // Validate service type
