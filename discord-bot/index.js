@@ -548,9 +548,28 @@ async function sendToPublicChannel(checkoutData) {
     // Create sanitized embed (filters out email, order number, profile, proxy)
     const publicEmbed = createPublicCheckoutEmbed(checkoutData);
 
-    // Send to public channel
-    await publicChannel.send({ embeds: [publicEmbed] });
-    console.log('✅ Sent sanitized checkout to public channel');
+    // Look up Discord user by email to tag them
+    let userMention = '';
+    if (checkoutData.email) {
+      try {
+        const lookupRes = await axios.get(
+          `${WEBSITE_API_URL}/api/lookup?email=${encodeURIComponent(checkoutData.email)}`
+        );
+        if (lookupRes.data?.discordId) {
+          userMention = `<@${lookupRes.data.discordId}> `;
+          console.log(`🏷️ Found user for ${checkoutData.email}: ${lookupRes.data.discordId}`);
+        }
+      } catch (lookupErr) {
+        console.log(`⚠️ Could not find Discord user for email: ${checkoutData.email}`);
+      }
+    }
+
+    // Send to public channel with user tag
+    await publicChannel.send({ 
+      content: userMention ? `${userMention}Your checkout went through! 🎉` : '',
+      embeds: [publicEmbed] 
+    });
+    console.log('✅ Sent sanitized checkout to public channel' + (userMention ? ' (with user tag)' : ''));
   } catch (error) {
     console.error('❌ Error sending to public channel:', error.message);
     console.error('Full error:', error);
