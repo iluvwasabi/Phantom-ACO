@@ -243,13 +243,13 @@ const server = app.listen(PORT, () => {
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Discord Server ID: ${process.env.DISCORD_SERVER_ID}`);
 
-  // Start Discord bot in the same process (saves a whole Render service = $7/month)
+  // Start Discord bot in the same process
   try {
-    console.log('🤖 Starting Discord bot in same process...');
-    require('../discord-bot/index.js');
-  } catch (error) {
-    console.error('❌ Failed to start Discord bot:', error.message);
-    // Don't crash the web server if bot fails
+    const { startBot } = require('./discord-bot');
+    startBot(PORT);
+  } catch (err) {
+    console.error('❌ Failed to start Discord bot:', err.message);
+    // Don't crash the web server if the bot fails
   }
 });
 
