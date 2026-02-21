@@ -315,13 +315,9 @@ router.post('/api/submissions', ensureAuthenticated, ensureHasACORole, async (re
       country,
       account_email,
       account_password,
+      account_imap: account_imap || '',  // Always include IMAP in the data object
       selected_products: req.body.selected_products || []
     };
-
-    // Only include account_imap if not Target service
-    if (service !== 'target') {
-      dataToEncrypt.account_imap = account_imap;
-    }
 
     // Keep legacy max_qty and max_checkouts for backwards compatibility
     if (req.body.max_qty) dataToEncrypt.max_qty = max_qty;
@@ -422,17 +418,23 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       return res.status(404).json({ error: 'Submission not found or you do not have permission to edit it' });
     }
 
-    // Get existing encrypted data to preserve password if not provided
+    // Get existing encrypted data to preserve password and IMAP if not provided
     let existingPassword = account_password;
-    if (!account_password || account_password.trim() === '') {
+    let existingImap = account_imap;
+    if (!account_password || account_password.trim() === '' || !account_imap || account_imap.trim() === '') {
       const existingCreds = db.prepare('SELECT encrypted_password FROM encrypted_credentials WHERE subscription_id = ?').get(submissionId);
       if (existingCreds && existingCreds.encrypted_password) {
         try {
           const decryptedData = decrypt(existingCreds.encrypted_password);
           const parsedData = JSON.parse(decryptedData);
-          existingPassword = parsedData.account_password || '';
+          if (!account_password || account_password.trim() === '') {
+            existingPassword = parsedData.account_password || '';
+          }
+          if (!account_imap || account_imap.trim() === '') {
+            existingImap = parsedData.account_imap || '';
+          }
         } catch (e) {
-          console.error('Error retrieving existing password:', e);
+          console.error('Error retrieving existing credentials:', e);
         }
       }
     }
@@ -496,7 +498,7 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
       country,
       account_email,
       account_password: existingPassword,  // Use existing password if not provided
-      account_imap,
+      account_imap: existingImap,  // Use existing IMAP if not provided
       max_qty,
       max_checkouts
     };
@@ -512,7 +514,7 @@ router.put('/api/submissions/:id', ensureAuthenticated, ensureHasACORole, async 
     `).run(
       account_email ? encrypt(account_email) : encrypt(email),
       encryptedDataString,
-      account_imap ? encrypt(account_imap) : null,
+      existingImap ? encrypt(existingImap) : null,  // Use existingImap which preserves old value
       subscription.id
     );
 
